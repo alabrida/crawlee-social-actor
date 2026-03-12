@@ -75,7 +75,7 @@ async function main(): Promise<void> {
         const cheerioCrawler = new CheerioCrawler({
             requestQueue: cheerioQueue,
             requestHandler: cheerioRouter,
-            proxyConfiguration,
+            proxyConfiguration: proxyConfiguration as any,
             useSessionPool: true,
             sessionPoolOptions: {
                 maxPoolSize: 100,
@@ -117,7 +117,7 @@ async function main(): Promise<void> {
         const playwrightCrawler = new PlaywrightCrawler({
             requestQueue: playwrightQueue,
             requestHandler: playwrightRouter,
-            proxyConfiguration,
+            proxyConfiguration: proxyConfiguration as any,
             useSessionPool: true,
             sessionPoolOptions: {
                 maxPoolSize: 100,

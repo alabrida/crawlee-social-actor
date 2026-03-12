@@ -6,8 +6,7 @@
  * @see G-COST-04 — Track bandwidth to flag runs exceeding 500 MB.
  */
 
-import { Actor } from 'apify';
-import { ProxyConfiguration } from 'crawlee';
+import { Actor, ProxyConfiguration } from 'apify';
 import type { ProxyConfig } from '../types.js';
 import { log } from './logger.js';
 
@@ -20,13 +19,13 @@ const BANDWIDTH_WARNING_THRESHOLD = 500 * 1024 * 1024;
 /**
  * Create a ProxyConfiguration from the actor input proxy settings.
  * Uses Actor.createProxyConfiguration() for Apify proxies,
- * or Crawlee's ProxyConfiguration for third-party proxy URLs.
+ * or raw ProxyConfiguration for third-party proxy URLs.
  * @param config - Proxy configuration from actor input.
- * @returns Crawlee-compatible ProxyConfiguration instance.
+ * @returns ProxyConfiguration instance, or undefined if no proxy.
  */
 export async function createProxyConfig(
     config: ProxyConfig,
-): Promise<ProxyConfiguration> {
+): Promise<ProxyConfiguration | undefined> {
     if (config.useApifyProxy) {
         log.info('Using Apify proxy', { groups: config.apifyProxyGroups });
         return await Actor.createProxyConfiguration({
@@ -42,7 +41,7 @@ export async function createProxyConfig(
     }
 
     log.warning('No proxy configured — requests will use direct IP');
-    return new ProxyConfiguration();
+    return undefined;
 }
 
 /**

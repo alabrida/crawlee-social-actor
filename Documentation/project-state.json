@@ -22,7 +22,7 @@
   },
   "completedSprints": [],
   "globalState": {
-    "sharedInfraReady": false,
+    "sharedInfraReady": true,
     "totalHandlersShipped": 0,
     "openBlockerCount": 0,
     "filesOverLineLimit": 0,
