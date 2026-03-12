@@ -1,0 +1,99 @@
+{
+  "title": "Social Media & Business Listing Scraper",
+  "description": "Configure which platforms to scrape, provide target URLs, and set proxy/concurrency options.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "platforms": {
+      "title": "Platforms",
+      "description": "List of platform identifiers to enable for this run.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["tiktok", "youtube", "linkedin", "google_maps", "pinterest", "reddit", "facebook", "instagram", "general"]
+      },
+      "default": ["tiktok", "youtube"],
+      "editor": "select"
+    },
+    "urls": {
+      "title": "Target URLs",
+      "description": "Array of objects specifying the platform and URL to scrape.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["platform", "url"],
+        "properties": {
+          "platform": {
+            "type": "string",
+            "description": "Platform identifier matching one of the enabled platforms."
+          },
+          "url": {
+            "type": "string",
+            "description": "Full URL to scrape."
+          }
+        }
+      },
+      "editor": "json"
+    },
+    "proxy": {
+      "title": "Proxy Configuration",
+      "description": "Proxy settings for the actor.",
+      "type": "object",
+      "properties": {
+        "useApifyProxy": {
+          "type": "boolean",
+          "title": "Use Apify Proxy",
+          "default": true
+        },
+        "apifyProxyGroups": {
+          "type": "array",
+          "title": "Proxy Groups",
+          "items": { "type": "string" },
+          "default": ["RESIDENTIAL"]
+        }
+      },
+      "editor": "json"
+    },
+    "maxConcurrency": {
+      "title": "Max Concurrency",
+      "description": "Maximum number of concurrent requests.",
+      "type": "integer",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 20
+    },
+    "maxRequestRetries": {
+      "title": "Max Request Retries",
+      "description": "How many times to retry a failed request.",
+      "type": "integer",
+      "default": 3,
+      "minimum": 0,
+      "maximum": 10
+    },
+    "linkedinDailyLimit": {
+      "title": "LinkedIn Daily Limit",
+      "description": "Maximum LinkedIn profiles to scrape per day (G-BOT-01 hard cap: 250).",
+      "type": "integer",
+      "default": 250,
+      "maximum": 250
+    },
+    "googleMapsGrid": {
+      "title": "Google Maps Grid",
+      "description": "Geographic grid configuration for Google Maps scraping.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "cellSizeKm": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1
+        }
+      },
+      "editor": "json"
+    }
+  },
+  "required": ["urls"]
+}

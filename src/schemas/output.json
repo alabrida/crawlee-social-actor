@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Scraped Item Output",
+  "description": "Normalized envelope for every scraped item regardless of source platform.",
+  "type": "object",
+  "required": ["platform", "url", "scrapedAt", "crawlerUsed", "data"],
+  "properties": {
+    "platform": {
+      "type": "string",
+      "enum": ["tiktok", "youtube", "linkedin", "google_maps", "pinterest", "reddit", "facebook", "instagram", "general"],
+      "description": "Source platform identifier."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Original URL that was scraped."
+    },
+    "scrapedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the scrape occurred."
+    },
+    "crawlerUsed": {
+      "type": "string",
+      "enum": ["cheerio", "playwright"],
+      "description": "Which crawler type was used for this extraction."
+    },
+    "data": {
+      "type": "object",
+      "description": "Platform-specific structured data. Shape varies by platform.",
+      "additionalProperties": true
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Any non-fatal warnings or issues encountered during extraction."
+    }
+  },
+  "additionalProperties": false
+}

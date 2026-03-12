@@ -1,0 +1,96 @@
+{
+  "lastUpdated": "2026-03-12T20:00:00Z",
+  "modules": {
+    "src/main.ts": {
+      "exports": [],
+      "imports": ["src/utils/logger.ts", "src/routes.ts", "src/types.ts"],
+      "consumers": []
+    },
+    "src/routes.ts": {
+      "exports": ["getHandler", "getRegisteredPlatforms"],
+      "imports": [
+        "src/types.ts",
+        "src/utils/logger.ts",
+        "src/handlers/tiktok.ts",
+        "src/handlers/youtube.ts",
+        "src/handlers/reddit.ts",
+        "src/handlers/google-maps.ts",
+        "src/handlers/pinterest.ts",
+        "src/handlers/linkedin.ts",
+        "src/handlers/meta.ts",
+        "src/handlers/general.ts"
+      ],
+      "consumers": ["src/main.ts"]
+    },
+    "src/types.ts": {
+      "exports": ["Platform", "CrawlerType", "UrlEntry", "ProxyConfig", "GoogleMapsGridConfig", "ActorInput", "ScrapedItem", "PlatformHandler"],
+      "imports": [],
+      "consumers": ["src/main.ts", "src/routes.ts", "src/handlers/*", "src/utils/proxy.ts"]
+    },
+    "src/utils/logger.ts": {
+      "exports": ["log"],
+      "imports": [],
+      "consumers": ["src/main.ts", "src/utils/session.ts", "src/utils/proxy.ts", "src/utils/resources.ts", "src/routes.ts"]
+    },
+    "src/utils/session.ts": {
+      "exports": ["getSessionPool"],
+      "imports": ["src/utils/logger.ts"],
+      "consumers": []
+    },
+    "src/utils/proxy.ts": {
+      "exports": ["createProxyConfig", "trackBandwidth", "getBandwidthUsage"],
+      "imports": ["src/types.ts", "src/utils/logger.ts"],
+      "consumers": []
+    },
+    "src/utils/resources.ts": {
+      "exports": ["blockResources"],
+      "imports": ["src/utils/logger.ts"],
+      "consumers": []
+    },
+    "src/utils/ua-rotation.ts": {
+      "exports": ["getRandomUserAgent", "getUserAgentList"],
+      "imports": [],
+      "consumers": []
+    },
+    "src/handlers/tiktok.ts": {
+      "exports": ["handle", "validate", "detectBlock", "default"],
+      "imports": ["src/types.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/youtube.ts": {
+      "exports": ["handle", "validate", "detectBlock", "default"],
+      "imports": ["src/types.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/reddit.ts": {
+      "exports": ["handle", "validate", "detectBlock", "default"],
+      "imports": ["src/types.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/google-maps.ts": {
+      "exports": ["handle", "validate", "detectBlock", "default"],
+      "imports": ["src/types.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/pinterest.ts": {
+      "exports": ["handle", "validate", "detectBlock", "default"],
+      "imports": ["src/types.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/linkedin.ts": {
+      "exports": ["handle", "validate", "detectBlock", "default"],
+      "imports": ["src/types.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/meta.ts": {
+      "exports": ["handle", "validate", "detectBlock", "default"],
+      "imports": ["src/types.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/general.ts": {
+      "exports": ["handle", "validate", "detectBlock", "default"],
+      "imports": ["src/types.ts"],
+      "consumers": ["src/routes.ts"]
+    }
+  }
+}

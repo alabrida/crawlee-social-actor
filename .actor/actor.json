@@ -1,0 +1,10 @@
+{
+  "actorSpecification": 1,
+  "name": "crawlee-social-scraper",
+  "title": "Social Media & Business Listing Scraper",
+  "description": "Unified scraper for TikTok, YouTube, LinkedIn, Google Maps, Pinterest, Reddit, Facebook, Instagram, and general business sites using a hybrid Crawlee architecture.",
+  "version": "0.1",
+  "buildTag": "latest",
+  "input": "./input_schema.json",
+  "dockerfile": "../Dockerfile"
+}
