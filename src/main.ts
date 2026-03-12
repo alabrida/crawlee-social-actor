@@ -1,17 +1,23 @@
 /**
  * @module main
  * @description Apify Actor entry point for the Crawlee social media scraping actor.
- * Reads input, initializes shared infrastructure, and dispatches to platform handlers.
+ * Creates CheerioCrawler and PlaywrightCrawler instances, enqueues URLs by platform,
+ * and dispatches to the correct handler via the router.
  */
 
 import { Actor } from 'apify';
+import { CheerioCrawler, PlaywrightCrawler, RequestQueue } from 'crawlee';
 import { log } from './utils/logger.js';
-import { getHandler } from './routes.js';
-import type { ActorInput, Platform, ScrapedItem } from './types.js';
+import { createProxyConfig } from './utils/proxy.js';
+import { blockResources } from './utils/resources.js';
+import { getRandomUserAgent } from './utils/ua-rotation.js';
+import { buildCheerioRouter, buildPlaywrightRouter } from './routes.js';
+import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
+import { PLATFORM_CRAWLER_MAP } from './types.js';
 
 /**
- * Main actor function. Initializes the Apify Actor, reads input,
- * and dispatches each URL to the appropriate platform handler.
+ * Main actor function. Initializes the Apify Actor, creates crawlers,
+ * enqueues URLs, and runs scrapers per crawler type.
  * @returns Promise that resolves when all URLs have been processed.
  */
 async function main(): Promise<void> {
@@ -28,56 +34,117 @@ async function main(): Promise<void> {
         maxConcurrency: input.maxConcurrency,
     });
 
-    const dataset = await Actor.openDataset();
-    const failedUrls: { platform: string; url: string; error: string }[] = [];
+    const handlerContext: HandlerContext = { input };
+    const proxyConfiguration = await createProxyConfig(input.proxy);
+
+    // Partition URLs by crawler type
+    const cheerioUrls: UrlEntry[] = [];
+    const playwrightUrls: UrlEntry[] = [];
 
     for (const entry of input.urls) {
         const platform = entry.platform as Platform;
 
-        // Skip if platform is not enabled
         if (!input.platforms.includes(platform)) {
             log.info(`Skipping disabled platform: ${platform}`, { url: entry.url });
             continue;
         }
 
-        const handler = getHandler(platform);
-        if (!handler) {
-            log.error(`No handler for platform: ${platform}`);
-            failedUrls.push({ platform, url: entry.url, error: 'No handler registered' });
-            continue;
-        }
-
-        try {
-            const items: ScrapedItem[] = await handler.handle(entry.url);
-
-            for (const item of items) {
-                if (!handler.validate(item.data)) {
-                    item.errors.push('Schema validation warning: unexpected data shape');
-                    log.warning('Data validation failed', { platform, url: entry.url });
-                }
-                await dataset.pushData(item);
-            }
-
-            log.info(`Successfully scraped: ${entry.url}`, { platform, itemCount: items.length });
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            log.error(`Failed to scrape: ${entry.url}`, { platform, error: errorMessage });
-            failedUrls.push({ platform, url: entry.url, error: errorMessage });
+        const crawlerType = PLATFORM_CRAWLER_MAP[platform];
+        if (crawlerType === 'cheerio') {
+            cheerioUrls.push(entry);
+        } else {
+            playwrightUrls.push(entry);
         }
     }
 
-    // Push failed URLs to a separate dataset for manual review
-    if (failedUrls.length > 0) {
-        const failedDataset = await Actor.openDataset('failed-urls');
-        for (const failed of failedUrls) {
-            await failedDataset.pushData(failed);
+    // Run CheerioCrawler for lightweight platforms
+    if (cheerioUrls.length > 0) {
+        log.info(`Running CheerioCrawler for ${cheerioUrls.length} URLs`);
+
+        const cheerioQueue = await RequestQueue.open('cheerio-queue');
+        for (const entry of cheerioUrls) {
+            await cheerioQueue.addRequest({
+                url: entry.url,
+                label: entry.platform,
+                userData: { platform: entry.platform },
+            });
         }
-        log.warning(`${failedUrls.length} URLs failed. See 'failed-urls' dataset.`);
+
+        const cheerioRouter = buildCheerioRouter(handlerContext);
+
+        const cheerioCrawler = new CheerioCrawler({
+            requestQueue: cheerioQueue,
+            requestHandler: cheerioRouter,
+            proxyConfiguration,
+            useSessionPool: true,
+            sessionPoolOptions: {
+                maxPoolSize: 100,
+                sessionOptions: {
+                    maxUsageCount: 50,
+                },
+            },
+            maxConcurrency: input.maxConcurrency,
+            maxRequestRetries: input.maxRequestRetries,
+            additionalMimeTypes: ['application/json'],
+            preNavigationHooks: [
+                (_context, options) => {
+                    options.headers = {
+                        ...options.headers,
+                        'User-Agent': getRandomUserAgent(),
+                    };
+                },
+            ],
+        });
+
+        await cheerioCrawler.run();
+    }
+
+    // Run PlaywrightCrawler for browser-required platforms
+    if (playwrightUrls.length > 0) {
+        log.info(`Running PlaywrightCrawler for ${playwrightUrls.length} URLs`);
+
+        const playwrightQueue = await RequestQueue.open('playwright-queue');
+        for (const entry of playwrightUrls) {
+            await playwrightQueue.addRequest({
+                url: entry.url,
+                label: entry.platform,
+                userData: { platform: entry.platform },
+            });
+        }
+
+        const playwrightRouter = buildPlaywrightRouter(handlerContext);
+
+        const playwrightCrawler = new PlaywrightCrawler({
+            requestQueue: playwrightQueue,
+            requestHandler: playwrightRouter,
+            proxyConfiguration,
+            useSessionPool: true,
+            sessionPoolOptions: {
+                maxPoolSize: 100,
+                sessionOptions: {
+                    maxUsageCount: 50,
+                },
+            },
+            maxConcurrency: Math.min(input.maxConcurrency, 3),
+            maxRequestRetries: input.maxRequestRetries,
+            launchContext: {
+                launchOptions: {
+                    args: ['--disable-blink-features=AutomationControlled'],
+                },
+            },
+            preNavigationHooks: [
+                async ({ page }) => {
+                    await blockResources(page);
+                },
+            ],
+        });
+
+        await playwrightCrawler.run();
     }
 
     log.info('Actor finished', {
-        totalUrls: input.urls.length,
-        failedCount: failedUrls.length,
+        cheerioUrls: cheerioUrls.length,
+        playwrightUrls: playwrightUrls.length,
     });
 
     await Actor.exit();

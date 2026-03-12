@@ -5,16 +5,21 @@
  * @see PRD Section 5.6
  */
 
-import type { PlatformHandler, ScrapedItem } from '../types.js';
+import type { CheerioCrawlingContext } from 'crawlee';
+import type { CheerioHandler, HandlerContext, ScrapedItem } from '../types.js';
 
 /**
  * Handle a Reddit URL by appending .json and parsing the raw JSON response.
- * @param url - The Reddit subreddit, post, or user URL to scrape.
+ * @param context - Crawlee CheerioCrawlingContext with request/response/$.
+ * @param _handlerContext - Shared handler context with actor input.
  * @returns Array of scraped items in the normalized envelope.
  */
-export async function handle(url: string): Promise<ScrapedItem[]> {
+async function handle(
+    context: CheerioCrawlingContext,
+    _handlerContext: HandlerContext,
+): Promise<ScrapedItem[]> {
     // TODO: Implement in Sprint 2 (Cheerio-Reddit Agent)
-    throw new Error(`Reddit handler not yet implemented for: ${url}`);
+    throw new Error(`Reddit handler not yet implemented for: ${context.request.url}`);
 }
 
 /**
@@ -22,7 +27,7 @@ export async function handle(url: string): Promise<ScrapedItem[]> {
  * @param data - The extracted data object.
  * @returns True if required fields are present.
  */
-export function validate(data: Record<string, unknown>): boolean {
+function validate(data: Record<string, unknown>): boolean {
     // TODO: Define expected keys for Reddit data
     return data !== null && typeof data === 'object';
 }
@@ -32,11 +37,16 @@ export function validate(data: Record<string, unknown>): boolean {
  * @param responseBody - The raw response body.
  * @returns True if a block is detected.
  */
-export function detectBlock(responseBody: string): boolean {
+function detectBlock(responseBody: string): boolean {
     // TODO: Implement block detection for Reddit
     return responseBody.includes('rate limit') || responseBody.includes('"error"');
 }
 
-/** Assembled handler export satisfying the PlatformHandler interface. */
-const redditHandler: PlatformHandler = { handle, validate, detectBlock };
+/** Assembled handler export satisfying the CheerioHandler interface. */
+const redditHandler: CheerioHandler = {
+    crawlerType: 'cheerio',
+    handle,
+    validate,
+    detectBlock,
+};
 export default redditHandler;

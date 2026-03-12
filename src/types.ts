@@ -3,6 +3,8 @@
  * @description Shared type definitions for the Crawlee social media scraping actor.
  */
 
+import type { CheerioCrawlingContext, PlaywrightCrawlingContext } from 'crawlee';
+
 /**
  * Supported platform identifiers.
  */
@@ -23,6 +25,21 @@ export type Platform =
 export type CrawlerType = 'cheerio' | 'playwright';
 
 /**
+ * Maps each platform to its crawler type.
+ */
+export const PLATFORM_CRAWLER_MAP: Record<Platform, CrawlerType> = {
+    tiktok: 'cheerio',
+    youtube: 'cheerio',
+    reddit: 'cheerio',
+    google_maps: 'playwright',
+    pinterest: 'playwright',
+    linkedin: 'playwright',
+    facebook: 'playwright',
+    instagram: 'playwright',
+    general: 'playwright',
+};
+
+/**
  * A single target URL entry from actor input.
  */
 export interface UrlEntry {
@@ -40,6 +57,8 @@ export interface ProxyConfig {
     useApifyProxy: boolean;
     /** Apify proxy group names (e.g., RESIDENTIAL). */
     apifyProxyGroups: string[];
+    /** Third-party proxy URLs (used when useApifyProxy is false). */
+    proxyUrls?: string[];
 }
 
 /**
@@ -92,16 +111,35 @@ export interface ScrapedItem {
 }
 
 /**
- * Handler interface that every platform handler must implement.
+ * Shared context passed to every handler from the crawler.
+ * Provides access to actor input and shared utilities without
+ * requiring handlers to create their own infrastructure.
+ * @see G-CODE-02 — No handler may create its own SessionPool.
+ * @see G-ENV-03 — Proxy config via shared utility.
+ */
+export interface HandlerContext {
+    /** Full actor input for accessing platform-specific config. */
+    input: ActorInput;
+}
+
+/**
+ * Handler interface for CheerioCrawler-based platforms.
  * @see G-CODE-01
  */
-export interface PlatformHandler {
+export interface CheerioHandler {
+    /** Crawler type identifier. */
+    readonly crawlerType: 'cheerio';
+
     /**
-     * Execute the scraping logic for a given URL.
-     * @param url - The target URL to scrape.
+     * Execute the scraping logic within a Cheerio crawling context.
+     * @param context - The Crawlee CheerioCrawlingContext.
+     * @param handlerContext - Shared handler context with actor input.
      * @returns Scraped item(s) in the normalized envelope.
      */
-    handle(url: string): Promise<ScrapedItem[]>;
+    handle(
+        context: CheerioCrawlingContext,
+        handlerContext: HandlerContext,
+    ): Promise<ScrapedItem[]>;
 
     /**
      * Validate that extracted data contains expected keys (schema-drift detection).
@@ -117,3 +155,42 @@ export interface PlatformHandler {
      */
     detectBlock(responseBody: string): boolean;
 }
+
+/**
+ * Handler interface for PlaywrightCrawler-based platforms.
+ * @see G-CODE-01
+ */
+export interface PlaywrightHandler {
+    /** Crawler type identifier. */
+    readonly crawlerType: 'playwright';
+
+    /**
+     * Execute the scraping logic within a Playwright crawling context.
+     * @param context - The Crawlee PlaywrightCrawlingContext.
+     * @param handlerContext - Shared handler context with actor input.
+     * @returns Scraped item(s) in the normalized envelope.
+     */
+    handle(
+        context: PlaywrightCrawlingContext,
+        handlerContext: HandlerContext,
+    ): Promise<ScrapedItem[]>;
+
+    /**
+     * Validate that extracted data contains expected keys (schema-drift detection).
+     * @param data - The extracted data object to validate.
+     * @returns True if the data structure is valid.
+     */
+    validate(data: Record<string, unknown>): boolean;
+
+    /**
+     * Detect if the page response indicates a block (CAPTCHA, challenge, empty-data).
+     * @param responseBody - The raw response body or page content to inspect.
+     * @returns True if a block is detected.
+     */
+    detectBlock(responseBody: string): boolean;
+}
+
+/**
+ * Union type for all platform handlers.
+ */
+export type PlatformHandler = CheerioHandler | PlaywrightHandler;

@@ -1,0 +1,14 @@
+# YouTube channel/video URLs for testing
+# Used by Anti-Bot Agent during RED (3 URLs) and HARDEN (10-20 URLs)
+# Rules: URLs must be public channels/videos only
+# Note: Residential proxy REQUIRED — datacenter IPs are blocked
+
+# RED phase (minimum 3)
+https://www.youtube.com/@MrBeast
+https://www.youtube.com/@PewDiePie
+https://www.youtube.com/@TEDx
+
+# HARDEN phase (add more diverse URLs below)
+# https://www.youtube.com/@veritasium
+# https://www.youtube.com/@mkbhd
+# https://www.youtube.com/watch?v=dQw4w9WgXcQ

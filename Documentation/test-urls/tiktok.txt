@@ -1,0 +1,13 @@
+# TikTok profile URLs for testing
+# Used by Anti-Bot Agent during RED (3 URLs) and HARDEN (10-20 URLs)
+# Rules: URLs must be public profiles/pages only
+
+# RED phase (minimum 3)
+https://www.tiktok.com/@tiktok
+https://www.tiktok.com/@charlidamelio
+https://www.tiktok.com/@khaby.lame
+
+# HARDEN phase (add more diverse URLs below)
+# https://www.tiktok.com/@mrbeast
+# https://www.tiktok.com/@bellapoarch
+# https://www.tiktok.com/@addisonre

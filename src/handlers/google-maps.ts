@@ -1,20 +1,25 @@
 /**
  * @module handlers/google-maps
- * @description Google Maps handler using PlaywrightCrawler.
- * Uses Geographic Orchestration and aria-label selectors.
+ * @description Google Business Profile (Maps) handler using PlaywrightCrawler.
+ * Uses geographic grid orchestration and aria-label selectors.
  * @see PRD Section 5.4
  */
 
-import type { PlatformHandler, ScrapedItem } from '../types.js';
+import type { PlaywrightCrawlingContext } from 'crawlee';
+import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 
 /**
- * Handle a Google Maps URL using geographic grid orchestration.
- * @param url - The Google Maps search or business URL to scrape.
+ * Handle a Google Maps URL with geographic grid splitting and DOM scraping.
+ * @param context - Crawlee PlaywrightCrawlingContext with page/request.
+ * @param _handlerContext - Shared handler context with actor input (includes grid config).
  * @returns Array of scraped items in the normalized envelope.
  */
-export async function handle(url: string): Promise<ScrapedItem[]> {
+async function handle(
+    context: PlaywrightCrawlingContext,
+    _handlerContext: HandlerContext,
+): Promise<ScrapedItem[]> {
     // TODO: Implement in Sprint 3 (PW-GoogleMaps Agent)
-    throw new Error(`Google Maps handler not yet implemented for: ${url}`);
+    throw new Error(`Google Maps handler not yet implemented for: ${context.request.url}`);
 }
 
 /**
@@ -22,7 +27,7 @@ export async function handle(url: string): Promise<ScrapedItem[]> {
  * @param data - The extracted data object.
  * @returns True if required fields are present.
  */
-export function validate(data: Record<string, unknown>): boolean {
+function validate(data: Record<string, unknown>): boolean {
     // TODO: Define expected keys for Google Maps data
     return data !== null && typeof data === 'object';
 }
@@ -32,11 +37,16 @@ export function validate(data: Record<string, unknown>): boolean {
  * @param responseBody - The page content.
  * @returns True if a block is detected.
  */
-export function detectBlock(responseBody: string): boolean {
+function detectBlock(responseBody: string): boolean {
     // TODO: Implement block detection for Google Maps
-    return responseBody.includes('unusual traffic') || responseBody.includes('captcha');
+    return responseBody.includes('unusual traffic') || responseBody.includes('CAPTCHA');
 }
 
-/** Assembled handler export satisfying the PlatformHandler interface. */
-const googleMapsHandler: PlatformHandler = { handle, validate, detectBlock };
+/** Assembled handler export satisfying the PlaywrightHandler interface. */
+const googleMapsHandler: PlaywrightHandler = {
+    crawlerType: 'playwright',
+    handle,
+    validate,
+    detectBlock,
+};
 export default googleMapsHandler;

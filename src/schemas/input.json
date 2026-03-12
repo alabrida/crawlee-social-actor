@@ -32,6 +32,11 @@
           "type": "array",
           "items": { "type": "string" },
           "default": ["RESIDENTIAL"]
+        },
+        "proxyUrls": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Third-party proxy URLs (used when useApifyProxy is false)"
         }
       }
     },

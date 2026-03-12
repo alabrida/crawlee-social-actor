@@ -6,7 +6,7 @@ description: Master workflow for building the Crawlee social media scraping Acto
 
 // turbo-all
 
-This workflow governs all development on the Crawlee social media scraping Actor. Every agent session must follow this workflow. The workflow file at `.agent/rules/` contains the guardrail details referenced by rule ID.
+This workflow governs all development on the Crawlee social media scraping Actor. Every agent session must follow this workflow. The workflow file at `.agent/rules/` contains the guardrail details referenced by rule ID. For architecture patterns and implementation guidance, see `Documentation/Architecting High-Efficiency Crawlee Actors for Social Media Scraping.md`.
 
 ---
 

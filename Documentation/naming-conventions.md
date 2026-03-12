@@ -12,7 +12,7 @@ This document is the single source of truth for naming conventions across the co
 |---|---|---|
 | **kebab-case** | `google-maps.ts` | All `.ts` files, directories |
 | **kebab-case** | `ua-rotation.ts` | Utility modules |
-| **kebab-case** | `input_schema.json` | Exception: Apify requires underscores for schema files |
+| **snake_case** | `input_schema.json` | Apify actor schema files follow Apify's snake_case convention |
 
 ## Function Names
 

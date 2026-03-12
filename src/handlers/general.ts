@@ -5,16 +5,21 @@
  * @see PRD Section 5.8
  */
 
-import type { PlatformHandler, ScrapedItem } from '../types.js';
+import type { PlaywrightCrawlingContext } from 'crawlee';
+import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 
 /**
  * Handle a general business website URL with stealth headless browser.
- * @param url - The business website URL to scrape.
+ * @param context - Crawlee PlaywrightCrawlingContext with page/request.
+ * @param _handlerContext - Shared handler context with actor input.
  * @returns Array of scraped items in the normalized envelope.
  */
-export async function handle(url: string): Promise<ScrapedItem[]> {
+async function handle(
+    context: PlaywrightCrawlingContext,
+    _handlerContext: HandlerContext,
+): Promise<ScrapedItem[]> {
     // TODO: Implement in Sprint 6 (PW-General Agent)
-    throw new Error(`General handler not yet implemented for: ${url}`);
+    throw new Error(`General handler not yet implemented for: ${context.request.url}`);
 }
 
 /**
@@ -22,7 +27,7 @@ export async function handle(url: string): Promise<ScrapedItem[]> {
  * @param data - The extracted data object.
  * @returns True if required fields are present.
  */
-export function validate(data: Record<string, unknown>): boolean {
+function validate(data: Record<string, unknown>): boolean {
     // TODO: Define expected keys for general business data
     return data !== null && typeof data === 'object';
 }
@@ -32,7 +37,7 @@ export function validate(data: Record<string, unknown>): boolean {
  * @param responseBody - The page content.
  * @returns True if a block is detected.
  */
-export function detectBlock(responseBody: string): boolean {
+function detectBlock(responseBody: string): boolean {
     // TODO: Implement block detection for general WAF challenges
     return (
         responseBody.includes('Checking your browser') ||
@@ -41,6 +46,11 @@ export function detectBlock(responseBody: string): boolean {
     );
 }
 
-/** Assembled handler export satisfying the PlatformHandler interface. */
-const generalHandler: PlatformHandler = { handle, validate, detectBlock };
+/** Assembled handler export satisfying the PlaywrightHandler interface. */
+const generalHandler: PlaywrightHandler = {
+    crawlerType: 'playwright',
+    handle,
+    validate,
+    detectBlock,
+};
 export default generalHandler;

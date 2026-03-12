@@ -1,96 +1,103 @@
 {
-  "lastUpdated": "2026-03-12T20:00:00Z",
+  "lastUpdated": "2026-03-12T20:42:00Z",
+  "supabaseProjectId": "wraqaqyqqeswufbarhcz",
   "modules": {
     "src/main.ts": {
       "exports": [],
-      "imports": ["src/utils/logger.ts", "src/routes.ts", "src/types.ts"],
+      "imports": [
+        "src/utils/logger.ts",
+        "src/utils/proxy.ts",
+        "src/utils/resources.ts",
+        "src/utils/ua-rotation.ts",
+        "src/routes.ts",
+        "src/types.ts"
+      ],
       "consumers": []
     },
     "src/routes.ts": {
-      "exports": ["getHandler", "getRegisteredPlatforms"],
+      "exports": ["buildCheerioRouter", "buildPlaywrightRouter", "getRegisteredPlatforms"],
       "imports": [
         "src/types.ts",
-        "src/utils/logger.ts",
-        "src/handlers/tiktok.ts",
-        "src/handlers/youtube.ts",
-        "src/handlers/reddit.ts",
-        "src/handlers/google-maps.ts",
-        "src/handlers/pinterest.ts",
-        "src/handlers/linkedin.ts",
-        "src/handlers/meta.ts",
-        "src/handlers/general.ts"
+        "src/utils/logger.ts"
       ],
-      "consumers": ["src/main.ts"]
+      "consumers": ["src/main.ts"],
+      "note": "Handler imports are commented out until SHIP phase. Uncomment as each handler ships."
     },
     "src/types.ts": {
-      "exports": ["Platform", "CrawlerType", "UrlEntry", "ProxyConfig", "GoogleMapsGridConfig", "ActorInput", "ScrapedItem", "PlatformHandler"],
+      "exports": [
+        "Platform", "CrawlerType", "PLATFORM_CRAWLER_MAP",
+        "UrlEntry", "ProxyConfig", "GoogleMapsGridConfig", "ActorInput",
+        "ScrapedItem", "HandlerContext",
+        "CheerioHandler", "PlaywrightHandler", "PlatformHandler"
+      ],
       "imports": [],
       "consumers": ["src/main.ts", "src/routes.ts", "src/handlers/*", "src/utils/proxy.ts"]
     },
     "src/utils/logger.ts": {
       "exports": ["log"],
       "imports": [],
-      "consumers": ["src/main.ts", "src/utils/session.ts", "src/utils/proxy.ts", "src/utils/resources.ts", "src/routes.ts"]
+      "consumers": ["src/main.ts", "src/utils/proxy.ts", "src/utils/resources.ts", "src/routes.ts"]
     },
     "src/utils/session.ts": {
       "exports": ["getSessionPool"],
       "imports": ["src/utils/logger.ts"],
-      "consumers": []
+      "consumers": [],
+      "note": "Available for handlers that need direct SessionPool access. Main.ts uses inline sessionPoolOptions."
     },
     "src/utils/proxy.ts": {
       "exports": ["createProxyConfig", "trackBandwidth", "getBandwidthUsage"],
       "imports": ["src/types.ts", "src/utils/logger.ts"],
-      "consumers": []
+      "consumers": ["src/main.ts"]
     },
     "src/utils/resources.ts": {
       "exports": ["blockResources"],
       "imports": ["src/utils/logger.ts"],
-      "consumers": []
+      "consumers": ["src/main.ts"]
     },
     "src/utils/ua-rotation.ts": {
       "exports": ["getRandomUserAgent", "getUserAgentList"],
       "imports": [],
-      "consumers": []
+      "consumers": ["src/main.ts"]
     },
     "src/handlers/tiktok.ts": {
-      "exports": ["handle", "validate", "detectBlock", "default"],
+      "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts"]
+      "consumers": ["src/routes.ts (when shipped)"]
     },
     "src/handlers/youtube.ts": {
-      "exports": ["handle", "validate", "detectBlock", "default"],
+      "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts"]
+      "consumers": ["src/routes.ts (when shipped)"]
     },
     "src/handlers/reddit.ts": {
-      "exports": ["handle", "validate", "detectBlock", "default"],
+      "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts"]
+      "consumers": ["src/routes.ts (when shipped)"]
     },
     "src/handlers/google-maps.ts": {
-      "exports": ["handle", "validate", "detectBlock", "default"],
+      "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts"]
+      "consumers": ["src/routes.ts (when shipped)"]
     },
     "src/handlers/pinterest.ts": {
-      "exports": ["handle", "validate", "detectBlock", "default"],
+      "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts"]
+      "consumers": ["src/routes.ts (when shipped)"]
     },
     "src/handlers/linkedin.ts": {
-      "exports": ["handle", "validate", "detectBlock", "default"],
+      "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts"]
+      "consumers": ["src/routes.ts (when shipped)"]
     },
     "src/handlers/meta.ts": {
-      "exports": ["handle", "validate", "detectBlock", "default"],
+      "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts"]
+      "consumers": ["src/routes.ts (when shipped)"]
     },
     "src/handlers/general.ts": {
-      "exports": ["handle", "validate", "detectBlock", "default"],
+      "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts"]
+      "consumers": ["src/routes.ts (when shipped)"]
     }
   }
 }

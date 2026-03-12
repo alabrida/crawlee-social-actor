@@ -1,7 +1,8 @@
 {
   "projectName": "crawlee-social-scraper",
-  "lastUpdated": "2026-03-12T15:28:00Z",
+  "lastUpdated": "2026-03-12T20:42:00Z",
   "lastSessionId": null,
+  "supabaseProjectId": "wraqaqyqqeswufbarhcz",
   "currentSprint": {
     "number": 0,
     "platforms": [],
@@ -12,15 +13,16 @@
     "tiktok": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/tiktok.ts", "nextAction": "Await Sprint 1 kickoff" },
     "youtube": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/youtube.ts", "nextAction": "Await Sprint 1 kickoff" },
     "reddit": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/reddit.ts", "nextAction": "Await Sprint 2 kickoff" },
-    "google-maps": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/google-maps.ts", "nextAction": "Await Sprint 3 kickoff" },
+    "google_maps": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/google-maps.ts", "nextAction": "Await Sprint 3 kickoff" },
     "pinterest": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/pinterest.ts", "nextAction": "Await Sprint 3 kickoff" },
     "linkedin": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/linkedin.ts", "nextAction": "Await Sprint 4 kickoff" },
-    "meta": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/meta.ts", "nextAction": "Await Sprint 5 kickoff" },
+    "facebook": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/meta.ts", "nextAction": "Await Sprint 5 kickoff" },
+    "instagram": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/meta.ts", "nextAction": "Await Sprint 5 kickoff" },
     "general": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/general.ts", "nextAction": "Await Sprint 6 kickoff" }
   },
   "completedSprints": [],
   "globalState": {
-    "sharedInfraReady": true,
+    "sharedInfraReady": false,
     "totalHandlersShipped": 0,
     "openBlockerCount": 0,
     "filesOverLineLimit": 0,

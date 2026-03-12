@@ -5,16 +5,21 @@
  * @see PRD Section 5.2
  */
 
-import type { PlatformHandler, ScrapedItem } from '../types.js';
+import type { CheerioCrawlingContext } from 'crawlee';
+import type { CheerioHandler, HandlerContext, ScrapedItem } from '../types.js';
 
 /**
- * Handle a YouTube URL by fetching raw HTML and regex-parsing embedded JSON.
- * @param url - The YouTube channel or video URL to scrape.
+ * Handle a YouTube URL by regex-parsing embedded JSON from the HTML response.
+ * @param context - Crawlee CheerioCrawlingContext with request/response/$.
+ * @param _handlerContext - Shared handler context with actor input.
  * @returns Array of scraped items in the normalized envelope.
  */
-export async function handle(url: string): Promise<ScrapedItem[]> {
+async function handle(
+    context: CheerioCrawlingContext,
+    _handlerContext: HandlerContext,
+): Promise<ScrapedItem[]> {
     // TODO: Implement in Sprint 1 (Cheerio-YouTube Agent)
-    throw new Error(`YouTube handler not yet implemented for: ${url}`);
+    throw new Error(`YouTube handler not yet implemented for: ${context.request.url}`);
 }
 
 /**
@@ -22,7 +27,7 @@ export async function handle(url: string): Promise<ScrapedItem[]> {
  * @param data - The extracted data object.
  * @returns True if required fields are present.
  */
-export function validate(data: Record<string, unknown>): boolean {
+function validate(data: Record<string, unknown>): boolean {
     // TODO: Define expected keys for YouTube data
     return data !== null && typeof data === 'object';
 }
@@ -32,11 +37,16 @@ export function validate(data: Record<string, unknown>): boolean {
  * @param responseBody - The raw HTML response body.
  * @returns True if a block is detected.
  */
-export function detectBlock(responseBody: string): boolean {
+function detectBlock(responseBody: string): boolean {
     // TODO: Implement block detection for YouTube
     return responseBody.includes('RequestBlocked') || responseBody.includes('consent.youtube.com');
 }
 
-/** Assembled handler export satisfying the PlatformHandler interface. */
-const youtubeHandler: PlatformHandler = { handle, validate, detectBlock };
+/** Assembled handler export satisfying the CheerioHandler interface. */
+const youtubeHandler: CheerioHandler = {
+    crawlerType: 'cheerio',
+    handle,
+    validate,
+    detectBlock,
+};
 export default youtubeHandler;

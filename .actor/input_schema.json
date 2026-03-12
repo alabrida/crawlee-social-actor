@@ -50,6 +50,12 @@
           "title": "Proxy Groups",
           "items": { "type": "string" },
           "default": ["RESIDENTIAL"]
+        },
+        "proxyUrls": {
+          "type": "array",
+          "title": "Third-Party Proxy URLs",
+          "description": "Optional list of third-party proxy URLs. Used when useApifyProxy is false.",
+          "items": { "type": "string" }
         }
       },
       "editor": "json"

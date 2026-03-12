@@ -5,16 +5,21 @@
  * @see PRD Section 5.1
  */
 
-import type { PlatformHandler, ScrapedItem } from '../types.js';
+import type { CheerioCrawlingContext } from 'crawlee';
+import type { CheerioHandler, HandlerContext, ScrapedItem } from '../types.js';
 
 /**
- * Handle a TikTok URL by fetching raw HTML and parsing embedded JSON.
- * @param url - The TikTok profile or video URL to scrape.
+ * Handle a TikTok URL by parsing embedded JSON from the HTML response.
+ * @param context - Crawlee CheerioCrawlingContext with request/response/$.
+ * @param _handlerContext - Shared handler context with actor input.
  * @returns Array of scraped items in the normalized envelope.
  */
-export async function handle(url: string): Promise<ScrapedItem[]> {
+async function handle(
+    context: CheerioCrawlingContext,
+    _handlerContext: HandlerContext,
+): Promise<ScrapedItem[]> {
     // TODO: Implement in Sprint 1 (Cheerio-TikTok Agent)
-    throw new Error(`TikTok handler not yet implemented for: ${url}`);
+    throw new Error(`TikTok handler not yet implemented for: ${context.request.url}`);
 }
 
 /**
@@ -22,7 +27,7 @@ export async function handle(url: string): Promise<ScrapedItem[]> {
  * @param data - The extracted data object.
  * @returns True if required fields are present.
  */
-export function validate(data: Record<string, unknown>): boolean {
+function validate(data: Record<string, unknown>): boolean {
     // TODO: Define expected keys for TikTok data
     return data !== null && typeof data === 'object';
 }
@@ -32,11 +37,16 @@ export function validate(data: Record<string, unknown>): boolean {
  * @param responseBody - The raw HTML response body.
  * @returns True if a block is detected.
  */
-export function detectBlock(responseBody: string): boolean {
+function detectBlock(responseBody: string): boolean {
     // TODO: Implement block detection for TikTok
     return responseBody.includes('captcha') || responseBody.length < 100;
 }
 
-/** Assembled handler export satisfying the PlatformHandler interface. */
-const tiktokHandler: PlatformHandler = { handle, validate, detectBlock };
+/** Assembled handler export satisfying the CheerioHandler interface. */
+const tiktokHandler: CheerioHandler = {
+    crawlerType: 'cheerio',
+    handle,
+    validate,
+    detectBlock,
+};
 export default tiktokHandler;
