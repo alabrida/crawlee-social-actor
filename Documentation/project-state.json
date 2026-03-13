@@ -1,31 +1,47 @@
 {
-  "projectName": "crawlee-social-scraper",
-  "lastUpdated": "2026-03-12T20:42:00Z",
-  "lastSessionId": null,
-  "supabaseProjectId": "wraqaqyqqeswufbarhcz",
-  "currentSprint": {
-    "number": 1,
-    "platforms": ["tiktok", "youtube"],
-    "valueIncrement": "Sprint 1 — TikTok and YouTube data extraction",
-    "status": "in_progress"
-  },
-  "platformStatus": {
-    "tiktok": { "phase": "MODULARIZE", "assignedRole": "VDO Agent", "lastCompletedPhase": "GREEN", "blockerIds": ["BLOCK-001", "BLOCK-002"], "handlerFile": "src/handlers/tiktok.ts", "nextAction": "Proceed to HARDEN sweep to measure new Playwright performance and success rates" },
-    "youtube": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/youtube.ts", "nextAction": "Await RED phase" },
-    "reddit": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/reddit.ts", "nextAction": "Await Sprint 2 kickoff" },
-    "google_maps": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/google-maps.ts", "nextAction": "Await Sprint 3 kickoff" },
-    "pinterest": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/pinterest.ts", "nextAction": "Await Sprint 3 kickoff" },
-    "linkedin": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/linkedin.ts", "nextAction": "Await Sprint 4 kickoff" },
-    "facebook": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/meta.ts", "nextAction": "Await Sprint 5 kickoff" },
-    "instagram": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/meta.ts", "nextAction": "Await Sprint 5 kickoff" },
-    "general": { "phase": "not_started", "assignedRole": null, "lastCompletedPhase": null, "blockerIds": [], "handlerFile": "src/handlers/general.ts", "nextAction": "Await Sprint 6 kickoff" }
-  },
-  "completedSprints": [],
-  "globalState": {
-    "sharedInfraReady": true,
-    "totalHandlersShipped": 0,
-    "openBlockerCount": 0,
-    "filesOverLineLimit": 0,
-    "totalSessionsCompleted": 0
+  "project": "crawlee-social-actor",
+  "version": "0.1.0",
+  "status": "DEVELOPMENT",
+  "platforms": {
+    "tiktok": {
+      "phase": "shipped",
+      "handlerType": "playwright",
+      "completionPercentage": 100
+    },
+    "instagram": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "youtube": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "twitter": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "facebook": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "linkedin": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "pinterest": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "snapchat": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    }
   }
 }

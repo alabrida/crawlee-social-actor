@@ -62,7 +62,7 @@
     "src/handlers/tiktok.ts": {
       "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts (when shipped)"]
+      "consumers": ["src/routes.ts"]
     },
     "src/handlers/youtube.ts": {
       "exports": ["default"],
