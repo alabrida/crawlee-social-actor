@@ -19,7 +19,7 @@ import type {
 // Handlers are imported and registered after passing the SHIP gate.
 // Uncomment each handler as it is shipped.
 // Sprint 1:
-// import tiktokHandler from './handlers/tiktok.js';
+import tiktokHandler from './handlers/tiktok.js';
 // import youtubeHandler from './handlers/youtube.js';
 // Sprint 2:
 // import redditHandler from './handlers/reddit.js';
@@ -38,7 +38,6 @@ import type {
  * Handlers are added here after passing the SHIP gate.
  */
 const CHEERIO_HANDLERS: Record<string, CheerioHandler> = {
-    // tiktok: tiktokHandler,
     // youtube: youtubeHandler,
     // reddit: redditHandler,
 };
@@ -48,6 +47,7 @@ const CHEERIO_HANDLERS: Record<string, CheerioHandler> = {
  * Handlers are added here after passing the SHIP gate.
  */
 const PLAYWRIGHT_HANDLERS: Record<string, PlaywrightHandler> = {
+    tiktok: tiktokHandler,
     // google_maps: googleMapsHandler,
     // pinterest: pinterestHandler,
     // linkedin: linkedinHandler,

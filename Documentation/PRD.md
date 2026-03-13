@@ -15,9 +15,10 @@ Build a single, unified **Apify Actor** powered by [Crawlee](https://crawlee.dev
 | Goal | Description |
 |---|---|
 | **Multi-Platform Coverage** | Scrape TikTok, YouTube, LinkedIn, Google Business Profile (Maps), Pinterest, Reddit, Facebook, and Instagram from a single actor. |
-| **Cost Efficiency** | Stay under the Creator Plan's $100/month compute-unit cap and 10 GB residential proxy limit. |
-| **Resilience** | Gracefully handle anti-bot defenses (Cloudflare, DataDome, PerimeterX, TLS fingerprinting, behavioral analysis) without complete run failure. |
-| **Data Quality** | Return structured, normalized JSON output regardless of source platform. |
+| **Cost Efficiency** | Stay under the Creator Plan's $100/month compute-unit cap and 10 GB residential proxy limit by avoiding useless content scraping. |
+| **Target Data Focus** | Extract *only* revenue journey indicators, CTAs, full-page screenshots, and profile HTML. Content (posts/videos) is explicitly ignored unless it's a CTA. |
+| **Data Quality & Pipeline** | Return a single, structured JSON output containing conversion markers paired with a screenshot, optimized for direct ingestion by an n8n workflow. |
+| **Resilience** | Gracefully handle anti-bot defenses and fully utilize `RequestQueue` for resumable state across interrupted runs. |
 
 ---
 
@@ -63,24 +64,26 @@ The actor **must not** use a single crawler type for every platform. Instead, it
 
 ## 5. Platform-Specific Requirements
 
+> **Note on Screenshots:** Since full-page screenshots are mandatory for the n8n output object, the architecture heavily favors `PlaywrightCrawler` to render visual states. Cheerio is strictly used if screenshots are toggled off.
+
 ### 5.1 TikTok
 
 | Item | Detail |
 |---|---|
-| **Crawler** | CheerioCrawler |
+| **Crawler** | PlaywrightCrawler (or Cheerio if screenshots disabled) |
 | **Anti-Bot Blocker** | Cryptographic API signatures (`X-Bogus`, `msToken`, `_signature`) |
-| **Extraction Method** | Parse embedded JSON from `<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">` or `<script id="SIGI_STATE">` |
-| **Target Data** | User profiles, video metadata, engagement stats |
+| **Extraction Method** | DOM parsing or embedded JSON intercept |
+| **Target Data** | Revenue journey indicators, CTAs, bio links, profile HTML snippet, screenshot |
 
 ### 5.2 YouTube
 
 | Item | Detail |
 |---|---|
-| **Crawler** | CheerioCrawler (via Residential Proxy) |
-| **Anti-Bot Blocker** | Datacenter IP blacklisting (`403 Forbidden`), n-parameter video signatures |
-| **Extraction Method** | Regex-parse `ytInitialData` / `ytInitialPlayerResponse` from `<script>` tags |
-| **Target Data** | Channel info, video metadata, view/like/comment counts |
-| **Note** | Residential proxy is **required** — datacenter IPs are blocked. |
+| **Crawler** | PlaywrightCrawler (or Cheerio if screenshots disabled) |
+| **Anti-Bot Blocker** | Datacenter IP blacklisting (`403 Forbidden`) |
+| **Extraction Method** | DOM parsing for channel info |
+| **Target Data** | Revenue journey indicators, channel CTAs, about page links, profile HTML snippet, screenshot |
+| **Note** | Residential proxy is **required**. |
 
 ### 5.3 LinkedIn
 
@@ -88,21 +91,18 @@ The actor **must not** use a single crawler type for every platform. Instead, it
 |---|---|
 | **Crawler** | PlaywrightCrawler (Sticky Residential IP) |
 | **Anti-Bot Blocker** | Browser fingerprinting, strict rate limits, geo-inconsistency checks |
-| **Extraction Method** | Authenticated DOM scraping with human-like interaction patterns |
-| **Target Data** | Profile headlines, experience, education, skills |
-| **Rate Limit** | ≤ 250 profiles/day |
-| **Delays** | Randomized 2–5 s between interactions |
-| **Proxy** | Sticky residential IP matching target profile's geo-location |
+| **Extraction Method** | Authenticated DOM scraping using injected session tokens (no fresh logins) |
+| **Target Data** | Revenue journey indicators, profile CTAs, featured links, profile HTML snippet, screenshot |
+| **Geotargeting** | Profile-specific geo-targeting matching GBP logic. |
 
 ### 5.4 Google Business Profile (Maps)
 
 | Item | Detail |
 |---|---|
 | **Crawler** | PlaywrightCrawler |
-| **Anti-Bot Blocker** | Official API result cap (60 per query), fragile CSS selectors |
-| **Extraction Method** | Geographic Orchestration — split target region into coordinate grid; query in parallel |
-| **DOM Strategy** | Use `aria-label` accessibility attributes (more stable than CSS classes) |
-| **Target Data** | Business name, address, phone, star rating, review count, review text |
+| **Anti-Bot Blocker** | Official API result cap, fragile CSS selectors |
+| **Extraction Method** | Direct profile extraction (Grid orchestration disabled until competitor info scaling is needed) |
+| **Target Data** | Revenue journey indicators, booking/website CTAs, profile HTML snippet, screenshot |
 
 ### 5.5 Pinterest
 
@@ -110,17 +110,17 @@ The actor **must not** use a single crawler type for every platform. Instead, it
 |---|---|
 | **Crawler** | PlaywrightCrawler |
 | **Anti-Bot Blocker** | Complex SPA DOM, infinite scroll |
-| **Extraction Method** | Scroll page; intercept XHR JSON responses via `page.route()` for image URLs and metadata |
-| **Target Data** | Pin images, descriptions, board names, engagement metrics |
+| **Extraction Method** | Direct profile extraction |
+| **Target Data** | Revenue journey indicators, profile CTAs, linked websites, profile HTML snippet, screenshot |
 
 ### 5.6 Reddit
 
 | Item | Detail |
 |---|---|
-| **Crawler** | CheerioCrawler (preferred) + SessionPool cookie reuse |
+| **Crawler** | PlaywrightCrawler (or Cheerio if screenshots disabled) |
 | **Anti-Bot Blocker** | Infinite scroll, strict API rate limits |
-| **Extraction Method** | Append `.json` to URLs for raw JSON; authenticate session once and reuse cookies |
-| **Target Data** | Subreddit posts, comments, user profiles, vote counts |
+| **Extraction Method** | Direct profile extraction |
+| **Target Data** | Revenue journey indicators, subreddit/user CTAs, pinned links, profile HTML snippet, screenshot |
 
 ### 5.7 Facebook & Instagram
 
@@ -128,9 +128,8 @@ The actor **must not** use a single crawler type for every platform. Instead, it
 |---|---|
 | **Crawler** | PlaywrightCrawler (Persistent Sessions + Residential Proxies) |
 | **Anti-Bot Blocker** | Aggressive IP tracking, forced login walls, dynamic GraphQL |
-| **Extraction Method** | Parse `window._sharedData` JSON (Instagram); human-like typing and scrolling |
-| **Target Data** | Profile info, post content, engagement metrics |
-| **Note** | Un-authenticated scraping is severely limited; persistent sessions are critical. |
+| **Extraction Method** | Load authentications via tokens/session cookies to maintain persistent sessions |
+| **Target Data** | Revenue journey indicators, bio CTAs, custom links, profile HTML snippet, screenshot |
 
 ### 5.8 General Business Websites (Cloudflare / DataDome / PerimeterX)
 
@@ -139,7 +138,7 @@ The actor **must not** use a single crawler type for every platform. Instead, it
 | **Crawler** | PlaywrightCrawler |
 | **Anti-Bot Blocker** | CAPTCHAs, "Verifying you are human" spinners, WAF challenges |
 | **Extraction Method** | Stealth headless browser with randomized fingerprints |
-| **Target Data** | Variable per site (contact info, reviews, pricing, etc.) |
+| **Target Data** | Revenue journey/conversion data, prominent CTAs, profile source HTML snippet, screenshot |
 
 ---
 
@@ -164,19 +163,20 @@ The actor **must not** use a single crawler type for every platform. Instead, it
   "platforms": ["tiktok", "youtube", "linkedin", "google_maps", "pinterest", "reddit", "facebook", "instagram", "general"],
   "urls": [
     { "platform": "tiktok", "url": "https://www.tiktok.com/@username" },
-    { "platform": "youtube", "url": "https://www.youtube.com/@channelname" }
+    { "platform": "linkedin", "url": "https://www.linkedin.com/in/username" }
   ],
   "proxy": {
     "useApifyProxy": true,
     "apifyProxyGroups": ["RESIDENTIAL"]
   },
+  "authTokens": {
+    "linkedin": "li_at=xxxxxx; JSESSIONID=xxxxxx;",
+    "facebook": "c_user=xxx; xs=xxx;",
+    "instagram": "sessionid=xxxxxx;"
+  },
   "maxConcurrency": 5,
   "maxRequestRetries": 3,
-  "linkedinDailyLimit": 250,
-  "googleMapsGrid": {
-    "enabled": true,
-    "cellSizeKm": 5
-  }
+  "takeScreenshots": true
 }
 ```
 
@@ -184,18 +184,23 @@ The actor **must not** use a single crawler type for every platform. Instead, it
 
 ## 8. Output Schema (Proposed)
 
-Each scraped item should conform to a normalized envelope:
+Each scraped item conforms to a normalized envelope optimized for direct parsing by an downstream **n8n workflow**:
 
 ```jsonc
 {
   "platform": "tiktok",
   "url": "https://www.tiktok.com/@username",
   "scrapedAt": "2026-03-12T17:20:00Z",
-  "crawlerUsed": "cheerio",
   "data": {
-    // Platform-specific structured fields
+    "revenueIndicators": {
+      "ctas": ["Book Now", "Link in Bio"],
+      "links": ["https://example.com/booking"],
+      "conversionMarkers": ["Promoted", "Shop"]
+    },
+    "profileHtml": "<div class=\"user-profile-section\">...</div>",
+    "screenshotUrl": "https://api.apify.com/v2/key-value-stores/STORE_ID/records/screenshot_tiktok_user.png"
   },
-  "errors": []   // Any non-fatal warnings
+  "errors": []
 }
 ```
 
@@ -205,20 +210,19 @@ Each scraped item should conform to a normalized envelope:
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Residential proxy budget exhausted mid-month | Medium | High | Prioritize CheerioCrawler; block media in Playwright; dashboard alerts at 70% usage |
-| Platform HTML structure changes break selectors | High | Medium | Use accessibility attributes (`aria-label`) where possible; add selector-health smoke tests |
-| LinkedIn account bans from over-scraping | Medium | High | Hard 250-profile/day cap; randomized delays; geo-matched sticky proxies |
-| TikTok/YouTube JSON key renames | Medium | Medium | Wrap extraction in try/catch; log schema drift; alert on > 10% extraction failures |
-| Cloudflare challenge upgrades | Medium | Medium | Keep Playwright stealth plugins up to date; fingerprint randomization |
+| Residential proxy budget exhausted | Medium | High | Prune useless data extraction; stop page execution once CTA/revenue markers load. |
+| Run interruption due to timeouts | High | Medium | Fully utilize `RequestQueue`. The actor can resume exactly where it left off on the next run. |
+| Platform HTML changes break selectors | High | Medium | Use accessibility attributes (`aria-label`) where possible. |
+| Account bans from full logins | Medium | High | Use session cookies/authentication tokens instead of standard log-in flows. |
 
 ---
 
 ## 10. Success Criteria
 
-1. The actor successfully extracts data from **all 8 listed platform categories** without manual intervention.
-2. A full representative run (≥ 50 URLs across platforms) completes under **$15 in compute** and **< 1 GB proxy bandwidth**.
-3. Blocked-request rate is **< 5%** across platforms using the hybrid strategy.
-4. Output datasets pass JSON schema validation with **zero malformed records**.
+1. The actor extracts **only** revenue journey indicators, source HTML snippets, and screenshots from the **8 listed platform categories**.
+2. Avoids fetching post/video content unless identified as a CTA, keeping the payload lean for the n8n webhook.
+3. Blocked-request rate is **< 5%** across platforms.
+4. Uses `RequestQueue` effectively for state resumption if interrupted.
 
 ---
 
@@ -227,11 +231,11 @@ Each scraped item should conform to a normalized envelope:
 > [!NOTE]
 > These questions were resolved during the design phase. See [agent-team.md](file:///d:/Apify/Documentation/agent-team.md) Section 8 for the full decision log.
 
-1. **Authentication:** LinkedIn, Facebook, and Instagram will use **authenticated persistent sessions** via PlaywrightCrawler with residential proxies. Credential management is handled through Apify Actor input (secure storage). TikTok, YouTube, and Reddit run **without authentication**.
-2. **Priority Order:** **Incremental delivery** — 6 sprints building platform support progressively. Sprint 1: TikTok + YouTube (Cheerio) → Sprint 2: Reddit (Cheerio) → Sprint 3: Google Maps + Pinterest (Playwright) → Sprint 4: LinkedIn → Sprint 5: Facebook + Instagram → Sprint 6: General business sites.
-3. **Data Freshness:** **On-demand only** for the initial release. The actor runs when triggered manually or via Apify schedule. Scheduled runs can be configured through Apify's built-in scheduling without additional actor logic.
-4. **General Business Sites:** The actor will accept **any URL** and attempt best-effort extraction using the stealth PlaywrightCrawler with fingerprint randomization. No fixed target list required.
-5. **Additional Platforms:** Yellow Pages, Yelp, TripAdvisor, Airbnb, Booking.com, Amazon, eBay, AliExpress, and Etsy are **deferred to post-initial release**. The 8 core platforms are the priority for the first version.
+1. **Information Scope:** The goal is strictly revenue journey indicators and conversion markers. Post/video content is explicitly ignored.
+2. **Screenshots:** A screenshot of each platform scraped is paired in the output object to be ingested by n8n.
+3. **Google Maps / LinkedIn Geotargeting:** Grid iteration is disabled for now. Geotargeting focuses strictly on the individual profile URLs provided.
+4. **Authentication:** Authenticated sessions are created using authentication tokens/cookies passed securely, bypassing the risk of on-the-fly login orchestration.
+5. **n8n Hand-off:** Data output structure is explicitly shaped to act as a seamless event trigger/payload for downstream n8n parsing.
 
 ---
 

@@ -1,0 +1,13 @@
+
+> crawlee-social-scraper@0.1.0 start
+> node --env-file=.env dist/main.js
+
+[32mINFO[39m  System info[90m {"apifyVersion":"3.2.6","apifyClientVersion":"2.22.2","crawleeVersion":"3.16.0","osType":"Windows_NT","nodeVersion":"v22.17.0"}[39m
+file:///D:/Apify/dist/main.js:24
+        throw new Error('Actor input is required.');
+              ^
+
+Error: Actor input is required.
+    at main (file:///D:/Apify/dist/main.js:24:15)
+
+Node.js v22.17.0

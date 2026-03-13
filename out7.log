@@ -1,0 +1,13 @@
+
+> crawlee-social-scraper@0.1.0 start
+> node --env-file=.env dist/main.js
+
+[32mINFO[39m  System info[90m {"apifyVersion":"3.2.6","apifyClientVersion":"2.22.2","crawleeVersion":"3.16.0","osType":"Windows_NT","nodeVersion":"v22.17.0"}[39m
+[32mINFO[39m  Actor started[90m {"platforms":["tiktok"],"urlCount":1,"maxConcurrency":1}[39m
+[32mINFO[39m  Using Apify proxy[90m {"groups":["RESIDENTIAL"]}[39m
+[32mINFO[39m  Running PlaywrightCrawler for 1 URLs
+[32mINFO[39m [33m PlaywrightCrawler:[39m Starting the crawler.
+[32mINFO[39m [33m PlaywrightCrawler:[39m All requests from the queue have been processed, the crawler will shut down.
+[32mINFO[39m [33m PlaywrightCrawler:[39m Final request statistics:[90m {"requestsFinished":0,"requestsFailed":0,"retryHistogram":[],"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":null,"requestsFinishedPerMinute":0,"requestsFailedPerMinute":0,"requestTotalDurationMillis":0,"requestsTotal":0,"crawlerRuntimeMillis":1064}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m Finished! Total 0 requests: 0 succeeded, 0 failed.[90m {"terminal":true}[39m
+[32mINFO[39m  Actor finished[90m {"cheerioUrls":0,"playwrightUrls":1}[39m

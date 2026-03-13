@@ -28,7 +28,7 @@ export type CrawlerType = 'cheerio' | 'playwright';
  * Maps each platform to its crawler type.
  */
 export const PLATFORM_CRAWLER_MAP: Record<Platform, CrawlerType> = {
-    tiktok: 'cheerio',
+    tiktok: 'playwright',
     youtube: 'cheerio',
     reddit: 'cheerio',
     google_maps: 'playwright',

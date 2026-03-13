@@ -1,0 +1,16 @@
+
+> crawlee-social-scraper@0.1.0 start
+> node --env-file=.env dist/main.js
+
+[32mINFO[39m  System info[90m {"apifyVersion":"3.2.6","apifyClientVersion":"2.22.2","crawleeVersion":"3.16.0","osType":"Windows_NT","nodeVersion":"v22.17.0"}[39m
+[32mINFO[39m  Actor started[90m {"platforms":["tiktok"],"urlCount":1,"maxConcurrency":1}[39m
+[32mINFO[39m  Using Apify proxy[90m {"groups":["RESIDENTIAL"]}[39m
+[32mINFO[39m  Running PlaywrightCrawler for 1 URLs
+[32mINFO[39m [33m PlaywrightCrawler:[39m Starting the crawler.
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@mrbeast"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@mrbeast
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@mrbeast","platform":"tiktok"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m All requests from the queue have been processed, the crawler will shut down.
+[32mINFO[39m [33m PlaywrightCrawler:[39m Final request statistics:[90m {"requestsFinished":1,"requestsFailed":0,"retryHistogram":[1],"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":26100,"requestsFinishedPerMinute":2,"requestsFailedPerMinute":0,"requestTotalDurationMillis":26100,"requestsTotal":1,"crawlerRuntimeMillis":27357}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m Finished! Total 1 requests: 1 succeeded, 0 failed.[90m {"terminal":true}[39m
+[32mINFO[39m  Actor finished[90m {"cheerioUrls":0,"playwrightUrls":1}[39m

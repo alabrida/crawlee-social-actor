@@ -1,0 +1,47 @@
+{
+  "project": "crawlee-social-actor",
+  "version": "0.1.0",
+  "status": "DEVELOPMENT",
+  "platforms": {
+    "tiktok": {
+      "phase": "shipped",
+      "handlerType": "playwright",
+      "completionPercentage": 100
+    },
+    "instagram": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "youtube": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "twitter": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "facebook": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "linkedin": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "pinterest": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    },
+    "snapchat": {
+      "phase": "TODO",
+      "handlerType": null,
+      "completionPercentage": 0
+    }
+  }
+}

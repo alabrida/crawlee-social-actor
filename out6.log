@@ -1,0 +1,81 @@
+
+> crawlee-social-scraper@0.1.0 start
+> node --env-file=.env dist/main.js
+
+[32mINFO[39m  System info[90m {"apifyVersion":"3.2.6","apifyClientVersion":"2.22.2","crawleeVersion":"3.16.0","osType":"Windows_NT","nodeVersion":"v22.17.0"}[39m
+[32mINFO[39m  Actor started[90m {"platforms":["tiktok"],"urlCount":16,"maxConcurrency":5}[39m
+[32mINFO[39m  Using Apify proxy[90m {"groups":["RESIDENTIAL"]}[39m
+[32mINFO[39m  Running PlaywrightCrawler for 16 URLs
+[32mINFO[39m [33m PlaywrightCrawler:[39m Starting the crawler.
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@charlidamelio"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@charlidamelio
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@tiktok"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@tiktok
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@charlidamelio","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@charlidamelio","platform":"tiktok"}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@tiktok","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@tiktok","platform":"tiktok"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:Statistics:[39m PlaywrightCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":41077,"requestsFinishedPerMinute":2,"requestsFailedPerMinute":0,"requestTotalDurationMillis":82153,"requestsTotal":2,"crawlerRuntimeMillis":60204,"retryHistogram":[2]}[39m
+[32mINFO[39m [33m PlaywrightCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":3,"desiredConcurrency":3,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@khaby.lame"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@khaby.lame
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@therock"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@therock
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@khaby.lame","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@khaby.lame","platform":"tiktok"}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@therock","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@therock","platform":"tiktok"}[39m
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@addisonre"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@addisonre
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@addisonre","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@addisonre","platform":"tiktok"}[39m
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@willsmith"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@willsmith
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@cznburak"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@cznburak
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@willsmith","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@willsmith","platform":"tiktok"}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@cznburak","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@cznburak","platform":"tiktok"}[39m
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@kyliejenner"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@kyliejenner
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@justinbieber"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@justinbieber
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@kyliejenner","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@kyliejenner","platform":"tiktok"}[39m
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@jasonderulo"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@jasonderulo
+[32mINFO[39m [33m PlaywrightCrawler:Statistics:[39m PlaywrightCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":33483,"requestsFinishedPerMinute":4,"requestsFailedPerMinute":0,"requestTotalDurationMillis":267860,"requestsTotal":8,"crawlerRuntimeMillis":120207,"retryHistogram":[8]}[39m
+[32mINFO[39m [33m PlaywrightCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":3,"desiredConcurrency":3,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@justinbieber","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@justinbieber","platform":"tiktok"}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@jasonderulo","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@jasonderulo","platform":"tiktok"}[39m
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@billieeilish"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@billieeilish
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@selenagomez"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@selenagomez
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@lizzza"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@lizzza
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@billieeilish","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@billieeilish","platform":"tiktok"}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@selenagomez","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@selenagomez","platform":"tiktok"}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@lizzza","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@lizzza","platform":"tiktok"}[39m
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@bellapoarch"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@bellapoarch
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@arianagrande"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@arianagrande
+[32mINFO[39m  Playwright handler: tiktok[90m {"url":"https://www.tiktok.com/@mrbeast"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m [TikTok] Extracting data from: https://www.tiktok.com/@mrbeast
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@bellapoarch","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@bellapoarch","platform":"tiktok"}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@arianagrande","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@arianagrande","platform":"tiktok"}[39m
+[33mWARN[39m  Data validation failed[90m {"url":"https://www.tiktok.com/@mrbeast","platform":"tiktok"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.tiktok.com/@mrbeast","platform":"tiktok"}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m All requests from the queue have been processed, the crawler will shut down.
+[32mINFO[39m [33m PlaywrightCrawler:[39m Final request statistics:[90m {"requestsFinished":16,"requestsFailed":0,"retryHistogram":[16],"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":29659,"requestsFinishedPerMinute":5,"requestsFailedPerMinute":0,"requestTotalDurationMillis":474544,"requestsTotal":16,"crawlerRuntimeMillis":176144}[39m
+[32mINFO[39m [33m PlaywrightCrawler:[39m Finished! Total 16 requests: 16 succeeded, 0 failed.[90m {"terminal":true}[39m
+[32mINFO[39m  Actor finished[90m {"cheerioUrls":0,"playwrightUrls":16}[39m

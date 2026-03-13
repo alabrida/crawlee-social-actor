@@ -23,4 +23,9 @@ Each entry follows this structure:
 
 ## Entries
 
-*No value has been delivered yet. The first entry will be written when Sprint 1 kicks off.*
+### Sprint 1 — TikTok, YouTube
+- **Value Increment:** Sprint 1 — TikTok and YouTube data extraction
+- **Status:** In Progress
+- **Delivered At:** N/A
+- **Evidence:** N/A
+- **Co-signed By:** N/A
