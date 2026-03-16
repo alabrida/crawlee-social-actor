@@ -88,8 +88,9 @@ export async function handle(
                 ctas.push('Local Pack Present');
             }
         }
-    } catch (e: any) {
-        log.warning(`[SEO-SERP] Playwright navigation failed: ${e.message}`);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log.warning(`[SEO-SERP] Playwright navigation failed: ${msg}`);
     }
 
     const scrapedItem: ScrapedItem = {
