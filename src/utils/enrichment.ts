@@ -23,9 +23,10 @@ export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
 
     // 1. Numeric Enrichment (Math-Steward)
     const enrichedData: any = { ...data };
+    const revIndicators = revenueIndicators as any;
     
-    if (revenueIndicators.conversionMarkers) {
-        revenueIndicators.conversionMarkers.forEach(marker => {
+    if (revIndicators && revIndicators.conversionMarkers) {
+        revIndicators.conversionMarkers.forEach((marker: string) => {
             if (marker.includes('Followers Raw:')) {
                 enrichedData.followerCount = parseNumericCount(marker.split(':')[1]);
             }
@@ -46,8 +47,8 @@ export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
     }
 
     // 2. Link Enrichment (Link-Strategist) - Gated for non-public modes
-    if (FEATURES.deepLinkAudit() && revenueIndicators.links && revenueIndicators.links.length > 0) {
-        const primaryLink = revenueIndicators.links[0];
+    if (FEATURES.deepLinkAudit() && revIndicators && revIndicators.links && revIndicators.links.length > 0) {
+        const primaryLink = revIndicators.links[0];
         const audit = await auditLink(primaryLink);
         enrichedData.linkAudit = audit;
         

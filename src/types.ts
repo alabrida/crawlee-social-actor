@@ -13,11 +13,15 @@ export type Platform =
     | 'youtube'
     | 'linkedin'
     | 'google_maps'
+    | 'google_business_profile'
     | 'pinterest'
     | 'reddit'
     | 'facebook'
     | 'instagram'
-    | 'general';
+    | 'twitter'
+    | 'seo_serp'
+    | 'general'
+    | 'general_hub';
 
 /**
  * Crawler type used for extraction.
@@ -32,11 +36,15 @@ export const PLATFORM_CRAWLER_MAP: Record<Platform, CrawlerType> = {
     youtube: 'cheerio',
     reddit: 'cheerio',
     google_maps: 'playwright',
+    google_business_profile: 'playwright',
     pinterest: 'playwright',
     linkedin: 'playwright',
     facebook: 'playwright',
     instagram: 'playwright',
+    twitter: 'playwright',
+    seo_serp: 'playwright',
     general: 'playwright',
+    general_hub: 'playwright',
 };
 
 /**
@@ -95,6 +103,14 @@ export interface ActorInput {
     linkedinDailyLimit: number;
     /** Google Maps grid config. */
     googleMapsGrid: GoogleMapsGridConfig;
+    /** Business domain used for Consultant phase. */
+    businessUrl?: string;
+    /** Business brand name used for Consultant phase. */
+    brandName?: string;
+    /** Consultant email for orchestration tracking. */
+    consultantEmail?: string;
+    /** Whether to trigger the interactive session vault setup */
+    interactiveSessionSetup?: boolean;
 }
 
 /**

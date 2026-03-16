@@ -15,7 +15,9 @@ import { getRandomUserAgent } from './utils/ua-rotation.js';
 import { buildCheerioRouter, buildPlaywrightRouter } from './routes.js';
 import { getBlankAssessmentRow } from './utils/schema-mapper.js';
 import { upsertAssessment } from './utils/supabase.js';
-import { FEATURES } from './utils/mode-gate.js';
+import { FEATURES, getSiloName } from './utils/mode-gate.js';
+import { runInteractiveSessionSetup } from './utils/interactive-setup.js';
+import { checkSessionHealth, getPlatformCookies } from './utils/session-vault.js';
 import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
 import { PLATFORM_CRAWLER_MAP } from './types.js';
 
@@ -35,6 +37,38 @@ async function main(): Promise<void> {
     const handlerContext: HandlerContext = { input };
     const proxyConfiguration = await createProxyConfig(input.proxy);
 
+    // Evaluate session health before scraping starts
+    const sessionHealth = await checkSessionHealth();
+    log.info('Session Vault Health Check:', sessionHealth);
+
+    // Check if any configured platforms for scraping have missing/expired session vaults
+    const requiredAuthPlatforms = ['linkedin', 'facebook', 'instagram', 'twitter'];
+    const activeAuthPlatforms = input.platforms.filter((p) => requiredAuthPlatforms.includes(p));
+
+    const platformsNeedingAuth: Platform[] = [];
+
+    // Evaluate explicitly if the vault is healthy for required platforms
+    for (const p of activeAuthPlatforms) {
+        if (!sessionHealth[p] || sessionHealth[p].status !== 'active') {
+            log.warning(`Platform ${p} requires an active session but none was found or it expired.`);
+            platformsNeedingAuth.push(p);
+        }
+    }
+
+    // --- INTERACTIVE SESSION SETUP (Auto-Trigger) ---
+    // If any requested platform is missing valid cookies, we pause the main
+    // scraping run to automatically invoke the interactive Live View setup.
+    // Once complete, the actor seamlessly continues scraping.
+    if (platformsNeedingAuth.length > 0) {
+        log.info(`Triggering Interactive Session Setup for missing/expired platforms: ${platformsNeedingAuth.join(', ')}`);
+        log.info('Please connect via Live View to authenticate.');
+        await runInteractiveSessionSetup(platformsNeedingAuth);
+
+        // Re-evaluate session health after interactive setup
+        const updatedHealth = await checkSessionHealth();
+        log.info('Updated Session Vault Health Check:', updatedHealth);
+    }
+
     // --- PHASE 2: Discovery Logic (Consultant Workflow) ---
     // Use input.urls if provided, otherwise prepare for hub discovery
     const finalUrls: UrlEntry[] = input.urls || [];
@@ -42,7 +76,7 @@ async function main(): Promise<void> {
         finalUrls.push({ platform: 'general_hub', url: input.businessUrl });
     }
 
-    log.info(`Actor started in mode: ${FEATURES.getSiloName()}`, {
+    log.info(`Actor started in mode: ${getSiloName()}`, {
         platforms: input.platforms,
         urlCount: finalUrls.length,
         maxConcurrency: input.maxConcurrency,
@@ -210,28 +244,35 @@ async function main(): Promise<void> {
                 }
                 
                 const platform = request.userData.platform as Platform;
-                if (input.authTokens && (input.authTokens as any)[platform]) {
-                    const tokenString = (input.authTokens as any)[platform];
-                    const urlObj = new URL(request.url);
-                    const domain = '.' + urlObj.hostname.replace('www.', '');
-                    
-                    const cookies = tokenString.split(';')
-                        .map((c: string) => c.trim())
-                        .filter((c: string) => c)
-                        .map((c: string) => {
-                            const [name, ...rest] = c.split('=');
-                            return {
-                                name,
-                                value: rest.join('='),
-                                domain,
-                                path: '/'
-                            };
-                        });
-                    
-                    if (cookies.length > 0) {
-                        log.info(`Injecting ${cookies.length} auth cookies for ${platform}`);
-                        await page.context().addCookies(cookies);
+
+                // Primary Auth: Retrieve cookies from the Apify KVS Session Vault
+                let cookies = await getPlatformCookies(platform);
+
+                // Fallback Auth: Retrieve cookies from legacy `input.authTokens` mapping
+                if (!cookies || cookies.length === 0) {
+                    if (input.authTokens && (input.authTokens as any)[platform]) {
+                        const tokenString = (input.authTokens as any)[platform];
+                        const urlObj = new URL(request.url);
+                        const domain = '.' + urlObj.hostname.replace('www.', '');
+
+                        cookies = tokenString.split(';')
+                            .map((c: string) => c.trim())
+                            .filter((c: string) => c)
+                            .map((c: string) => {
+                                const [name, ...rest] = c.split('=');
+                                return {
+                                    name,
+                                    value: rest.join('='),
+                                    domain,
+                                    path: '/'
+                                };
+                            });
                     }
+                }
+
+                if (cookies && cookies.length > 0) {
+                    log.info(`Injecting ${cookies.length} auth cookies for ${platform}`);
+                    await page.context().addCookies(cookies);
                 }
             },
         ],
