@@ -16,6 +16,7 @@ import { buildCheerioRouter, buildPlaywrightRouter } from './routes.js';
 import { getBlankAssessmentRow } from './utils/schema-mapper.js';
 import { upsertAssessment } from './utils/supabase.js';
 import { FEATURES } from './utils/mode-gate.js';
+import { SessionVault } from './utils/session-vault.js';
 import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
 import { PLATFORM_CRAWLER_MAP } from './types.js';
 
@@ -30,6 +31,33 @@ async function main(): Promise<void> {
     const input = await Actor.getInput<ActorInput>();
     if (!input) {
         throw new Error('Actor input is required.');
+    }
+
+    // --- SESSION VAULT: Manage Authentication & Refresh Logic ---
+    const sessionVault = new SessionVault();
+    await sessionVault.initialize();
+
+    // Check if the vault requires a hard refresh, or if interactive setup is requested
+    const needsRefresh = sessionVault.needsRefresh();
+    if (needsRefresh) {
+        log.warning('Session Vault is approaching or past the 20-day limit. Hard refresh recommended.');
+    }
+
+    if (input.interactiveSessionSetup) {
+        log.info('Interactive Session Setup is requested. Launching Apify Live View flow...');
+        await sessionVault.runInteractiveSetup(input.proxy);
+        log.info('Interactive setup complete. Sessions saved to vault.');
+        // Optionally exit here if this run was just to populate the vault
+        // await Actor.exit();
+    }
+
+    // Inject vault tokens into input.authTokens if not provided via input
+    if (!input.authTokens) {
+        const vaultTokens = await sessionVault.getTokens();
+        if (vaultTokens) {
+             input.authTokens = vaultTokens;
+             log.info('Loaded auth tokens from Session Vault.');
+        }
     }
 
     const handlerContext: HandlerContext = { input };
@@ -262,6 +290,9 @@ async function main(): Promise<void> {
     const masterItem = getBlankAssessmentRow();
     
     // Fill basic orchestration meta from new Consultant UI
+    const runId = Actor.getEnv().actorRunId || Date.now().toString();
+    masterItem.lead_uuid = input.businessUrl ? createHash('md5').update(input.businessUrl).digest('hex') : createHash('md5').update(`unknown-lead-${runId}`).digest('hex');
+    masterItem.dedupe_key = masterItem.lead_uuid + '-' + new Date().toISOString().split('T')[0];
     masterItem.assessment_date = new Date().toISOString();
     masterItem.total_platforms_submitted = finalUrls.length;
     masterItem.platforms_list = finalUrls.map(u => u.platform);

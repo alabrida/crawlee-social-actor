@@ -70,6 +70,12 @@
             },
             "editor": "json"
         },
+        "interactiveSessionSetup": {
+            "title": "Interactive Session Setup",
+            "description": "If enabled, launches Apify Live View to allow manual login to platforms and saves the cookies to the 20-day Vault.",
+            "type": "boolean",
+            "default": false
+        },
         "maxConcurrency": {
             "title": "Max Concurrency",
             "type": "integer",
