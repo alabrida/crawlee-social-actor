@@ -19,8 +19,6 @@ export async function handle(
 
     log.info(`[Pinterest] Extracting: ${request.url}`);
 
-    const apiResponses: any[] = [];
-
     await page.goto(request.url, { waitUntil: 'domcontentloaded' });
 
     // Extract the embedded JSON data from the script tag

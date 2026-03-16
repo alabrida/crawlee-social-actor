@@ -17,7 +17,7 @@ import { log } from './logger.js';
  */
 export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
     const { platform, data } = item;
-    const { revenueIndicators } = data;
+    const { revenueIndicators } = data as any;
 
     log.info(`[Enrichment] Processing ${platform}: ${item.url}`);
 
@@ -25,7 +25,7 @@ export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
     const enrichedData: any = { ...data };
     
     if (revenueIndicators.conversionMarkers) {
-        revenueIndicators.conversionMarkers.forEach(marker => {
+        (revenueIndicators.conversionMarkers as string[]).forEach((marker: string) => {
             if (marker.includes('Followers Raw:')) {
                 enrichedData.followerCount = parseNumericCount(marker.split(':')[1]);
             }
@@ -33,7 +33,7 @@ export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
                 enrichedData.followingCount = parseNumericCount(marker.split(':')[1]);
             }
             // Google Business Profile (GBP) High-Res Mapping
-            if (platform === 'google_maps' || platform === 'google_business_profile') {
+            if (platform === ('google_maps' as any) || platform === ('google_business_profile' as any)) {
                 if (marker.includes('Title:')) enrichedData.gbpBusinessName = marker.split('Title:')[1].trim();
                 if (marker.includes('Category:')) enrichedData.gbpCategory = marker.split('Category:')[1].trim();
                 if (marker.includes('Rating:')) enrichedData.gbpRating = parseFloat(marker.split('Rating:')[1].trim());

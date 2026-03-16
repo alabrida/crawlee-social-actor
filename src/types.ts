@@ -17,6 +17,10 @@ export type Platform =
     | 'reddit'
     | 'facebook'
     | 'instagram'
+    | 'twitter'
+    | 'google_business_profile'
+    | 'seo_serp'
+    | 'general_hub'
     | 'general';
 
 /**
@@ -36,6 +40,10 @@ export const PLATFORM_CRAWLER_MAP: Record<Platform, CrawlerType> = {
     linkedin: 'playwright',
     facebook: 'playwright',
     instagram: 'playwright',
+    twitter: 'playwright',
+    google_business_profile: 'playwright',
+    seo_serp: 'playwright',
+    general_hub: 'playwright',
     general: 'playwright',
 };
 
@@ -79,6 +87,18 @@ export interface ActorInput {
     platforms: Platform[];
     /** Target URLs to scrape. */
     urls: UrlEntry[];
+    /** Single business URL for discovery. */
+    businessUrl?: string;
+    /** Brand name/Business title. */
+    brandName?: string;
+    /** Email of the consultant triggering the run. */
+    consultantEmail?: string;
+    /** Workflow status (draft/final). */
+    workflowStatus?: string;
+    /** Supabase URL for direct upsert. */
+    supabaseUrl?: string;
+    /** Supabase Service Role Key. */
+    supabaseServiceKey?: string;
     /** Proxy configuration. */
     proxy: ProxyConfig;
     /** Authentication tokens/cookies. */
@@ -86,12 +106,13 @@ export interface ActorInput {
         linkedin?: string;
         facebook?: string;
         instagram?: string;
+        twitter?: string;
     };
     /** Maximum concurrent requests. */
     maxConcurrency: number;
     /** Maximum retries per failed request. */
     maxRequestRetries: number;
-    /** LinkedIn daily profile cap (G-BOT-01: max 250). */
+    /** LinkedIn daily profile cap. */
     linkedinDailyLimit: number;
     /** Google Maps grid config. */
     googleMapsGrid: GoogleMapsGridConfig;

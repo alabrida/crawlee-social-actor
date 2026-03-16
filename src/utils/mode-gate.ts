@@ -36,6 +36,9 @@ export const FEATURES = {
     
     /** Whether to allow Tier Gating (SaaS mode). */
     tierGating: () => getActorMode() === 'SAAS',
+
+    /** Returns the human-readable silo name. */
+    getSiloName: () => getSiloName(),
 };
 
 /**
