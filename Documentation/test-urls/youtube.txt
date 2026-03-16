@@ -9,6 +9,10 @@ https://www.youtube.com/@PewDiePie
 https://www.youtube.com/@TEDx
 
 # HARDEN phase (add more diverse URLs below)
-# https://www.youtube.com/@veritasium
-# https://www.youtube.com/@mkbhd
-# https://www.youtube.com/watch?v=dQw4w9WgXcQ
+https://www.youtube.com/@veritasium
+https://www.youtube.com/@mkbhd
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
+https://www.youtube.com/@LinusTechTips
+https://www.youtube.com/@MarquesBrownlee
+https://www.youtube.com/@Vsauce
+https://www.youtube.com/watch?v=jNQXAC9IVRw

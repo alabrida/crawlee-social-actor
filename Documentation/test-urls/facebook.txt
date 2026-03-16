@@ -1,0 +1,12 @@
+# Facebook profile URLs for testing
+# Used by Anti-Bot Agent during RED (3 URLs) and HARDEN (10-20 URLs)
+
+# RED phase (minimum 3)
+https://www.facebook.com/Nike/
+https://www.facebook.com/Starbucks/
+https://www.facebook.com/Zuck/
+
+# HARDEN phase (add more diverse URLs below)
+https://www.facebook.com/TheLegoGroup/
+https://www.facebook.com/GoPro/
+https://www.facebook.com/RedBull/

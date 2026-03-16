@@ -20,65 +20,42 @@ async function handle(
 
     log.info(`[TikTok] Extracting data from: ${url}`);
 
-    // Wait for either the profile content to load, or the fallback DOM, or a captcha
-    await page.waitForTimeout(5000); // Give it some time to settle
+    // Wait for the profile content to load
+    await page.waitForTimeout(5000); 
 
-    // Extract visible text and links
-    const bioText = await page.evaluate(() => {
-        const h2 = document.querySelector('h2[data-e2e="user-bio"]');
-        return h2 ? h2.textContent || '' : '';
-    });
+    const extractedData = await page.evaluate(() => {
+        const bioEl = document.querySelector('[data-e2e="user-bio"]');
+        const linkEl = document.querySelector('a[data-e2e="user-link"]');
+        const followersEl = document.querySelector('[data-e2e="followers-count"]');
+        const followingEl = document.querySelector('[data-e2e="following-count"]');
+        const likesEl = document.querySelector('[data-e2e="likes-count"]');
 
-    const externalLink = await page.evaluate(() => {
-        const a = document.querySelector('a[data-e2e="user-link"]');
-        return a ? a.getAttribute('href') || a.textContent || null : null;
-    });
-
-    const profileHtml = await page.evaluate(() => {
-        // Try the modern e2e selector first
-        const section = document.querySelector('div[data-e2e="user-profile-section"]');
-        if (section && section.parentElement) return section.parentElement.innerHTML;
-        
-        // Try the container often used for the whole profile block
-        const container = document.querySelector('div[class*="DivShareLayoutMain"]');
-        if (container) return container.innerHTML;
-
-        // Fallback to the main tag
-        const main = document.querySelector('main');
-        if (main) return `<div class="tiktok-fallback-profile-wrapper">${main.innerHTML}</div>`;
-
-        return ''; // Returning empty string satisfies string schema, rather than the string "null"
+        return {
+            bio: bioEl?.textContent?.trim() || '',
+            externalLink: linkEl?.getAttribute('href') || linkEl?.textContent?.trim() || '',
+            followers: followersEl?.textContent?.trim() || '',
+            following: followingEl?.textContent?.trim() || '',
+            likes: likesEl?.textContent?.trim() || '',
+            isVerified: !!document.querySelector('[data-e2e="verify-icon"]'),
+            profileHtml: document.querySelector('div[data-e2e="user-profile-section"]')?.innerHTML || 
+                         document.querySelector('main')?.innerHTML || ''
+        };
     });
 
     const ctas: string[] = [];
-    if (externalLink) {
+    if (extractedData.externalLink) {
         ctas.push('Link in Bio');
     }
 
     const conversionMarkers: string[] = [];
-    if (bioText.toLowerCase().includes('shop')) conversionMarkers.push('Shop');
-    if (bioText.toLowerCase().includes('book')) conversionMarkers.push('Booking');
-
-    // Attempt to scrape SIGI_STATE from browser memory if possible, as a bonus
-    const sigiLinks = await page.evaluate(() => {
-        try {
-            const state = (window as any)['SIGI_STATE'];
-            if (state && state.UserModule && state.UserModule.users) {
-                const users = state.UserModule.users;
-                const firstKey = Object.keys(users)[0];
-                const link = users[firstKey]?.bioLink?.link;
-                return link ? [link] : [];
-            }
-        } catch (e) {
-            // ignore
-        }
-        return [];
-    });
-
-    const finalLinks = externalLink ? [externalLink] : [];
-    for (const link of sigiLinks) {
-        if (!finalLinks.includes(link)) finalLinks.push(link);
-    }
+    if (extractedData.bio.toLowerCase().includes('shop')) conversionMarkers.push('Shop');
+    if (extractedData.bio.toLowerCase().includes('book')) conversionMarkers.push('Booking');
+    
+    // Add Raw signals for Math Agent
+    if (extractedData.followers) conversionMarkers.push(`Followers Raw: ${extractedData.followers}`);
+    if (extractedData.following) conversionMarkers.push(`Following Raw: ${extractedData.following}`);
+    if (extractedData.likes) conversionMarkers.push(`Likes Raw: ${extractedData.likes}`);
+    if (extractedData.isVerified) conversionMarkers.push('Status: Verified');
 
     const scrapedItem: ScrapedItem = {
         platform: 'tiktok',
@@ -88,17 +65,14 @@ async function handle(
         data: {
             revenueIndicators: {
                 ctas,
-                links: finalLinks,
+                links: extractedData.externalLink ? [extractedData.externalLink] : [],
                 conversionMarkers,
             },
-            profileHtml: profileHtml
+            profileHtml: extractedData.profileHtml,
+            screenshotUrl: '',
         },
         errors: []
     };
-
-    if (finalLinks.length === 0 && bioText === '') {
-        log.warning(`[TikTok] Playwright extraction yielded empty strings on ${url}.`);
-    }
 
     return [scrapedItem];
 }
@@ -111,6 +85,7 @@ function validate(data: Record<string, unknown>): boolean {
     if (!payload || typeof payload !== 'object') return false;
     if (!payload.revenueIndicators || !Array.isArray(payload.revenueIndicators.links)) return false;
     if (typeof payload.profileHtml !== 'string') return false;
+    if (typeof payload.screenshotUrl !== 'string') return false;
     return true;
 }
 

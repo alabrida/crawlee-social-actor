@@ -1,105 +1,81 @@
 {
-  "title": "Social Media & Business Listing Scraper",
-  "description": "Configure which platforms to scrape, provide target URLs, and set proxy/concurrency options.",
-  "type": "object",
-  "schemaVersion": 1,
-  "properties": {
-    "platforms": {
-      "title": "Platforms",
-      "description": "List of platform identifiers to enable for this run.",
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": ["tiktok", "youtube", "linkedin", "google_maps", "pinterest", "reddit", "facebook", "instagram", "general"]
-      },
-      "default": ["tiktok", "youtube"],
-      "editor": "select"
-    },
-    "urls": {
-      "title": "Target URLs",
-      "description": "Array of objects specifying the platform and URL to scrape.",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["platform", "url"],
-        "properties": {
-          "platform": {
+    "title": "Revenue Journey: Consultant Audit Tool",
+    "description": "High-resolution digital presence auditor. Performs 11-platform scrape, deep-link forensics, and direct Supabase upsert.",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "businessUrl": {
+            "title": "Business Hub URL",
+            "description": "The primary website of the business (e.g., https://apify.com).",
             "type": "string",
-            "description": "Platform identifier matching one of the enabled platforms."
-          },
-          "url": {
+            "editor": "textfield",
+            "prefill": "https://"
+        },
+        "brandName": {
+            "title": "Brand Name",
+            "description": "Used for SEO ranking and cross-platform consistency checks.",
             "type": "string",
-            "description": "Full URL to scrape."
-          }
-        }
-      },
-      "editor": "json"
-    },
-    "proxy": {
-      "title": "Proxy Configuration",
-      "description": "Proxy settings for the actor.",
-      "type": "object",
-      "properties": {
-        "useApifyProxy": {
-          "type": "boolean",
-          "title": "Use Apify Proxy",
-          "default": true
+            "editor": "textfield"
         },
-        "apifyProxyGroups": {
-          "type": "array",
-          "title": "Proxy Groups",
-          "items": { "type": "string" },
-          "default": ["RESIDENTIAL"]
+        "targetKeywords": {
+            "title": "SEO Target Keywords",
+            "description": "Keywords to check organic SERP ranking for (comma-separated).",
+            "type": "array",
+            "items": { "type": "string" },
+            "editor": "string-list"
         },
-        "proxyUrls": {
-          "type": "array",
-          "title": "Third-Party Proxy URLs",
-          "description": "Optional list of third-party proxy URLs. Used when useApifyProxy is false.",
-          "items": { "type": "string" }
-        }
-      },
-      "editor": "json"
-    },
-    "maxConcurrency": {
-      "title": "Max Concurrency",
-      "description": "Maximum number of concurrent requests.",
-      "type": "integer",
-      "default": 5,
-      "minimum": 1,
-      "maximum": 20
-    },
-    "maxRequestRetries": {
-      "title": "Max Request Retries",
-      "description": "How many times to retry a failed request.",
-      "type": "integer",
-      "default": 3,
-      "minimum": 0,
-      "maximum": 10
-    },
-    "linkedinDailyLimit": {
-      "title": "LinkedIn Daily Limit",
-      "description": "Maximum LinkedIn profiles to scrape per day (G-BOT-01 hard cap: 250).",
-      "type": "integer",
-      "default": 250,
-      "maximum": 250
-    },
-    "googleMapsGrid": {
-      "title": "Google Maps Grid",
-      "description": "Geographic grid configuration for Google Maps scraping.",
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": true
+        "consultantEmail": {
+            "title": "Consultant Email",
+            "description": "Your email for tracking the audit source in the dashboard.",
+            "type": "string",
+            "format": "email",
+            "editor": "textfield"
         },
-        "cellSizeKm": {
-          "type": "number",
-          "default": 5,
-          "minimum": 1
+        "workflowStatus": {
+            "title": "Audit Workflow Status",
+            "description": "Initial status of the record in your Supabase dashboard.",
+            "type": "string",
+            "enum": ["draft", "pending_review", "final"],
+            "default": "draft",
+            "editor": "select"
+        },
+        "urls": {
+            "title": "Social Profile Overrides (Optional)",
+            "description": "If left blank, the crawler will attempt to discover these from the Business Hub.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["platform", "url"],
+                "properties": {
+                    "platform": {
+                        "type": "string",
+                        "enum": ["tiktok", "youtube", "linkedin", "google_maps", "pinterest", "reddit", "facebook", "instagram", "twitter"]
+                    },
+                    "url": {
+                        "type": "string"
+                    }
+                }
+            },
+            "editor": "json"
+        },
+        "authTokens": {
+            "title": "Session Vault Overrides",
+            "description": "Active session cookies for authenticated platforms. Leave blank to use the Vault.",
+            "type": "object",
+            "properties": {
+                "linkedin": { "type": "string" },
+                "facebook": { "type": "string" },
+                "instagram": { "type": "string" },
+                "twitter": { "type": "string" }
+            },
+            "editor": "json"
+        },
+        "maxConcurrency": {
+            "title": "Max Concurrency",
+            "type": "integer",
+            "default": 2,
+            "maximum": 5
         }
-      },
-      "editor": "json"
-    }
-  },
-  "required": ["urls"]
+    },
+    "required": ["businessUrl", "brandName"]
 }

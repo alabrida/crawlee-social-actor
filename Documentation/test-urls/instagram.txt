@@ -1,0 +1,12 @@
+# Instagram profile URLs for testing
+# Used by Anti-Bot Agent during RED (3 URLs) and HARDEN (10-20 URLs)
+
+# RED phase (minimum 3)
+https://www.instagram.com/nike/
+https://www.instagram.com/therock/
+https://www.instagram.com/cristiano/
+
+# HARDEN phase (add more diverse URLs below)
+https://www.instagram.com/nasa/
+https://www.instagram.com/natgeo/
+https://www.instagram.com/zuck/

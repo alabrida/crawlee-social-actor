@@ -1,0 +1,16 @@
+# Pinterest profile URLs for testing
+# Used by Anti-Bot Agent during RED (3 URLs) and HARDEN (10-20 URLs)
+
+# RED phase (minimum 3)
+https://www.pinterest.com/nike/
+https://www.pinterest.com/joyfoodsunshine/
+https://www.pinterest.com/ohjoy/
+
+# HARDEN phase (add more diverse URLs below)
+https://www.pinterest.com/adidas/
+https://www.pinterest.com/starbucks/
+https://www.pinterest.com/buzzfeedfood/
+https://www.pinterest.com/target/
+https://www.pinterest.com/hgtv/
+https://www.pinterest.com/wholefoods/
+https://www.pinterest.com/nonexistent_user_999/

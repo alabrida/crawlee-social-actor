@@ -7,7 +7,9 @@
 
 import { createCheerioRouter, createPlaywrightRouter } from 'crawlee';
 import { Actor } from 'apify';
+import { createHash } from 'crypto';
 import { log } from './utils/logger.js';
+import { enrichItem } from './utils/enrichment.js';
 import type {
     HandlerContext,
     CheerioHandler,
@@ -20,26 +22,28 @@ import type {
 // Uncomment each handler as it is shipped.
 // Sprint 1:
 import tiktokHandler from './handlers/tiktok.js';
-// import youtubeHandler from './handlers/youtube.js';
-// Sprint 2:
-// import redditHandler from './handlers/reddit.js';
-// Sprint 3:
-// import googleMapsHandler from './handlers/google-maps.js';
-// import pinterestHandler from './handlers/pinterest.js';
+import youtubeHandler from './handlers/youtube.js';
 // Sprint 4:
-// import linkedinHandler from './handlers/linkedin.js';
+import redditHandler from './handlers/reddit.js';
+// Sprint 3:
+import googleMapsHandler from './handlers/google-maps.js';
+import pinterestHandler from './handlers/pinterest.js';
+// Sprint 4:
+import linkedinHandler from './handlers/linkedin.js';
 // Sprint 5:
-// import metaHandler from './handlers/meta.js';
+import metaHandler from './handlers/meta.js';
+import twitterHandler from './handlers/twitter.js';
+import seoSerpHandler from './handlers/seo-serp.js';
 // Sprint 6:
-// import generalHandler from './handlers/general.js';
+import generalHandler from './handlers/general.js';
 
 /**
  * Registry of shipped CheerioCrawler handlers.
  * Handlers are added here after passing the SHIP gate.
  */
 const CHEERIO_HANDLERS: Record<string, CheerioHandler> = {
-    // youtube: youtubeHandler,
-    // reddit: redditHandler,
+    youtube: youtubeHandler,
+    reddit: redditHandler,
 };
 
 /**
@@ -48,12 +52,16 @@ const CHEERIO_HANDLERS: Record<string, CheerioHandler> = {
  */
 const PLAYWRIGHT_HANDLERS: Record<string, PlaywrightHandler> = {
     tiktok: tiktokHandler,
-    // google_maps: googleMapsHandler,
-    // pinterest: pinterestHandler,
-    // linkedin: linkedinHandler,
-    // facebook: metaHandler,
-    // instagram: metaHandler,
-    // general: generalHandler,
+    google_maps: googleMapsHandler,
+    google_business_profile: googleMapsHandler,
+    pinterest: pinterestHandler,
+    linkedin: linkedinHandler,
+    facebook: metaHandler,
+    instagram: metaHandler,
+    twitter: twitterHandler,
+    seo_serp: seoSerpHandler,
+    general: generalHandler,
+    general_hub: generalHandler,
 };
 
 /**
@@ -72,17 +80,26 @@ export function buildCheerioRouter(handlerContext: HandlerContext) {
 
             try {
                 const items: ScrapedItem[] = await handler.handle(context, handlerContext);
-                const dataset = await Actor.openDataset();
-
+                
                 for (const item of items) {
                     if (!handler.validate(item.data)) {
                         item.errors.push('Schema validation warning: unexpected data shape');
                         log.warning('Data validation failed', { platform, url: context.request.url });
                     }
-                    await dataset.pushData(item);
+                    
+                    // Phase 2: High-Res Enrichment
+                    const enrichedItem = await enrichItem(item);
+                    
+                    // Use originalUrl from userData for stable key instead of context.request.url
+                    // which might be rewritten (e.g. for Reddit .json)
+                    const targetKeyUrl = context.request.userData.originalUrl || context.request.url;
+                    const urlHash = createHash('md5').update(targetKeyUrl).digest('hex');
+                    const dataKey = `data_${urlHash}`;
+                    await Actor.setValue(dataKey, enrichedItem);
+                    log.info(`Saved Enriched Cheerio data to KVS: ${dataKey} for ${targetKeyUrl}`, { platform, url: context.request.url });
                 }
 
-                log.info(`Scraped ${items.length} items`, { platform, url: context.request.url });
+                log.info(`Scraped ${items.length} items (staged in KVS)`, { platform, url: context.request.url });
             } catch (error) {
                 const msg = error instanceof Error ? error.message : String(error);
                 log.error(`Handler failed: ${platform}`, { url: context.request.url, error: msg });
@@ -132,6 +149,27 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
 
             try {
                 const items: ScrapedItem[] = await handler.handle(context, handlerContext);
+                
+                // Capture screenshot for the native Playwright platform
+                let screenshotUrl = '';
+                try {
+                    const screenshotKey = `screenshot_${context.request.id}.png`;
+                    // Defensive screenshot - try fullPage but fallback to viewport if it hangs
+                    let screenshotBuffer;
+                    try {
+                        screenshotBuffer = await context.page.screenshot({ fullPage: true, timeout: 15000 });
+                    } catch (e) {
+                        log.warning(`Full-page screenshot failed for ${context.request.url}, capturing viewport instead.`);
+                        screenshotBuffer = await context.page.screenshot({ fullPage: false });
+                    }
+                    
+                    await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
+                    const storeId = Actor.getEnv().defaultKeyValueStoreId || 'default';
+                    screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
+                } catch (screenshotError: any) {
+                    log.error(`Failed to capture screenshot for ${context.request.url}: ${screenshotError.message}`);
+                }
+
                 const dataset = await Actor.openDataset();
 
                 for (const item of items) {
@@ -139,10 +177,19 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                         item.errors.push('Schema validation warning: unexpected data shape');
                         log.warning('Data validation failed', { platform, url: context.request.url });
                     }
-                    await dataset.pushData(item);
+                    
+                    // Attach the screenshot URL (could be empty if screenshot failed)
+                    item.data.screenshotUrl = screenshotUrl;
+                    if (!screenshotUrl) {
+                        item.errors.push('Mandatory screenshot failed to capture.');
+                    }
+
+                    // Phase 2: High-Res Enrichment
+                    const enrichedItem = await enrichItem(item);
+                    await dataset.pushData(enrichedItem);
                 }
 
-                log.info(`Scraped ${items.length} items`, { platform, url: context.request.url });
+                log.info(`Scraped ${items.length} items with screenshot and enrichment`, { platform, url: context.request.url });
             } catch (error) {
                 const msg = error instanceof Error ? error.message : String(error);
                 log.error(`Handler failed: ${platform}`, { url: context.request.url, error: msg });

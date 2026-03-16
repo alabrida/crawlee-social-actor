@@ -1,0 +1,118 @@
+﻿[32mINFO[39m  System info[90m {"apifyVersion":"3.2.6","apifyClientVersion":"2.22.2","crawleeVersion":"3.16.0","osType":"Windows_NT","nodeVersion":"v22.17.0"}[39m
+[32mINFO[39m  Actor started[90m {"platforms":["reddit"],"urlCount":12,"maxConcurrency":2}[39m
+[32mINFO[39m  Using Apify proxy[90m {"groups":["RESIDENTIAL"]}[39m
+node.exe : 
+[33mWARN[39m [33m P
+roxyConfiguration:[39
+m No proxy password 
+or token detected, 
+running without 
+proxy. To use Apify 
+Proxy locally, 
+provide 
+options.password or "A
+PIFY_PROXY_PASSWORD" 
+environment variable. 
+If you add the 
+"APIFY_TOKEN" 
+environment variable, 
+the password will be 
+automatically 
+inferred.
+At C:\Program Files\no
+dejs\npx.ps1:29 char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: ([33mWARN   
+ [39m ...cally inf    
+erred.:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+[33mWARN[39m [33m P
+roxyConfiguration:[39
+m Invalid password 
+provided: User not 
+found.
+[32mINFO[39m  Running CheerioCrawler for 12 URLs
+[32mINFO[39m [33m CheerioCrawler:[39m Starting the crawler.
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/user/spez/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/user/spez/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 0 links, 0 CTAs[90m {"url":"https://www.reddit.com/user/spez/about.json","kind":"t2"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/user/GallowBoob/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/user/GallowBoob/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 0 links, 0 CTAs[90m {"url":"https://www.reddit.com/user/GallowBoob/about.json","kind":"t2"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/user/spez/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/user/GallowBoob/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/user/shittymorph/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/user/shittymorph/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 0 links, 0 CTAs[90m {"url":"https://www.reddit.com/user/shittymorph/about.json","kind":"t2"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/user/shittymorph/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/user/thisuserdefinitelydoesnotexist99999/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/user/thisuserdefinitelydoesnotexist99999/about.json
+[31mERROR[39m 
+Handler failed: 
+reddit[90m {"url":"ht
+tps://www.reddit.com/u
+ser/thisuserdefinitely
+doesnotexist99999/abou
+t.json","error":"[Redd
+it] API error 404: 
+Not Found for https://
+www.reddit.com/user/th
+isuserdefinitelydoesno
+texist99999/about.json
+"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/user/Poem_for_your_sprog/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/user/Poem_for_your_sprog/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 0 links, 0 CTAs[90m {"url":"https://www.reddit.com/user/Poem_for_your_sprog/about.json","kind":"t2"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/user/Poem_for_your_sprog/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/r/technology/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/r/technology/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 20 links, 1 CTAs[90m {"url":"https://www.reddit.com/r/technology/about.json","kind":"t5"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/r/technology/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/r/entrepreneur/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/r/entrepreneur/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 1 links, 1 CTAs[90m {"url":"https://www.reddit.com/r/entrepreneur/about.json","kind":"t5"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/r/entrepreneur/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/r/SideProject/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/r/SideProject/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 7 links, 1 CTAs[90m {"url":"https://www.reddit.com/r/SideProject/about.json","kind":"t5"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/r/smallbusiness/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/r/smallbusiness/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 0 links, 0 CTAs[90m {"url":"https://www.reddit.com/r/smallbusiness/about.json","kind":"t5"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/r/SideProject/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/r/smallbusiness/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/r/Futurology/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/r/Futurology/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 29 links, 2 CTAs[90m {"url":"https://www.reddit.com/r/Futurology/about.json","kind":"t5"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/r/thissubredditdefinitelydoesnotexist99/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/r/thissubredditdefinitelydoesnotexist99/about.json
+[31mERROR[39m 
+Handler failed: 
+reddit[90m {"url":"ht
+tps://www.reddit.com/r
+/thissubredditdefinite
+lydoesnotexist99/about
+.json","error":"[Reddi
+t] API error 404: Not 
+Found for https://www.
+reddit.com/r/thissubre
+dditdefinitelydoesnote
+xist99/about.json"}[3
+9m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/r/Futurology/about.json","platform":"reddit"}[39m
+[32mINFO[39m  Cheerio handler: reddit[90m {"url":"https://www.reddit.com/r/AskReddit/about.json"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracting: https://www.reddit.com/r/AskReddit/about.json
+[32mINFO[39m [33m CheerioCrawler:[39m [Reddit] Extracted 1 links, 1 CTAs[90m {"url":"https://www.reddit.com/r/AskReddit/about.json","kind":"t5"}[39m
+[32mINFO[39m  Scraped 1 items[90m {"url":"https://www.reddit.com/r/AskReddit/about.json","platform":"reddit"}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m All requests from the queue have been processed, the crawler will shut down.
+[32mINFO[39m [33m CheerioCrawler:[39m Final request statistics:[90m {"requestsFinished":12,"requestsFailed":0,"retryHistogram":[12],"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":200,"requestsFinishedPerMinute":290,"requestsFailedPerMinute":0,"requestTotalDurationMillis":2403,"requestsTotal":12,"crawlerRuntimeMillis":2485}[39m
+[32mINFO[39m [33m CheerioCrawler:[39m Finished! Total 12 requests: 12 succeeded, 0 failed.[90m {"terminal":true}[39m
+[32mINFO[39m  Actor finished[90m {"cheerioUrls":12,"playwrightUrls":0}[39m

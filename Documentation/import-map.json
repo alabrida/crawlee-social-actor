@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-03-12T20:42:00Z",
+  "lastUpdated": "2026-03-14T10:00:00Z",
   "supabaseProjectId": "wraqaqyqqeswufbarhcz",
   "modules": {
     "src/main.ts": {
@@ -10,7 +10,8 @@
         "src/utils/resources.ts",
         "src/utils/ua-rotation.ts",
         "src/routes.ts",
-        "src/types.ts"
+        "src/types.ts",
+        "crypto"
       ],
       "consumers": []
     },
@@ -18,10 +19,10 @@
       "exports": ["buildCheerioRouter", "buildPlaywrightRouter", "getRegisteredPlatforms"],
       "imports": [
         "src/types.ts",
-        "src/utils/logger.ts"
+        "src/utils/logger.ts",
+        "crypto"
       ],
-      "consumers": ["src/main.ts"],
-      "note": "Handler imports are commented out until SHIP phase. Uncomment as each handler ships."
+      "consumers": ["src/main.ts"]
     },
     "src/types.ts": {
       "exports": [
@@ -42,7 +43,7 @@
       "exports": ["getSessionPool"],
       "imports": ["src/utils/logger.ts"],
       "consumers": [],
-      "note": "Available for handlers that need direct SessionPool access. Main.ts uses inline sessionPoolOptions."
+      "note": "Available for handlers that need direct SessionPool access."
     },
     "src/utils/proxy.ts": {
       "exports": ["createProxyConfig", "trackBandwidth", "getBandwidthUsage"],
@@ -52,7 +53,7 @@
     "src/utils/resources.ts": {
       "exports": ["blockResources"],
       "imports": ["src/utils/logger.ts"],
-      "consumers": ["src/main.ts"]
+      "consumers": ["src/main.ts", "src/handlers/*"]
     },
     "src/utils/ua-rotation.ts": {
       "exports": ["getRandomUserAgent", "getUserAgentList"],
@@ -67,37 +68,47 @@
     "src/handlers/youtube.ts": {
       "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts (when shipped)"]
+      "consumers": ["src/routes.ts"]
     },
     "src/handlers/reddit.ts": {
       "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts (when shipped)"]
+      "consumers": ["src/routes.ts"]
     },
     "src/handlers/google-maps.ts": {
-      "exports": ["default"],
-      "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts (when shipped)"]
+      "exports": ["default", "handle", "validate", "detectBlock"],
+      "imports": ["src/types.ts", "src/utils/resources.ts"],
+      "consumers": ["src/routes.ts"]
     },
     "src/handlers/pinterest.ts": {
       "exports": ["default"],
-      "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts (when shipped)"]
+      "imports": ["src/types.ts", "src/utils/resources.ts"],
+      "consumers": ["src/routes.ts"]
     },
     "src/handlers/linkedin.ts": {
       "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts (when shipped)"]
+      "consumers": ["src/routes.ts"]
     },
     "src/handlers/meta.ts": {
-      "exports": ["default"],
-      "imports": ["src/types.ts"],
+      "exports": ["default", "handle", "validate", "detectBlock"],
+      "imports": ["src/types.ts", "src/utils/resources.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/twitter.ts": {
+      "exports": ["default", "handle", "validate", "detectBlock"],
+      "imports": ["src/types.ts", "src/utils/resources.ts"],
+      "consumers": ["src/routes.ts"]
+    },
+    "src/handlers/seo-serp.ts": {
+      "exports": ["default", "handle", "validate", "detectBlock"],
+      "imports": ["src/types.ts", "src/utils/resources.ts"],
       "consumers": ["src/routes.ts (when shipped)"]
     },
     "src/handlers/general.ts": {
       "exports": ["default"],
       "imports": ["src/types.ts"],
-      "consumers": ["src/routes.ts (when shipped)"]
+      "consumers": ["src/routes.ts"]
     }
   }
 }

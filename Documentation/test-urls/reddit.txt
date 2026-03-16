@@ -1,0 +1,12 @@
+# Reddit test URLs for RED probing and HARDEN sweep
+# User profiles (t2 kind)
+https://www.reddit.com/user/GallowBoob/about.json
+https://www.reddit.com/user/spez/about.json
+https://www.reddit.com/user/Poem_for_your_sprog/about.json
+# Subreddit pages (t5 kind)
+https://www.reddit.com/r/technology/about.json
+https://www.reddit.com/r/AskReddit/about.json
+https://www.reddit.com/r/entrepreneur/about.json
+# Edge cases
+https://www.reddit.com/user/thisuserdoesnotexist999999/about.json
+https://www.reddit.com/r/nonexistentsubreddit999/about.json

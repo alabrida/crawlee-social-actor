@@ -1,0 +1,14 @@
+{
+  "platforms": ["google_maps"],
+  "urls": [
+    { "platform": "google_maps", "url": "https://www.google.com/maps/search/Eiffel+Tower/" },
+    { "platform": "google_maps", "url": "https://www.google.com/maps/search/Louvre+Museum/" },
+    { "platform": "google_maps", "url": "https://www.google.com/maps/search/Sydney+Opera+House/" }
+  ],
+  "proxy": {
+    "useApifyProxy": false,
+    "apifyProxyGroups": []
+  },
+  "maxConcurrency": 1,
+  "maxRequestRetries": 1
+}

@@ -1,47 +1,24 @@
 {
-  "project": "crawlee-social-actor",
-  "version": "0.1.0",
+  "project": "crawlee-social-actor-high-res",
+  "version": "0.3.0",
   "status": "DEVELOPMENT",
+  "phase": "2-ENRICHMENT",
+  "currentSprint": 2,
+  "currentPlatform": "google_business_profile",
+  "currentPhase": "RED",
+  "nextAction": "Anti-Bot Agent runs RED phase probing against Google Business Profile (GBP) URLs",
   "platforms": {
-    "tiktok": {
-      "phase": "shipped",
-      "handlerType": "playwright",
-      "completionPercentage": 100
-    },
-    "instagram": {
-      "phase": "TODO",
-      "handlerType": null,
-      "completionPercentage": 0
-    },
-    "youtube": {
-      "phase": "TODO",
-      "handlerType": null,
-      "completionPercentage": 0
-    },
-    "twitter": {
-      "phase": "TODO",
-      "handlerType": null,
-      "completionPercentage": 0
-    },
-    "facebook": {
-      "phase": "TODO",
-      "handlerType": null,
-      "completionPercentage": 0
-    },
-    "linkedin": {
-      "phase": "TODO",
-      "handlerType": null,
-      "completionPercentage": 0
-    },
-    "pinterest": {
-      "phase": "TODO",
-      "handlerType": null,
-      "completionPercentage": 0
-    },
-    "snapchat": {
-      "phase": "TODO",
-      "handlerType": null,
-      "completionPercentage": 0
-    }
+    "tiktok": { "phase": "shipped", "completionPercentage": 100 },
+    "youtube": { "phase": "shipped", "completionPercentage": 100 },
+    "linkedin": { "phase": "shipped", "completionPercentage": 100 },
+    "reddit": { "phase": "shipped", "completionPercentage": 100 },
+    "google_maps": { "phase": "shipped", "completionPercentage": 100 },
+    "pinterest": { "phase": "shipped", "completionPercentage": 100 },
+    "facebook": { "phase": "shipped", "completionPercentage": 100 },
+    "instagram": { "phase": "shipped", "completionPercentage": 100 },
+    "twitter": { "phase": "shipped", "completionPercentage": 100 },
+    "seo_serp": { "phase": "shipped", "completionPercentage": 100 },
+    "general_hub": { "phase": "shipped", "completionPercentage": 100 },
+    "google_business_profile": { "phase": "RED", "completionPercentage": 0 }
   }
 }

@@ -13,96 +13,59 @@ The team is organized into **five tiers** with **12 separate agent definitions**
 | Attribute | Detail |
 |---|---|
 | **Owns** | Project scaffolding, shared infrastructure, Crawlee router configuration, Apify Actor entry point (`main.ts`), input/output schemas, **and the workflow state machine** |
-| **Responsibilities** | • Initialize the Actor project (`apify init`) and Crawlee dependencies · • Define the `RouterHandler` that dispatches URLs to the correct platform handler · • Build shared utilities: `SessionPool` factory, proxy rotation logic, resource-blocking middleware, structured logger · • Maintain the actor's `INPUT_SCHEMA.json` and normalized output envelope · • Enforce budget guardrails (CU estimator, bandwidth tracker) · • **Drive all phase transitions** — no agent begins work until the Architect unlocks the next phase · • **Assign work** to the correct agent at each phase gate · • **Resolve disputes** between agents (e.g., Modularization Agent rejects code that the Platform Agent believes is correct) |
+| **Responsibilities** | • Initialize the Actor project (`apify init`) and Crawlee dependencies · • Define the `RouterHandler` that dispatches URLs to the correct platform handler · • Build shared utilities: `SessionPool` factory, proxy rotation logic, resource-blocking middleware, structured logger · • Maintain the actor's `INPUT_SCHEMA.json` and normalized output envelope · • Enforce budget guardrails (CU estimator, bandwidth tracker) · • **Drive all phase transitions** — no agent begins work until the Architect unlocks the next phase · • **Assign work** to the correct agent at each phase gate · • **Resolve disputes** between agents · • **Orchestrate Phase 2 Multi-Stage Builds** (Scrape -> Enrich -> Finalize) |
 | **Blocker Focus** | Cross-cutting concerns — session management, proxy rotation, and resource blocking that affect *every* platform |
 | **Delivers to** | All Platform Agents (shared modules they import) |
 
-#### Orchestration Tooling
+---
 
-The Architect is the **only agent authorized to advance the workflow**. They use three tools:
+### 1.2 ⚡ Extraction Tier — *"The Data Harvesters"*
 
-| Tool | Purpose | Mechanism |
+This tier is responsible for the raw capture of HTML, Screenshots, and basic signals.
+
+| Agent | Platform | Strategy |
 |---|---|---|
-| **Phase Gate Controller** | Validates all exit criteria before unlocking the next phase | Reads the handoff checklist for the current phase; every `[ ]` must be `[x]` before the gate opens. If any item is incomplete, the Architect blocks the transition and notifies the responsible agent. |
-| **Blocker Registry Dashboard** | Surfaces open blockers that prevent a handler from advancing | Queries the Supabase `blockers` table for entries with `status = 'open'` for the current platform. Zero open blockers is a hard requirement for GREEN → MODULARIZE and HARDEN → SHIP gates. |
-| **Sprint Tracker** | Keeps a timestamped record of all phase transitions and agent assignments | Appends entries to `iteration_log.md` with: timestamp, platform, phase entered, assigned agent, and any notes. This is the audit trail for the entire build. |
-
-> [!NOTE]
-> The Architect does **not** do the work of other agents — they orchestrate. If the Anti-Bot Agent finds a new blocker during HARDEN, the Architect logs it, resets the handler to RED, and assigns the Platform Agent to fix it. The Architect decides *when* things move, not *how* they're built.
-
----
-
-### 1.2 ⚡ Cheerio Platform Agents — *"The Lightweight Extractors"*
-
-Three sub-agents, one per CheerioCrawler platform:
-
-| Agent | Platform | Key Blocker | Extraction Target |
-|---|---|---|---|
-| **Cheerio-TikTok** | TikTok | Cryptographic API signatures (`X-Bogus`, `msToken`) | `<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">` / `SIGI_STATE` JSON |
-| **Cheerio-YouTube** | YouTube | Datacenter IP blacklisting, n-parameter signatures | `ytInitialData` / `ytInitialPlayerResponse` regex parse |
-| **Cheerio-Reddit** | Reddit | API rate limits, infinite scroll | `.json` URL suffix, cookie-reuse via SessionPool |
-
-**Shared mandate for all Cheerio agents:**
-- Extract data exclusively from embedded JSON — **zero JavaScript rendering**.
-- Each agent writes a single handler file (e.g., `src/handlers/tiktok.ts`).
-- Must export a `validate()` function that asserts the expected JSON keys exist (schema-drift detection).
+| **Cheerio-TikTok** | TikTok | `<script>` JSON parsing (SSR) |
+| **Cheerio-YouTube** | YouTube | `ytInitialData` regex parsing |
+| **Cheerio-Reddit** | Reddit | `.json` endpoint + cookie reuse |
+| **PW-LinkedIn** | LinkedIn | Sticky residential proxy, rate-capped |
+| **PW-GoogleMaps** | Google Maps | `aria-label` selectors |
+| **PW-Pinterest** | Pinterest | XHR route interception |
+| **PW-Meta** | FB + IG | Persistent sessions + cookie injection |
+| **PW-General** | Hub Website | Stealth headless + WAF bypass |
+| **PW-Twitter (NEW)** | Twitter/X | `auth_token` injection + metric capture |
+| **SEO-Analyst (NEW)** | Google SERP | Organic ranking position detection |
 
 ---
 
-### 1.3 🎭 Playwright Platform Agents — *"The Stealth Operators"*
+### 1.3 🟣 Enrichment Tier — *"The Insight Engine"*
 
-Five sub-agents for PlaywrightCrawler platforms:
+This tier transforms raw signals into high-resolution, structured data.
 
-| Agent | Platform | Key Blocker | Extraction Strategy |
-|---|---|---|---|
-| **PW-LinkedIn** | LinkedIn | Fingerprinting, geo-checks, rate limits | Sticky residential proxy, ≤ 250/day, 2–5 s random delays |
-| **PW-GoogleMaps** | Google Maps | 60-result API cap, fragile selectors | Geographic grid orchestration, `aria-label` selectors |
-| **PW-Pinterest** | Pinterest | SPA infinite scroll | XHR route interception via `page.route()` |
-| **PW-Meta** | Facebook + Instagram | IP tracking, forced login, GraphQL | Persistent sessions, `window._sharedData` parse, human-like input |
-| **PW-General** | Cloudflare / DataDome / PerimeterX sites | WAF challenges, CAPTCHAs | Stealth headless, fingerprint randomization, automation flag removal |
-
-**Shared mandate for all Playwright agents:**
-- Must call the Architect's `blockResources()` middleware on every page.
-- Must use the shared `SessionPool` factory — no ad-hoc session creation.
-- Each handler file includes a `detectBlock()` function that returns `true` if the page shows a CAPTCHA, challenge, or empty-data state.
+| Agent | Responsibility | Key Output |
+|---|---|---|
+| **Math-Steward (NEW)** | Numeric integrity and temporal logic | Integers from strings ("1.2M" -> 1.2M), `post_frequency_days` |
+| **Hub-Forensics (NEW)** | Technical signal detection on Hub site | SSL, Google Analytics, JSON-LD, Pixel detection |
+| **Link-Strategist (NEW)** | Deep-link crawling and strategy audit | Redirection chains, UTM detection, Hub-to-Social reciprocity |
 
 ---
 
-### 1.4 🧩 Value Delivery Office (VDO) Agent — *"The Refactorer & Value Steward"*
+### 1.4 🧩 Governance & Quality Tier — *"The Refactorers"*
 
-This agent carries a **dual mandate**: keep the code modular and shippable, *and* ensure every sprint delivers real, demonstrable value within the project's scope.
-
-| Attribute | Detail |
-|---|---|
-| **Owns** | File size enforcement, naming conventions, import/export integrity, module decomposition, **value-stream validation, scope alignment, and incremental delivery checkpoints** |
-| **Code Modularity Duties** | • Enforce a strict **250-line cap** on every `.ts` file · • Define and maintain the **Naming Convention Registry** (`naming-conventions.md`) · • Audit handlers for line count, naming compliance, correct imports, and circular-dependency risk · • Propose decomposition plans when files must be split; verify all call-sites after refactors · • Maintain the **Import Map** (`import-map.json`) recording every module's public exports and consumers |
-| **Value Delivery Duties** | • **Define the Value Increment** for each sprint — before RED begins, the VDO documents *what user-facing value this sprint will deliver* · • **Validate value delivery** at the SHIP gate — does the shipped handler deliver the promised increment? · • **Maintain the Value Ledger** (`value-ledger.md`) — a running log of delivered value · • **Flag scope drift** — if work doesn't map to a defined value increment, VDO raises a flag · • **Enforce early delivery** — push for the smallest shippable slice in each sprint |
-| **Relationship to Architect** | The VDO works **alongside** the Architect at every phase gate. The Architect decides *when* things move; the VDO ensures *what* moves is valuable. Together they co-steer the project. |
-| **Blocker Focus** | Scale/maintenance blockers (code) + value blockers (scope drift, incomplete increments, wasted effort) |
-| **Gate Power** | Can **reject** GREEN → HARDEN (modularity) and **reject SHIP** (value increment not met). |
-
-> [!IMPORTANT]
-> The VDO reviews **every** handler at GREEN → HARDEN (modularity check) **and** validates the value increment at HARDEN → SHIP. Both approvals are hard prerequisites.
+| Agent | Responsibility | Key Guardrail |
+|---|---|---|
+| **VDO Agent** | Modularization and Value Steward | **G-MOD-01** (250-line cap) and **G-VAL** (Value Increment) |
+| **Marketplace-Optimizer (NEW)** | UX and Storefront quality | Readme clarity, Input Schema UX, Output aesthetics |
+| **Anti-Bot & QA** | Blocker registry and validation | Blocker Registry (Supabase), Regression testing |
+| **Integration Lead** | Final assembly and deployment | Full Actor E2E, CU/Bandwidth measurement |
 
 ---
 
-### 1.5 🛡️ Anti-Bot & QA Agent — *"The Adversary"*
+### 1.5 🔐 Security & Scale Tier — *"The Vault Guardians"*
 
-| Attribute | Detail |
-|---|---|
-| **Owns** | Test harness, blocker simulation, validation suite |
-| **Responsibilities** | • Write and run integration tests that verify each handler against live URLs · • Maintain a **Blocker Registry** (`blockers.json`) — a structured log of every known blocker, its status (open / mitigated / verified), and the mitigation applied · • After each Platform Agent delivers a handler, run the handler against a sample URL set and report pass/fail with evidence (status codes, response bodies, screenshots) · • Propose iteration tickets when a blocker is not yet mitigated |
-| **Blocker Focus** | *All* blockers — this agent is the single source of truth for what's blocked and what's resolved |
-
----
-
-### 1.6 🔗 Integration Lead Agent — *"The Assembler"*
-
-| Attribute | Detail |
-|---|---|
-| **Owns** | Final actor assembly, end-to-end testing, deployment |
-| **Responsibilities** | • Wire all platform handlers into the Architect's router · • Run full-actor test runs on Apify Cloud (or local Docker) · • Validate output dataset against the JSON schema · • Measure CU consumption and proxy bandwidth per platform · • Approve or reject a build for deployment |
-| **Blocker Focus** | Cross-platform regressions — e.g., SessionPool contention when running multiple platforms concurrently |
+| Agent | Responsibility | Key Goal |
+|---|---|---|
+| **Auth-Steward (NEW)** | Session Vault management | 20-day proactive re-auth, Interactive Login flow |
 
 ---
 

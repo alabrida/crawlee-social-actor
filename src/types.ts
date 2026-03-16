@@ -81,6 +81,12 @@ export interface ActorInput {
     urls: UrlEntry[];
     /** Proxy configuration. */
     proxy: ProxyConfig;
+    /** Authentication tokens/cookies. */
+    authTokens?: {
+        linkedin?: string;
+        facebook?: string;
+        instagram?: string;
+    };
     /** Maximum concurrent requests. */
     maxConcurrency: number;
     /** Maximum retries per failed request. */
@@ -105,7 +111,10 @@ export interface ScrapedItem {
     /** Which crawler type was used. */
     crawlerUsed: CrawlerType;
     /** Platform-specific structured data. */
-    data: Record<string, unknown>;
+    data: Record<string, unknown> & {
+        /** Public URL to the full-page screenshot in Apify KVS. */
+        screenshotUrl: string;
+    };
     /** Non-fatal warnings or issues. */
     errors: string[];
 }

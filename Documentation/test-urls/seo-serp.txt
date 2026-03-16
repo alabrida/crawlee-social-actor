@@ -1,0 +1,12 @@
+# Google Search URLs for testing SERP ranking
+# Format: https://www.google.com/search?q=[keyword]
+
+# RED phase (minimum 3)
+https://www.google.com/search?q=Apify
+https://www.google.com/search?q=Crawlee
+https://www.google.com/search?q=Supabase
+
+# HARDEN phase
+https://www.google.com/search?q=Playwright+Browser
+https://www.google.com/search?q=Social+Media+Scraper
+https://www.google.com/search?q=Revenue+Journey+Audit

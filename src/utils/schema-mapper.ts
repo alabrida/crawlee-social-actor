@@ -1,0 +1,262 @@
+/**
+ * @module utils/schema-mapper
+ * @description Provides a 1:1 schema template for the Supabase revenue_journey_assessments table.
+ * Ensures zero-logic n8n upserts by providing every required key.
+ */
+
+/**
+ * Returns a blank assessment row with all 250+ columns initialized.
+ */
+export function getBlankAssessmentRow(): Record<string, any> {
+    return {
+        // IDs & Meta
+        assessment_id: null,
+        lead_uuid: null,
+        business_url: '',
+        dedupe_key: null,
+        assessment_run_number: 1,
+        assessment_date: new Date().toISOString(),
+        workflow_1_completed_at: null,
+        workflow_2_completed_at: null,
+        source: 'apify_actor',
+        user_email: null,
+        
+        // Business Hub Basics
+        business_title: null,
+        business_meta_description: null,
+        business_canonical_url: null,
+        business_language: null,
+        business_loaded_url: null,
+        business_http_status: null,
+        business_has_ssl: false,
+        business_has_json_ld: false,
+        business_screenshot_url: null,
+        business_screenshot_captured_at: null,
+        business_scrape_success: false,
+        
+        // Orchestration
+        total_platforms_submitted: 0,
+        platforms_list: [],
+        
+        // Platform Presence Flags
+        has_instagram: false,
+        has_twitter: false,
+        has_linkedin: false,
+        has_facebook: false,
+        has_tiktok: false,
+        has_youtube: false,
+        has_gbp: false,
+        has_reddit: false,
+        has_pinterest: false,
+        has_google_business_profile: false,
+
+        // Instagram Metrics
+        instagram_url: null,
+        instagram_username: null,
+        instagram_full_name: null,
+        instagram_biography: null,
+        instagram_external_url: null,
+        instagram_verified: false,
+        instagram_is_private: false,
+        instagram_followers_count: 0,
+        instagram_following_count: 0,
+        instagram_posts_count: 0,
+        instagram_latest_post_date: null,
+        instagram_post_frequency_days: 0,
+        instagram_has_reels: false,
+        instagram_engagement_rate_estimate: 0,
+        instagram_screenshot_url: null,
+        instagram_scrape_date: null,
+        instagram_activity_status: 'unknown',
+        instagram_days_since_post: null,
+
+        // Twitter/X Metrics
+        twitter_url: null,
+        twitter_username: null,
+        twitter_full_name: null,
+        twitter_biography: null,
+        twitter_verified: false,
+        twitter_followers_count: 0,
+        twitter_following_count: 0,
+        twitter_tweets_count: 0,
+        twitter_latest_tweet_date: null,
+        twitter_tweet_frequency_days: 0,
+        twitter_has_media_tweets: false,
+        twitter_screenshot_url: null,
+        twitter_scrape_date: null,
+        twitter_activity_status: 'unknown',
+        twitter_days_since_post: null,
+
+        // LinkedIn Metrics
+        linkedin_url: null,
+        linkedin_full_name: null,
+        linkedin_headline: null,
+        linkedin_location: null,
+        linkedin_connections_count: 0,
+        linkedin_followers_count: 0,
+        linkedin_company_name: null,
+        linkedin_has_recent_activity: false,
+        linkedin_screenshot_url: null,
+        linkedin_scrape_date: null,
+        linkedin_activity_status: 'unknown',
+        linkedin_days_since_post: null,
+
+        // Facebook Metrics
+        facebook_url: null,
+        facebook_page_name: null,
+        facebook_category: null,
+        facebook_likes_count: 0,
+        facebook_followers_count: 0,
+        facebook_checkins_count: 0,
+        facebook_posts_count: 0,
+        facebook_latest_post_date: null,
+        facebook_has_reviews: false,
+        facebook_screenshot_url: null,
+        facebook_scrape_date: null,
+        facebook_activity_status: 'unknown',
+        facebook_days_since_post: null,
+
+        // TikTok Metrics
+        tiktok_url: null,
+        tiktok_username: null,
+        tiktok_display_name: null,
+        tiktok_biography: null,
+        tiktok_verified: false,
+        tiktok_followers_count: 0,
+        tiktok_following_count: 0,
+        tiktok_likes_count: 0,
+        tiktok_videos_count: 0,
+        tiktok_latest_video_date: null,
+        tiktok_video_frequency_days: 0,
+        tiktok_screenshot_url: null,
+        tiktok_scrape_date: null,
+        tiktok_activity_status: 'unknown',
+        tiktok_days_since_post: null,
+
+        // YouTube Metrics
+        youtube_url: null,
+        youtube_channel_name: null,
+        youtube_channel_handle: null,
+        youtube_description: null,
+        youtube_subscribers_count: 0,
+        youtube_videos_count: 0,
+        youtube_views_count: 0,
+        youtube_latest_video_date: null,
+        youtube_video_frequency_days: 0,
+        youtube_has_shorts: false,
+        youtube_verified: false,
+        youtube_screenshot_url: null,
+        youtube_scrape_date: null,
+        youtube_activity_status: 'unknown',
+        youtube_days_since_post: null,
+
+        // Google Business Profile (GBP)
+        gbp_url: null,
+        gbp_business_name: null,
+        gbp_category: null,
+        gbp_rating: 0,
+        gbp_reviews_count: 0,
+        gbp_address: null,
+        gbp_phone: null,
+        gbp_website: null,
+        gbp_has_photos: false,
+        gbp_screenshot_url: null,
+        gbp_scrape_date: null,
+
+        // Reddit Metrics
+        reddit_url: null,
+        reddit_username: null,
+        reddit_karma: 0,
+        reddit_post_karma: 0,
+        reddit_comment_karma: 0,
+        reddit_account_age_days: 0,
+        reddit_posts_count: 0,
+        reddit_latest_activity_date: null,
+        reddit_screenshot_url: null,
+        reddit_scrape_date: null,
+
+        // Pinterest Metrics
+        pinterest_url: null,
+        pinterest_username: null,
+        pinterest_full_name: null,
+        pinterest_followers_count: 0,
+        pinterest_following_count: 0,
+        pinterest_pins_count: 0,
+        pinterest_boards_count: 0,
+        pinterest_monthly_views: 0,
+        pinterest_screenshot_url: null,
+        pinterest_scrape_date: null,
+
+        // Forensics & Technical Signals
+        has_google_analytics: false,
+        has_newsletter_signup: false,
+        has_lead_magnet: false,
+        has_privacy_policy: false,
+        has_cookie_banner: false,
+        has_intent_tracking: false,
+        has_instant_booking: false,
+        is_ai_ready: false,
+        is_self_hosted: false,
+        business_has_ssl: false,
+        business_has_json_ld: false,
+        consideration_ ROI_calculator_detected: false,
+        decision_pricing_page_detected: false,
+        conversion_mobile_optimized: false,
+
+        // Human Input Fields (Isolated - Always Null)
+        h_awareness_signal_enrichment_tools: null,
+        h_awareness_first_party_data_strategy: null,
+        h_awareness_target_persona_communities: null,
+        h_awareness_content_strategy: null,
+        h_consideration_interactive_tools: null,
+        h_consideration_lead_nurturing_workflow: null,
+        h_consideration_lead_scoring_system: null,
+        h_consideration_consent_collection: null,
+        h_decision_retargeting_campaigns: null,
+        h_decision_pricing_transparency: null,
+        h_decision_reputation_management: null,
+        h_decision_guided_selling_process: null,
+        h_conversion_speed_to_lead: null,
+        h_conversion_quote_to_cash_process: null,
+        h_conversion_mobile_checkout: null,
+        h_conversion_account_assignment: null,
+        h_conversion_activation_milestones: null,
+        h_retention_usage_telemetry: null,
+        h_retention_nrr_tracking: null,
+        h_retention_referral_program: null,
+        h_retention_health_feedback: null,
+        h_retention_expansion_playbook: null,
+        h_retention_champion_tracking: null,
+        
+        // Workflow & Human Scoring
+        workflow_2_status: 'awaiting_human',
+        human_questions_submitted: false,
+        human_questions_submitted_at: null,
+        stage_1_human_score: 0,
+        stage_2_human_score: 0,
+        stage_3_human_score: 0,
+        stage_4_human_score: 0,
+        stage_5_human_score: 0,
+
+        // Automated Scores (Placeholders)
+        awareness_stage_machine_score: 0,
+        consideration_stage_machine_score: 0,
+        decision_stage_machine_score: 0,
+        conversion_stage_machine_score: 0,
+        retention_stage_machine_score: 0,
+        overall_machine_score_percentage: 0,
+        digital_presence_score: 0,
+        
+        // SEO/SERP
+        serp_ranking_position: 0,
+        serp_keyword_used: null,
+        serp_check_date: null,
+        seo_ranking_position: 0,
+
+        // AI/RAG Hooks
+        rag_interpretation_complete: false,
+        rag_recommendations: null,
+        rag_processing_timestamp: null,
+        gemini_tokens_used: 0
+    };
+}

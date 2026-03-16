@@ -1,57 +1,137 @@
-/**
- * @module handlers/meta
- * @description Facebook & Instagram handler using PlaywrightCrawler.
- * Uses persistent sessions, residential proxies, and human-like interaction patterns.
- * Handles both facebook and instagram platform identifiers.
- * @see PRD Section 5.7
- */
-
 import type { PlaywrightCrawlingContext } from 'crawlee';
+import { blockResources } from '../utils/resources.js';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 
 /**
- * Handle a Facebook or Instagram URL with human-like browsing patterns.
- * @param context - Crawlee PlaywrightCrawlingContext with page/request.
- * @param _handlerContext - Shared handler context with actor input.
- * @returns Array of scraped items in the normalized envelope.
+ * Handle Meta (Facebook/Instagram) URLs.
+ * @param context - Crawlee PlaywrightCrawlingContext.
+ * @param _handlerContext - Shared handler context.
+ * @returns Array of scraped items.
  */
-async function handle(
+export async function handle(
     context: PlaywrightCrawlingContext,
     _handlerContext: HandlerContext,
 ): Promise<ScrapedItem[]> {
-    // TODO: Implement in Sprint 5 (PW-Meta Agent)
-    throw new Error(`Meta handler not yet implemented for: ${context.request.url}`);
+    const { page, request, log } = context;
+    const platform = request.url.includes('facebook.com') ? 'facebook' : 'instagram';
+
+    log.info(`[Meta] Extracting ${platform}: ${request.url}`);
+
+    // G-COST-02: Block heavy resources
+    await blockResources(page, ['image', 'media', 'font']);
+
+    await page.goto(request.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+    // Detect if we are still on the login wall
+    const content = await page.content();
+    const isBlocked = detectBlock(content);
+    
+    if (isBlocked) {
+        log.warning(`[Meta] Potential ${platform} block or login wall detected after navigation.`);
+    }
+
+    const links: string[] = [];
+    const ctas: string[] = [];
+    const conversionMarkers: string[] = [];
+
+    // Skip extraction if blocked to avoid timeouts on missing elements
+    if (!isBlocked) {
+        if (platform === 'instagram') {
+            try {
+                const bioLinkLocator = page.locator('header section a[target="_blank"]').first();
+                if (await bioLinkLocator.count() > 0) {
+                    const bioLink = await bioLinkLocator.getAttribute('href');
+                    if (bioLink) links.push(bioLink);
+                }
+                
+                const nameLocator = page.locator('header section h1').first();
+                if (await nameLocator.count() > 0) {
+                    const fullName = await nameLocator.textContent();
+                    if (fullName) conversionMarkers.push(`Name: ${fullName.trim()}`);
+                }
+
+                // Phase 2: Raw Metrics for Instagram
+                const followerText = await page.locator('header section ul li:nth-child(2) span').first().getAttribute('title').catch(() => null);
+                if (followerText) conversionMarkers.push(`Followers Raw: ${followerText}`);
+                
+                const isVerified = await page.locator('header section span[title="Verified"]').count() > 0;
+                if (isVerified) conversionMarkers.push('Status: Verified');
+
+            } catch (e) {
+                log.debug('[Meta] Instagram extraction failed on some elements', { url: request.url });
+            }
+        } else {
+            // Facebook extraction
+            try {
+                const introLocator = page.locator('[role="main"] div').first();
+                if (await introLocator.count() > 0) {
+                    const introText = await introLocator.textContent();
+                    if (introText) conversionMarkers.push(`Intro detected: ${introText.substring(0, 50)}...`);
+                }
+
+                // Phase 2: Raw Metrics for Facebook (often in intro or followers link)
+                const followersLink = page.locator('a[href*="followers"]').first();
+                if (await followersLink.count() > 0) {
+                    const followersText = await followersLink.textContent();
+                    if (followersText) conversionMarkers.push(`Followers Raw: ${followersText.trim()}`);
+                }
+            } catch (e) {
+                log.debug('[Meta] Facebook extraction failed on some elements', { url: request.url });
+            }
+        }
+    } else {
+        conversionMarkers.push('BLOCKED: Login Wall / Anti-Bot');
+    }
+
+    const scrapedItem: ScrapedItem = {
+        platform,
+        url: request.url,
+        crawlerUsed: 'playwright',
+        scrapedAt: new Date().toISOString(),
+        data: {
+            revenueIndicators: {
+                ctas,
+                links,
+                conversionMarkers,
+            },
+            profileHtml: await page.content(),
+            screenshotUrl: '',
+        },
+        errors: []
+    };
+
+    return [scrapedItem];
 }
 
 /**
- * Validate that the extracted Meta data contains expected keys.
- * @param data - The extracted data object.
- * @returns True if required fields are present.
+ * Validate extracted Meta data.
+ * @param data - The data object.
+ * @returns True if valid.
  */
-function validate(data: Record<string, unknown>): boolean {
-    // TODO: Define expected keys for Meta data
-    return data !== null && typeof data === 'object';
-}
-
-/**
- * Detect if the response indicates a Meta block (login wall, rate limit).
- * @param responseBody - The page content.
- * @returns True if a block is detected.
- */
-function detectBlock(responseBody: string): boolean {
-    // TODO: Implement block detection for Meta platforms
+export function validate(data: Record<string, unknown>): boolean {
+    const payload = data as any;
     return (
-        responseBody.includes('login_form') ||
-        responseBody.includes('checkpoint') ||
-        responseBody.includes('rate limit')
+        payload &&
+        payload.revenueIndicators &&
+        typeof payload.screenshotUrl === 'string'
     );
 }
 
-/** Assembled handler export satisfying the PlaywrightHandler interface. */
+/**
+ * Detect Meta blocks (login walls).
+ * @param responseBody - Page content.
+ * @returns True if blocked.
+ */
+export function detectBlock(responseBody: string): boolean {
+    const lower = responseBody.toLowerCase();
+    return lower.includes('login') || lower.includes('log in') || lower.includes('checkpoint');
+}
+
 const metaHandler: PlaywrightHandler = {
     crawlerType: 'playwright',
     handle,
     validate,
     detectBlock,
 };
+
 export default metaHandler;

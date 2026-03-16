@@ -1,0 +1,16 @@
+# Google Maps business profile URLs for testing
+# Used by Anti-Bot Agent during RED (3 URLs) and HARDEN (10-20 URLs)
+
+# RED phase (minimum 3)
+https://www.google.com/maps/place/Eiffel+Tower/
+https://www.google.com/maps/place/Empire+State+Building/
+https://www.google.com/maps/place/Sydney+Opera+House/
+
+# HARDEN phase (add more diverse URLs below)
+https://www.google.com/maps/place/Colosseum/
+https://www.google.com/maps/place/Statue+of+Liberty/
+https://www.google.com/maps/place/Burj+Khalifa/
+https://www.google.com/maps/place/Machu+Picchu/
+https://www.google.com/maps/place/Taj+Mahal/
+https://www.google.com/maps/place/The+British+Museum/
+https://www.google.com/maps/place/Louvre+Museum/

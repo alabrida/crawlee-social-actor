@@ -18,8 +18,97 @@ async function handle(
     context: CheerioCrawlingContext,
     _handlerContext: HandlerContext,
 ): Promise<ScrapedItem[]> {
-    // TODO: Implement in Sprint 1 (Cheerio-YouTube Agent)
-    throw new Error(`YouTube handler not yet implemented for: ${context.request.url}`);
+    const { request, $, body, log } = context;
+    const url = request.url;
+    log.info(`[YouTube] Extracting data from: ${url}`);
+
+    const html = typeof body === 'string' ? body : body.toString('utf-8');
+
+    let ytInitialData: any = null;
+    const ytInitialDataMatch = html.match(/var ytInitialData = (\{.*?\});<\/script>/);
+    if (ytInitialDataMatch && ytInitialDataMatch[1]) {
+        try {
+            ytInitialData = JSON.parse(ytInitialDataMatch[1]);
+        } catch (e) {
+            log.warning(`[YouTube] Failed to parse ytInitialData for ${url}`);
+        }
+    }
+
+    const ctas: string[] = [];
+    const links: string[] = [];
+    const conversionMarkers: string[] = [];
+    
+    // Attempt to extract from ytInitialData
+    if (ytInitialData) {
+        let stringifiedData = '';
+        try {
+            stringifiedData = JSON.stringify(ytInitialData);
+        } catch(e) {}
+
+        const headerLinksMatch = stringifiedData.match(/"urlEndpoint":\{"url":"([^"]+)"\}/g);
+        if (headerLinksMatch) {
+            for (const match of headerLinksMatch) {
+                const urlMatch = match.match(/"url":"([^"]+)"/);
+                if (urlMatch && urlMatch[1]) {
+                    let extractedUrl = urlMatch[1];
+                    try {
+                        if (extractedUrl.includes('/redirect')) {
+                            const parsedUrl = new URL(extractedUrl, 'https://www.youtube.com');
+                            extractedUrl = parsedUrl.searchParams.get('q') || extractedUrl;
+                        }
+                    } catch (e) {}
+                    if (extractedUrl.startsWith('http') && !links.includes(extractedUrl)) {
+                        links.push(extractedUrl);
+                    }
+                }
+            }
+        }
+        
+        // Channel Links in about page or channel header
+        const ctaMatches = stringifiedData.match(/"simpleText":"([^"]+)"/g) || [];
+        for (const match of ctaMatches) {
+            const textMatch = match.match(/"simpleText":"([^"]+)"/);
+            if (textMatch && textMatch[1]) {
+                const text = textMatch[1];
+                if (/book|shop|merch|store|website|subscribe/i.test(text) && !ctas.includes(text)) {
+                    ctas.push(text);
+                }
+            }
+        }
+    }
+
+    // Attempt to find business email / booking keywords in description
+    const metaDescription = $('meta[name="description"]').attr('content') || '';
+    if (metaDescription.toLowerCase().includes('shop')) conversionMarkers.push('Shop');
+    if (metaDescription.toLowerCase().includes('book')) conversionMarkers.push('Booking');
+    if (metaDescription.toLowerCase().includes('contact') || metaDescription.includes('@')) conversionMarkers.push('Contact Info');
+
+    // Extract profile HTML snippet (mostly what's in head and main container, YouTube's DOM is CSR heavy)
+    const profileHtml = $('title').prop('outerHTML') + ($('meta[name="description"]').prop('outerHTML') || '');
+
+    const scrapedItem: ScrapedItem = {
+        platform: 'youtube',
+        url,
+        crawlerUsed: 'cheerio',
+        scrapedAt: new Date().toISOString(),
+        data: {
+            revenueIndicators: {
+                ctas,
+                links,
+                conversionMarkers,
+            },
+            profileHtml,
+            // screenshotUrl placeholder, filled by Playwright screenshot-collector
+            screenshotUrl: '' 
+        },
+        errors: []
+    };
+
+    if (!ytInitialData) {
+        scrapedItem.errors.push('ytInitialData JSON payload not found. Page might be blocked or structured differently.');
+    }
+
+    return [scrapedItem];
 }
 
 /**
@@ -28,8 +117,12 @@ async function handle(
  * @returns True if required fields are present.
  */
 function validate(data: Record<string, unknown>): boolean {
-    // TODO: Define expected keys for YouTube data
-    return data !== null && typeof data === 'object';
+    const payload = data as any;
+    if (!payload || typeof payload !== 'object') return false;
+    if (!payload.revenueIndicators || !Array.isArray(payload.revenueIndicators.links)) return false;
+    if (typeof payload.profileHtml !== 'string') return false;
+    if (typeof payload.screenshotUrl !== 'string') return false;
+    return true;
 }
 
 /**
@@ -38,8 +131,9 @@ function validate(data: Record<string, unknown>): boolean {
  * @returns True if a block is detected.
  */
 function detectBlock(responseBody: string): boolean {
-    // TODO: Implement block detection for YouTube
-    return responseBody.includes('RequestBlocked') || responseBody.includes('consent.youtube.com');
+    const isConsent = responseBody.includes('consent.youtube.com');
+    const isForbidden = responseBody.includes('403 Forbidden') || responseBody.includes('RequestBlocked');
+    return isConsent || isForbidden;
 }
 
 /** Assembled handler export satisfying the CheerioHandler interface. */

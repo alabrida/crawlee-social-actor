@@ -1,0 +1,14 @@
+# Twitter/X profile URLs for testing
+# Used by Anti-Bot Agent during RED (3 URLs) and HARDEN (10-20 URLs)
+
+# RED phase (minimum 3)
+https://x.com/elonmusk
+https://x.com/NASA
+https://x.com/OpenAI
+
+# HARDEN phase
+https://x.com/Apple
+https://x.com/Google
+https://x.com/Microsoft
+https://x.com/Netflix
+https://x.com/Disney

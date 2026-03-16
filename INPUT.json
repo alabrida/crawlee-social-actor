@@ -1,0 +1,26 @@
+{
+  "platforms": ["reddit"],
+  "urls": [
+    { "platform": "reddit", "url": "https://www.reddit.com/user/GallowBoob" },
+    { "platform": "reddit", "url": "https://www.reddit.com/user/spez" },
+    { "platform": "reddit", "url": "https://www.reddit.com/user/Poem_for_your_sprog" },
+    { "platform": "reddit", "url": "https://www.reddit.com/user/shittymorph" },
+    { "platform": "reddit", "url": "https://www.reddit.com/user/thisuserdefinitelydoesnotexist99999" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/technology" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/entrepreneur" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/smallbusiness" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/SideProject" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/Futurology" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/thissubredditdefinitelydoesnotexist99" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/AskReddit" }
+  ],
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": ["RESIDENTIAL"],
+    "proxyUrls": []
+  },
+  "maxConcurrency": 2,
+  "maxRequestRetries": 2,
+  "linkedinDailyLimit": 250,
+  "googleMapsGrid": { "enabled": false, "cellSizeKm": 5 }
+}

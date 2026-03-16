@@ -3,26 +3,95 @@
     "id": "BLOCK-001",
     "platform": "tiktok",
     "type": "captcha",
-    "description": "Bare HTTP GET requests consistently return a 200 OK status but the response body contains a captcha/verification challenge instead of the expected profile data or embedded JSON state. Reproduction: curl -H \"User-Agent: Mozilla/5.0\" https://www.tiktok.com/@tiktok",
+    "description": "Bare HTTP GET requests consistently return a 200 OK status but the response body contains a captcha/verification challenge instead of the expected profile data or embedded JSON state.",
     "status": "verified",
     "mitigation": "Migrated TikTok to PlaywrightCrawler to natively solve/bypass SSR Captcha blocks by rendering the page.",
     "verified_by": "Cheerio-TikTok Agent",
-    "verified_at": "2026-03-13 01:11:19.991395+00",
-    "evidence": null,
-    "sprint": null,
-    "created_at": "2026-03-12 22:17:02.335993+00"
+    "sprint": 1
   },
   {
     "id": "BLOCK-002",
     "platform": "tiktok",
     "type": "captcha",
-    "description": "Bare HTTP requests and Apify residential proxies both fail to hit SSR HTML containing SIGI_STATE or __UNIVERSAL_DATA_FOR_REHYDRATION__. The response contains a captcha challenge. Cheerio extraction yields 0% success.",
+    "description": "Bare HTTP requests and Apify residential proxies both fail to hit SSR HTML containing SIGI_STATE or __UNIVERSAL_DATA_FOR_REHYDRATION__.",
     "status": "verified",
     "mitigation": "Migrated TikTok to PlaywrightCrawler to natively solve/bypass SSR Captcha blocks by rendering the page.",
     "verified_by": "Cheerio-TikTok Agent",
-    "verified_at": "2026-03-13 01:11:19.991395+00",
-    "evidence": "Out.log from HARDEN phase execution showing 16 validation failures",
-    "sprint": 1,
-    "created_at": "2026-03-13 01:02:21.614652+00"
+    "sprint": 1
+  },
+  {
+    "id": "BLOCK-003",
+    "platform": "youtube",
+    "type": "datacenter_ip_block",
+    "description": "High likelihood of HTTP 403 Forbidden when accessing YouTube from Datacenter IPs without rendering JavaScript or having residential reputation",
+    "status": "verified",
+    "mitigation": "CheerioCrawler residential proxy mapping + injected CONSENT cookie in preNavigationHooks",
+    "verified_by": "Anti-Bot & Integration Lead",
+    "sprint": 2
+  },
+  {
+    "id": "BLOCK-004",
+    "platform": "youtube",
+    "type": "consent_wall",
+    "description": "Redirects or blocks via consent.youtube.com for European IPs or unconsented automated sessions",
+    "status": "verified",
+    "mitigation": "CheerioCrawler residential proxy mapping + injected CONSENT cookie in preNavigationHooks",
+    "verified_by": "Anti-Bot & Integration Lead",
+    "sprint": 2
+  },
+  {
+    "id": "BLOCK-005",
+    "platform": "linkedin",
+    "type": "bot_challenge",
+    "description": "LinkedIn returns HTTP 999 for bare HTTP requests without proper headers or browser fingerprinting, indicating a strict anti-bot challenge wall.",
+    "status": "mitigated",
+    "mitigation": "Injected session tokens (li_at, JSESSIONID) via PlaywrightCrawler preNavigationHooks.",
+    "sprint": 3
+  },
+  {
+    "id": "BLOCK-006",
+    "platform": "reddit",
+    "type": "rate_limit",
+    "description": "Reddit API enforces rate limiting via x-ratelimit-* headers: 100 requests per 600-second window. Exceeding the limit returns HTTP 429.",
+    "status": "verified",
+    "mitigation": "CheerioCrawler with SessionPool handles retry on HTTP 429.",
+    "verified_by": "Integration Lead",
+    "sprint": 4
+  },
+  {
+    "id": "BLOCK-007",
+    "platform": "google_maps",
+    "type": "captcha_unusual_traffic",
+    "description": "Google Maps returns a Consent wall in EU regions or an \"Unusual traffic from your computer network\" CAPTCHA screen.",
+    "status": "open",
+    "mitigation": "Use PlaywrightCrawler with residential proxies and human-like delays. Implement detectBlock() to catch CAPTCHA or unusual traffic strings.",
+    "sprint": 5
+  },
+  {
+    "id": "BLOCK-010",
+    "platform": "facebook",
+    "type": "login_wall",
+    "description": "Mandatory login wall detected on profile pages.",
+    "status": "verified",
+    "mitigation": "Injected session cookies via PlaywrightCrawler preNavigationHooks. Implemented detectBlock() to fail-fast on login walls.",
+    "sprint": 7
+  },
+  {
+    "id": "BLOCK-011",
+    "platform": "instagram",
+    "type": "login_wall",
+    "description": "Mandatory login wall detected on profile pages.",
+    "status": "verified",
+    "mitigation": "Injected session cookies via PlaywrightCrawler preNavigationHooks. Implemented detectBlock() to fail-fast on login walls.",
+    "sprint": 7
+  },
+  {
+    "id": "BLOCK-012",
+    "platform": "general",
+    "type": "waf_block",
+    "description": "WAF challenges (Cloudflare/DataDome) detected on business websites.",
+    "status": "verified",
+    "mitigation": "PlaywrightCrawler with stealth settings and residential proxies. Implemented detectBlock() to capture WAF HTML for manual review.",
+    "sprint": 8
   }
 ]

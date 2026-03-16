@@ -1,0 +1,12 @@
+# General business website URLs for testing
+# Focus on Cloudflare / DataDome / PerimeterX protected sites
+
+# RED phase (minimum 3)
+https://www.upwork.com/         # Cloudflare
+https://www.tripadvisor.com/    # DataDome
+https://www.yellowpages.com/    # PerimeterX
+
+# HARDEN phase
+https://www.yelp.com/
+https://www.glassdoor.com/
+https://www.fiverr.com/

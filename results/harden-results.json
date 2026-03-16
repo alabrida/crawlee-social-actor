@@ -1,0 +1,82 @@
+[
+  {
+    "url": "https://www.pinterest.com/nike/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 3
+  },
+  {
+    "url": "https://www.pinterest.com/joyfoodsunshine/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 3
+  },
+  {
+    "url": "https://www.pinterest.com/ohjoy/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 2
+  },
+  {
+    "url": "https://www.pinterest.com/adidas/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 3
+  },
+  {
+    "url": "https://www.pinterest.com/starbucks/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 3
+  },
+  {
+    "url": "https://www.pinterest.com/buzzfeedfood/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 2
+  },
+  {
+    "url": "https://www.pinterest.com/target/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 3
+  },
+  {
+    "url": "https://www.pinterest.com/hgtv/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 3
+  },
+  {
+    "url": "https://www.pinterest.com/wholefoods/",
+    "success": true,
+    "errors": [],
+    "links": 1,
+    "ctas": 0,
+    "markers": 3
+  },
+  {
+    "url": "https://www.pinterest.com/nonexistent_user_999/",
+    "success": true,
+    "errors": [],
+    "links": 0,
+    "ctas": 0,
+    "markers": 0
+  }
+]
