@@ -5,7 +5,7 @@
  * Only shipped handlers should be uncommented in the registry.
  */
 
-import { createCheerioRouter, createPlaywrightRouter } from 'crawlee';
+import { createCheerioRouter, createPlaywrightRouter, Dataset } from 'crawlee';
 import { Actor } from 'apify';
 import { createHash } from 'crypto';
 import { log } from './utils/logger.js';
@@ -37,6 +37,32 @@ import twitterHandler from './handlers/twitter.js';
 import seoSerpHandler from './handlers/seo-serp.js';
 // Sprint 6:
 import generalHandler from './handlers/general.js';
+
+/**
+ * Module-level cache for dataset promises to avoid redundant API calls.
+ */
+let defaultDatasetPromise: Promise<Dataset> | null = null;
+let failedDatasetPromise: Promise<Dataset> | null = null;
+
+/**
+ * Get the default dataset with caching.
+ */
+function getDefaultDataset(): Promise<Dataset> {
+    if (!defaultDatasetPromise) {
+        defaultDatasetPromise = Actor.openDataset();
+    }
+    return defaultDatasetPromise;
+}
+
+/**
+ * Get the failed-urls dataset with caching.
+ */
+function getFailedDataset(): Promise<Dataset> {
+    if (!failedDatasetPromise) {
+        failedDatasetPromise = Actor.openDataset('failed-urls');
+    }
+    return failedDatasetPromise;
+}
 
 /**
  * Registry of shipped CheerioCrawler handlers.
@@ -106,7 +132,7 @@ export function buildCheerioRouter(handlerContext: HandlerContext) {
                 const msg = error instanceof Error ? error.message : String(error);
                 log.error(`Handler failed: ${platform}`, { url: context.request.url, error: msg });
 
-                const failedDataset = await Actor.openDataset('failed-urls');
+                const failedDataset = await getFailedDataset();
                 await failedDataset.pushData({
                     platform,
                     url: context.request.url,
@@ -124,7 +150,7 @@ export function buildCheerioRouter(handlerContext: HandlerContext) {
             url: context.request.url,
         });
 
-        const failedDataset = await Actor.openDataset('failed-urls');
+        const failedDataset = await getFailedDataset();
         await failedDataset.pushData({
             platform,
             url: context.request.url,
@@ -176,7 +202,7 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                     log.error(`Failed to capture screenshot for ${context.request.url}: ${msg}`);
                 }
 
-                const dataset = await Actor.openDataset();
+                const dataset = await getDefaultDataset();
 
                 for (const item of items) {
                     if (!handler.validate(item.data)) {
@@ -211,7 +237,7 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                 const msg = error instanceof Error ? error.message : String(error);
                 log.error(`Handler failed: ${platform}`, { url: context.request.url, error: msg });
 
-                const failedDataset = await Actor.openDataset('failed-urls');
+                const failedDataset = await getFailedDataset();
                 await failedDataset.pushData({
                     platform,
                     url: context.request.url,
@@ -229,7 +255,7 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
             url: context.request.url,
         });
 
-        const failedDataset = await Actor.openDataset('failed-urls');
+        const failedDataset = await getFailedDataset();
         await failedDataset.pushData({
             platform,
             url: context.request.url,
