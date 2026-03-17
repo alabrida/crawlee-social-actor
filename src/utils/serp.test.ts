@@ -46,9 +46,9 @@ describe('fetchSerpApi', () => {
 
         await fetchSerpApi(query, apiKey);
 
-        const expectedQuery = 'search query';
+        const expectedQuery = 'search+query';
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(`q=${encodeURIComponent(expectedQuery)}`)
+            expect.stringContaining(`q=${expectedQuery}`)
         );
         expect(global.fetch).toHaveBeenCalledWith(
             expect.stringContaining(`api_key=${apiKey}`)
