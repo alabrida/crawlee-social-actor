@@ -33,12 +33,10 @@ describe('SessionVault', () => {
         expect(Actor.openKeyValueStore).toHaveBeenCalledWith('AUTH_SESSION_VAULT');
         expect(mockStore.getValue).toHaveBeenCalledWith('tokens');
 
-        // Even though it is brand new, the code initializes `updatedAt` to `new Date()`.
-        // This means it thinks it was just updated 0 days ago.
-        // What we really want to check is that tokens are empty:
         const tokens = await vault.getTokens();
         expect(tokens).toEqual({});
-        expect(vault.needsRefresh()).toBe(false);
+        // Empty tokens should trigger needsRefresh
+        expect(vault.needsRefresh()).toBe(true);
     });
 
     it('should calculate needsRefresh correctly for old tokens', async () => {

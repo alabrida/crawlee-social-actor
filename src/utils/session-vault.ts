@@ -40,10 +40,12 @@ export class SessionVault {
     }
 
     /**
-     * Check if the vault requires a "Hard Refresh" (older than 20 days).
+     * Check if the vault requires a "Hard Refresh" (older than 20 days) or is empty.
      */
     needsRefresh(): boolean {
         if (!this.vaultData?.updatedAt) return true;
+        if (!this.vaultData.tokens || Object.keys(this.vaultData.tokens).length === 0) return true;
+
         const updatedDate = new Date(this.vaultData.updatedAt);
         const today = new Date();
         const diffTime = Math.abs(today.getTime() - updatedDate.getTime());
@@ -86,7 +88,7 @@ export class SessionVault {
 
         const proxyConfiguration = await createProxyConfig(proxyConfig);
 
-        // As per memory, use default unnamed request queue for login
+        // Use a named request queue to isolate login state from the main crawler
         const requestQueue = await RequestQueue.open('AUTH_SETUP_QUEUE');
 
         // Add auth-wall URLs to queue
