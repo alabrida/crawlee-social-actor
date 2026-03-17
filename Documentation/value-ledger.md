@@ -117,3 +117,15 @@ Transform the Foundation Scraper into a High-Resolution Revenue Journey Engine b
 - **Forensics:** Upgraded `General` handler to detect technical signals: SSL, Google Analytics, JSON-LD, and Conversion CTAs.
 - **Resilience:** Established the "20-Day Proactive Re-Auth" foundation for LinkedIn and Meta.
 
+## Phase 2: Sprint 2 — Deployment Readiness & Auth-Steward Implementation
+
+**Value Increment Definition:**
+Finalize the codebase for Marketplace, SaaS, and Consultant deployment modes. This sprint delivers: (1) An active Session Vault utilizing the Apify KVS to hold persistent cookies, (2) An interactive login flow via Apify Live View to securely acquire cookies without logging them, (3) Resolution of the `google_business_profile` routing gap, and (4) Complete synchronization of the actor's output object with the UCE Rubric v3.9 SQL schema.
+
+**Delivery Evidence (Phase 2, Sprint 2 Shipped):**
+
+- **Auth-Steward:** Implemented `src/utils/session-vault.ts` with 20-day refresh tracking and PlaywrightCrawler interactive-login capability over an un-named RequestQueue.
+- **Schema Parity:** Extensively updated `src/utils/schema-mapper.ts` to include complex fields like `frankenstein_index`, `governance_score`, and `connectivity_matrix` correctly aligning to the provided Supabase structure.
+- **Data Integrity:** Generated deterministic `lead_uuid` and `dedupe_key` properties in `main.ts` to prevent unique constraint conflicts during Supabase upsert calls.
+- **GBP Pipeline:** Adjusted output extraction logic in `google-maps.ts` to explicitly mark `google_business_profile` when requested.
+- **Validation:** Deployed Vitest specifications for `schema-mapper.ts`, `session-vault.ts`, and `google-maps.ts` resulting in 100% test success.

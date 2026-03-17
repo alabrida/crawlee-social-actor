@@ -108,6 +108,8 @@ export interface ActorInput {
         instagram?: string;
         twitter?: string;
     };
+    /** Interactive Session Setup flag. */
+    interactiveSessionSetup?: boolean;
     /** Maximum concurrent requests. */
     maxConcurrency: number;
     /** Maximum retries per failed request. */

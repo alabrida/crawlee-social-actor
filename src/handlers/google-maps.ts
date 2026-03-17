@@ -175,8 +175,14 @@ export async function handle(
         log.warning(`[Google Maps] Failed to extract profile HTML fallback`, { url: request.url });
     }
 
+    // Ensure the output platform label matches what was requested
+    // so that the enricher maps it to the correct DB columns.
+    const outputPlatform = request.userData?.platform === 'google_business_profile'
+        ? 'google_business_profile'
+        : 'google_maps';
+
     const scrapedItem: ScrapedItem = {
-        platform: 'google_maps',
+        platform: outputPlatform,
         url: request.url,
         crawlerUsed: 'playwright',
         scrapedAt: new Date().toISOString(),
