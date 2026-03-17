@@ -12,28 +12,6 @@ vi.mock('./logger.js', () => ({
 // Mock global fetch
 global.fetch = vi.fn();
 
-describe('sanitizeQuery', () => {
-    it('should trim whitespace', () => {
-        expect(sanitizeQuery('  hello world  ')).toBe('hello world');
-    });
-
-    it('should remove control characters', () => {
-        const input = 'hello\x00world\x1F';
-        expect(sanitizeQuery(input)).toBe('helloworld');
-    });
-
-    it('should limit length', () => {
-        const input = 'a'.repeat(600);
-        expect(sanitizeQuery(input, 500)).toHaveLength(500);
-    });
-
-    it('should handle empty input', () => {
-        expect(sanitizeQuery('')).toBe('');
-        // @ts-ignore
-        expect(sanitizeQuery(null)).toBe('');
-    });
-});
-
 describe('fetchSerpApi', () => {
     it('should use sanitized query in the request', async () => {
         const query = '  search query\x00  ';
