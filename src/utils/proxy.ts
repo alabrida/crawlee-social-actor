@@ -30,6 +30,7 @@ export async function createProxyConfig(
         log.info('Using Apify proxy', { groups: config.apifyProxyGroups });
         return await Actor.createProxyConfiguration({
             groups: config.apifyProxyGroups,
+            countryCode: config.apifyProxyCountry as any,
         });
     }
 

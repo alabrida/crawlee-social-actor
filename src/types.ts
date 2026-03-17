@@ -65,6 +65,8 @@ export interface ProxyConfig {
     useApifyProxy: boolean;
     /** Apify proxy group names (e.g., RESIDENTIAL). */
     apifyProxyGroups: string[];
+    /** Country code for Apify proxy. */
+    apifyProxyCountry?: string;
     /** Third-party proxy URLs (used when useApifyProxy is false). */
     proxyUrls?: string[];
 }

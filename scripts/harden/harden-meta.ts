@@ -4,7 +4,7 @@ import { log } from '../../src/utils/logger.js';
 import { injectCookies } from '../../src/utils/auth.js';
 import fs from 'fs';
 import path from 'path';
-import 'dotenv/config'; // Load .env
+
 
 async function runHardenSweep() {
     console.log('--- STARTING META (FB/IG) HARDEN SWEEP ---');

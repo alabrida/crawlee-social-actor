@@ -9,7 +9,7 @@
   "main": "dist/main.js",
   "scripts": {
     "start": "node --env-file=.env dist/main.js",
-    "dev": "tsx --env-file=.env src/main.ts",
+    "dev": "npx tsx --env-file=.env src/main.ts",
     "build": "tsc",
     "lint": "eslint src/",
     "test": "vitest run",
@@ -22,7 +22,6 @@
     "apify": "3.2.6",
     "cheerio": "1.2.0",
     "crawlee": "3.16.0",
-    "dotenv": "17.3.1",
     "playwright": "1.50.1"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 import type { PlaywrightCrawlingContext } from 'crawlee';
 import { blockResources } from '../utils/resources.js';
-import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+import type { PlaywrightHandler, HandlerContext, ScrapedItem, Platform } from '../types.js';
 import { reportIssue } from '../utils/issue-log.js';
 
 /**
@@ -14,7 +14,8 @@ export async function handle(
     _handlerContext: HandlerContext,
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
-    const platform = request.url.includes('facebook.com') ? 'facebook' : 'instagram';
+    const platform = (request.userData?.platform as Platform) || 
+        (request.url.includes('facebook.com') || request.url.includes('fb.com') ? 'facebook' : 'instagram');
 
     log.info(`[Meta] Extracting ${platform}: ${request.url}`);
 
