@@ -7,6 +7,7 @@
 
 import type { PlaywrightCrawlingContext } from 'crawlee';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+import { blockResources } from '../utils/resources.js';
 
 let dailyRequestCount = 0;
 
@@ -22,6 +23,9 @@ async function handle(
 ): Promise<ScrapedItem[]> {
     const { request, page, log } = context;
     const url = request.url;
+
+    // G-COST-02: Block heavy resources (LinkedIn profiles are heavy)
+    await blockResources(page);
 
     // G-BOT-01: Hard cap at 250 requests/day
     const maxDaily = handlerContext.input.linkedinDailyLimit || 250;

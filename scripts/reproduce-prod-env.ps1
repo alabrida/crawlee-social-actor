@@ -33,8 +33,16 @@ if (-not (Test-Path ".env")) {
 # 2b. Validate .env
 if (Test-Path ".env") {
     $envContent = Get-Content ".env" -Raw
-    if ($envContent -match "YOUR_TOKEN_HERE") {
-        Write-Warning "WARNING: Your .env file contains 'YOUR_TOKEN_HERE'. The actor may fail to authenticate with Apify/Supabase."
+    $tokens = @("AUTH_TOKENS_FACEBOOK", "AUTH_TOKENS_INSTAGRAM", "AUTH_TOKENS_X", "AUTH_TOKENS_LINKEDIN", "SERP_API_KEY")
+    
+    foreach ($token in $tokens) {
+        if ($envContent -match "YOUR_${token}_HERE" -or $envContent -match "YOUR_TOKEN_HERE") {
+            Write-Warning "WARNING: Your .env file contains placeholder for $token. The actor may fail to authenticate or bypass walls."
+        }
+    }
+
+    if ($envContent -notmatch "AUTH_TOKENS_") {
+        Write-Warning "WARNING: No authentication tokens found in .env. Social media platforms will likely be blocked."
     }
 }
 

@@ -88,8 +88,9 @@ export async function handle(
                 ctas.push('Local Pack Present');
             }
         }
-    } catch (e: any) {
-        log.warning(`[SEO-SERP] Playwright navigation failed: ${e.message}`);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log.warning(`[SEO-SERP] Playwright navigation failed: ${msg}`);
     }
 
     const scrapedItem: ScrapedItem = {
@@ -133,6 +134,9 @@ export function validate(data: Record<string, unknown>): boolean {
  * @returns True if blocked.
  */
 export function detectBlock(responseBody: string): boolean {
+    // If it's JSON (SerpApi), we assume unblocked unless the API itself failed
+    if (responseBody.trim().startsWith('{')) return false;
+
     const lower = responseBody.toLowerCase();
     return (
         lower.includes('sorry') ||

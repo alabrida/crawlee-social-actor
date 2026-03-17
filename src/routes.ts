@@ -5,7 +5,7 @@
  * Only shipped handlers should be uncommented in the registry.
  */
 
-import { createCheerioRouter, createPlaywrightRouter } from 'crawlee';
+import { createCheerioRouter, createPlaywrightRouter, Dataset } from 'crawlee';
 import { Actor } from 'apify';
 import { createHash } from 'crypto';
 import { log } from './utils/logger.js';
@@ -16,6 +16,7 @@ import type {
     PlaywrightHandler,
     ScrapedItem,
 } from './types.js';
+import { reportIssue } from './utils/issue-log.js';
 
 // --- Handler imports ---
 // Handlers are imported and registered after passing the SHIP gate.
@@ -38,6 +39,32 @@ import seoSerpHandler from './handlers/seo-serp.js';
 import generalHandler from './handlers/general.js';
 
 /**
+ * Module-level cache for dataset promises to avoid redundant API calls.
+ */
+let defaultDatasetPromise: Promise<Dataset> | null = null;
+let failedDatasetPromise: Promise<Dataset> | null = null;
+
+/**
+ * Get the default dataset with caching.
+ */
+function getDefaultDataset(): Promise<Dataset> {
+    if (!defaultDatasetPromise) {
+        defaultDatasetPromise = Actor.openDataset();
+    }
+    return defaultDatasetPromise;
+}
+
+/**
+ * Get the failed-urls dataset with caching.
+ */
+function getFailedDataset(): Promise<Dataset> {
+    if (!failedDatasetPromise) {
+        failedDatasetPromise = Actor.openDataset('failed-urls');
+    }
+    return failedDatasetPromise;
+}
+
+/**
  * Registry of shipped CheerioCrawler handlers.
  * Handlers are added here after passing the SHIP gate.
  */
@@ -53,6 +80,7 @@ const CHEERIO_HANDLERS: Record<string, CheerioHandler> = {
 const PLAYWRIGHT_HANDLERS: Record<string, PlaywrightHandler> = {
     tiktok: tiktokHandler,
     google_maps: googleMapsHandler,
+    'google-maps': googleMapsHandler,
     google_business_profile: googleMapsHandler,
     pinterest: pinterestHandler,
     linkedin: linkedinHandler,
@@ -104,7 +132,7 @@ export function buildCheerioRouter(handlerContext: HandlerContext) {
                 const msg = error instanceof Error ? error.message : String(error);
                 log.error(`Handler failed: ${platform}`, { url: context.request.url, error: msg });
 
-                const failedDataset = await Actor.openDataset('failed-urls');
+                const failedDataset = await getFailedDataset();
                 await failedDataset.pushData({
                     platform,
                     url: context.request.url,
@@ -122,7 +150,7 @@ export function buildCheerioRouter(handlerContext: HandlerContext) {
             url: context.request.url,
         });
 
-        const failedDataset = await Actor.openDataset('failed-urls');
+        const failedDataset = await getFailedDataset();
         await failedDataset.pushData({
             platform,
             url: context.request.url,
@@ -153,11 +181,14 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                 // Capture screenshot for the native Playwright platform
                 let screenshotUrl = '';
                 try {
+                    // Phase 2: Wait for images and layouts to settle before screenshot
+                    await context.page.waitForTimeout(4000);
+                    
                     const screenshotKey = `screenshot_${context.request.id}.png`;
                     // Defensive screenshot - try fullPage but fallback to viewport if it hangs
                     let screenshotBuffer;
                     try {
-                        screenshotBuffer = await context.page.screenshot({ fullPage: true, timeout: 15000 });
+                        screenshotBuffer = await context.page.screenshot({ fullPage: true, timeout: 20000 });
                     } catch (e) {
                         log.warning(`Full-page screenshot failed for ${context.request.url}, capturing viewport instead.`);
                         screenshotBuffer = await context.page.screenshot({ fullPage: false });
@@ -166,11 +197,12 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                     await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
                     const storeId = Actor.getEnv().defaultKeyValueStoreId || 'default';
                     screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
-                } catch (screenshotError: any) {
-                    log.error(`Failed to capture screenshot for ${context.request.url}: ${screenshotError.message}`);
+                } catch (screenshotError: unknown) {
+                    const msg = screenshotError instanceof Error ? screenshotError.message : String(screenshotError);
+                    log.error(`Failed to capture screenshot for ${context.request.url}: ${msg}`);
                 }
 
-                const dataset = await Actor.openDataset();
+                const dataset = await getDefaultDataset();
 
                 for (const item of items) {
                     if (!handler.validate(item.data)) {
@@ -187,6 +219,17 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                     // Phase 2: High-Res Enrichment
                     const enrichedItem = await enrichItem(item);
                     await dataset.pushData(enrichedItem);
+                    
+                    // Finalize Issue Log if this item was blocked or has errors
+                    if (item.data.conversionMarkers && (item.data.conversionMarkers as string[]).some(m => m.includes('BLOCKED'))) {
+                        await reportIssue({
+                            platform,
+                            url: context.request.url,
+                            severity: 'CRITICAL',
+                            message: `Extraction finalized with BLOCKED status.`,
+                            screenshotUrl,
+                        });
+                    }
                 }
 
                 log.info(`Scraped ${items.length} items with screenshot and enrichment`, { platform, url: context.request.url });
@@ -194,7 +237,7 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                 const msg = error instanceof Error ? error.message : String(error);
                 log.error(`Handler failed: ${platform}`, { url: context.request.url, error: msg });
 
-                const failedDataset = await Actor.openDataset('failed-urls');
+                const failedDataset = await getFailedDataset();
                 await failedDataset.pushData({
                     platform,
                     url: context.request.url,
@@ -212,7 +255,7 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
             url: context.request.url,
         });
 
-        const failedDataset = await Actor.openDataset('failed-urls');
+        const failedDataset = await getFailedDataset();
         await failedDataset.pushData({
             platform,
             url: context.request.url,

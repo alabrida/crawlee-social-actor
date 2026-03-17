@@ -1,8 +1,10 @@
 import { chromium } from 'playwright';
-import twitterHandler from '../../src/handlers/twitter.ts';
+import twitterHandler from '../../src/handlers/twitter.js';
 import { log } from '../../src/utils/logger.js';
+import { injectCookies } from '../../src/utils/auth.js';
 import fs from 'fs';
 import path from 'path';
+import 'dotenv/config'; // Load .env
 
 async function runHardenSweep() {
     console.log('--- STARTING TWITTER/X HARDEN SWEEP ---');
@@ -31,6 +33,11 @@ async function runHardenSweep() {
         });
         const page = await context.newPage();
         
+        const tokenString = process.env.AUTH_TOKENS_X;
+        if (tokenString) {
+            await injectCookies(page, 'twitter', tokenString, url);
+        }
+
         const crawlingContext: any = {
             page,
             request: { url, userData: { platform: 'twitter' } },
@@ -48,11 +55,11 @@ async function runHardenSweep() {
 
         try {
             const results = await twitterHandler.handle(crawlingContext, handlerContext);
-            const data = results[0].data;
+            const data = results[0].data as any;
             const isValid = twitterHandler.validate(data);
             const isBlocked = twitterHandler.detectBlock(data.profileHtml);
             
-            resultEntry.success = isValid; // It's valid even if blocked, as long as it returns schema
+            resultEntry.success = isValid && !isBlocked;
             resultEntry.blocked = isBlocked;
             resultEntry.links = data.revenueIndicators.links.length;
             resultEntry.markers = data.revenueIndicators.conversionMarkers.length;
@@ -61,6 +68,12 @@ async function runHardenSweep() {
             console.log(`  - Blocked (Login Wall): ${resultEntry.blocked}`);
             console.log(`  - Links: ${resultEntry.links}`);
             console.log(`  - Markers: ${resultEntry.markers}`);
+
+            if (isBlocked) {
+                const screenshotPath = `results/debug-twitter-block-${Date.now()}.png`;
+                await page.screenshot({ path: screenshotPath });
+                console.log(`  - [DEBUG] Block screenshot saved to ${screenshotPath}`);
+            }
 
         } catch (e: any) {
             console.error(`  - FAILED: ${e.message}`);

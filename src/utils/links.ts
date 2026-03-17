@@ -56,8 +56,9 @@ export async function auditLink(url: string): Promise<LinkAudit> {
         audit.isOptimized = audit.trackingParams.length > 0 || audit.isLinkTree;
 
         log.debug(`[Link-Strategist] Audited link: ${url} -> ${response.url}`);
-    } catch (e: any) {
-        log.warning(`[Link-Strategist] Link audit failed for: ${url}`, { error: e.message });
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log.warning(`[Link-Strategist] Link audit failed for: ${url}`, { error: msg });
     }
 
     return audit;

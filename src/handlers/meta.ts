@@ -1,6 +1,7 @@
 import type { PlaywrightCrawlingContext } from 'crawlee';
 import { blockResources } from '../utils/resources.js';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+import { reportIssue } from '../utils/issue-log.js';
 
 /**
  * Handle Meta (Facebook/Instagram) URLs.
@@ -17,17 +18,53 @@ export async function handle(
 
     log.info(`[Meta] Extracting ${platform}: ${request.url}`);
 
-    // G-COST-02: Block heavy resources
-    await blockResources(page, ['image', 'media', 'font']);
+    // G-COST-02: Block heavy resources (Excluding image for high-res screenshots)
+    await blockResources(page, ['media', 'font'], ['image']);
 
     await page.goto(request.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    
+    // Wait for hydration and dynamic content
+    try {
+        await page.waitForFunction(() => document.body.innerText.length > 1000, { timeout: 15000 });
+    } catch (e) {
+        log.debug(`[Meta] Hydration wait timed out or body insufficient for ${request.url}`);
+    }
 
+    // Dismiss potential login overlays/dialogs that block screenshots
+    try {
+        const dismissSelectors = [
+            '[role="dialog"] [aria-label="Close"]',
+            '[role="dialog"] [aria-label="Not Now"]',
+            'div[role="dialog"] button:has-text("Not Now")',
+            'div[role="dialog"] i.x10l6tqk' // Common close 'X' icon on IG
+        ];
+        for (const selector of dismissSelectors) {
+            const btn = page.locator(selector).first();
+            if (await btn.isVisible({ timeout: 2000 })) {
+                log.info(`[Meta] Dismissing login overlay: ${selector}`);
+                await btn.click();
+                await page.waitForTimeout(1000);
+            }
+        }
+    } catch (e) {
+        // Ignore errors if selectors aren't found
+    }
+    
+    // Final wait to ensure animations/splash screens clear and images settle
+    await page.waitForTimeout(4000);
+    
     // Detect if we are still on the login wall
     const content = await page.content();
     const isBlocked = detectBlock(content);
     
     if (isBlocked) {
         log.warning(`[Meta] Potential ${platform} block or login wall detected after navigation.`);
+        await reportIssue({
+            platform,
+            url: request.url,
+            severity: 'CRITICAL',
+            message: 'Login wall or anti-bot checkpoint detected after hydration.',
+        });
     }
 
     const links: string[] = [];
@@ -124,7 +161,21 @@ export function validate(data: Record<string, unknown>): boolean {
  */
 export function detectBlock(responseBody: string): boolean {
     const lower = responseBody.toLowerCase();
-    return lower.includes('login') || lower.includes('log in') || lower.includes('checkpoint');
+    
+    // CONTENT-FIRST: If we see clear profile indicators, it's NOT blocked.
+    const hasProfileIndicators = lower.includes('followers') || 
+                                lower.includes('following') || 
+                                lower.includes('posts') ||
+                                lower.includes('about') ||
+                                lower.includes('photos');
+    
+    if (hasProfileIndicators) return false;
+
+    // Explicit login walls or anti-bot checkpoints
+    return lower.includes('login_form') || 
+           lower.includes('ident_login') ||
+           lower.includes('checkpoint') || 
+           (lower.includes('instagram.com/accounts/login') && !lower.includes('content-type="profile"'));
 }
 
 const metaHandler: PlaywrightHandler = {

@@ -15,13 +15,20 @@ const BLOCKED_RESOURCE_TYPES = ['image', 'media', 'font'] as const;
  * Must be called on every Playwright page before navigation.
  * @param page - The Playwright Page instance to configure.
  * @param additionalTypes - Optional additional resource types to block.
+ * @param exclusions - Optional resource types to EXCLUDE from the default block list (e.g., ['image']).
  * @returns Promise that resolves when route interception is configured.
  */
 export async function blockResources(
     page: Page,
     additionalTypes: string[] = [],
+    exclusions: string[] = [],
 ): Promise<void> {
     const blockedTypes = new Set([...BLOCKED_RESOURCE_TYPES, ...additionalTypes]);
+    
+    // Remove exclusions from the final blocked set
+    for (const type of exclusions) {
+        blockedTypes.delete(type as any);
+    }
 
     await page.route('**/*', (route) => {
         const resourceType = route.request().resourceType();

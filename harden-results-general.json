@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://www.yelp.com/",
+    "success": false,
+    "blocked": true,
+    "errors": [],
+    "ctas": 0,
+    "htmlLength": 682119
+  },
+  {
+    "url": "https://www.glassdoor.com/",
+    "success": false,
+    "blocked": true,
+    "errors": [],
+    "ctas": 0,
+    "htmlLength": 668735
+  },
+  {
+    "url": "https://www.fiverr.com/",
+    "success": false,
+    "blocked": true,
+    "errors": [],
+    "ctas": 0,
+    "htmlLength": 37096
+  }
+]

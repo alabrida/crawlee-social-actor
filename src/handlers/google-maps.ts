@@ -8,6 +8,7 @@
 import type { PlaywrightCrawlingContext } from 'crawlee';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 import { blockResources } from '../utils/resources.js';
+import { reportIssue } from '../utils/issue-log.js';
 
 /**
  * Handles Google Maps profile extraction.
@@ -21,8 +22,8 @@ export async function handle(
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
 
-    // G-COST-02: Block heavy resources to save residential proxy bandwidth
-    await blockResources(page, ['image', 'media', 'font', 'stylesheet']);
+    // G-COST-02: Block heavy resources (Excluding image for high-res screenshots)
+    await blockResources(page, ['media', 'font', 'stylesheet'], ['image']);
 
     log.info(`[Google Maps] Extracting data from: ${request.url}`);
 
@@ -199,6 +200,12 @@ export async function handle(
 
     if (links.length === 0 && ctas.length === 0 && conversionMarkers.length === 0) {
         log.warning(`[Google Maps] Extracted zero revenue indicators. Check selectors for layout shifts.`, { url: request.url });
+        await reportIssue({
+            platform: 'google_maps',
+            url: request.url,
+            severity: 'WARNING',
+            message: 'Extracted zero revenue indicators. Potential selector shift or empty profile.',
+        });
     }
 
     return [scrapedItem];

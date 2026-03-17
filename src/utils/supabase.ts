@@ -33,8 +33,9 @@ export async function upsertAssessment(data: any, url: string, key: string) {
 
         log.info(`[Supabase] Successfully upserted assessment row.`);
         return { success: true };
-    } catch (e: any) {
-        log.error(`[Supabase] Critical error during upsert: ${e.message}`);
-        return { success: false, error: e.message };
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log.error(`[Supabase] Critical error during upsert: ${msg}`);
+        return { success: false, error: msg };
     }
 }
