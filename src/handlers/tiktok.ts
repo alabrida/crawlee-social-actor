@@ -7,6 +7,7 @@
 
 import type { PlaywrightCrawlingContext } from 'crawlee';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+import { blockResources } from '../utils/resources.js';
 
 /**
  * Handle a TikTok URL by rendering the page in a browser and extracting the DOM.
@@ -19,6 +20,7 @@ async function handle(
     const url = request.url;
 
     log.info(`[TikTok] Extracting data from: ${url}`);
+    await blockResources(page);
 
     // Wait for the profile content to load
     await page.waitForTimeout(5000); 

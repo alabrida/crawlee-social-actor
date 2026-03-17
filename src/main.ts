@@ -10,12 +10,12 @@ import { CheerioCrawler, PlaywrightCrawler, RequestQueue } from 'crawlee';
 import { createHash } from 'crypto';
 import { log } from './utils/logger.js';
 import { createProxyConfig } from './utils/proxy.js';
-import { blockResources } from './utils/resources.js';
 import { getRandomUserAgent } from './utils/ua-rotation.js';
 import { buildCheerioRouter, buildPlaywrightRouter } from './routes.js';
 import { getBlankAssessmentRow } from './utils/schema-mapper.js';
 import { upsertAssessment } from './utils/supabase.js';
 import { FEATURES } from './utils/mode-gate.js';
+import { injectCookies } from './utils/auth.js';
 import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
 import { PLATFORM_CRAWLER_MAP } from './types.js';
 
@@ -31,6 +31,15 @@ async function main(): Promise<void> {
     if (!input) {
         throw new Error('Actor input is required.');
     }
+
+    // --- PHASE 2: Cookie Injection from Environment (Local Dev Helper) ---
+    // Merge tokens from .env if not provided in input
+    input.authTokens = {
+        linkedin: input.authTokens?.linkedin || process.env.AUTH_TOKENS_LINKEDIN,
+        facebook: input.authTokens?.facebook || process.env.AUTH_TOKENS_FACEBOOK,
+        instagram: input.authTokens?.instagram || process.env.AUTH_TOKENS_INSTAGRAM,
+        twitter: input.authTokens?.twitter || process.env.AUTH_TOKENS_X,
+    };
 
     const handlerContext: HandlerContext = { input };
     const proxyConfiguration = await createProxyConfig(input.proxy);
@@ -204,34 +213,13 @@ async function main(): Promise<void> {
         },
         preNavigationHooks: [
             async ({ page, request }) => {
-                // For screenshots, we don't want to block images
-                if (request.label !== 'screenshot-collector') {
-                    await blockResources(page);
-                }
+                // Resource blocking is now handled selectively within each platform handler
+                // to allow for high-res screenshots where needed.
                 
                 const platform = request.userData.platform as Platform;
                 if (input.authTokens && (input.authTokens as any)[platform]) {
                     const tokenString = (input.authTokens as any)[platform];
-                    const urlObj = new URL(request.url);
-                    const domain = '.' + urlObj.hostname.replace('www.', '');
-                    
-                    const cookies = tokenString.split(';')
-                        .map((c: string) => c.trim())
-                        .filter((c: string) => c)
-                        .map((c: string) => {
-                            const [name, ...rest] = c.split('=');
-                            return {
-                                name,
-                                value: rest.join('='),
-                                domain,
-                                path: '/'
-                            };
-                        });
-                    
-                    if (cookies.length > 0) {
-                        log.info(`Injecting ${cookies.length} auth cookies for ${platform}`);
-                        await page.context().addCookies(cookies);
-                    }
+                    await injectCookies(page, platform, tokenString, request.url);
                 }
             },
         ],

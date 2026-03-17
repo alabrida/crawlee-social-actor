@@ -16,6 +16,7 @@ import type {
     PlaywrightHandler,
     ScrapedItem,
 } from './types.js';
+import { reportIssue } from './utils/issue-log.js';
 
 // --- Handler imports ---
 // Handlers are imported and registered after passing the SHIP gate.
@@ -53,6 +54,7 @@ const CHEERIO_HANDLERS: Record<string, CheerioHandler> = {
 const PLAYWRIGHT_HANDLERS: Record<string, PlaywrightHandler> = {
     tiktok: tiktokHandler,
     google_maps: googleMapsHandler,
+    'google-maps': googleMapsHandler,
     google_business_profile: googleMapsHandler,
     pinterest: pinterestHandler,
     linkedin: linkedinHandler,
@@ -153,11 +155,14 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                 // Capture screenshot for the native Playwright platform
                 let screenshotUrl = '';
                 try {
+                    // Phase 2: Wait for images and layouts to settle before screenshot
+                    await context.page.waitForTimeout(4000);
+                    
                     const screenshotKey = `screenshot_${context.request.id}.png`;
                     // Defensive screenshot - try fullPage but fallback to viewport if it hangs
                     let screenshotBuffer;
                     try {
-                        screenshotBuffer = await context.page.screenshot({ fullPage: true, timeout: 15000 });
+                        screenshotBuffer = await context.page.screenshot({ fullPage: true, timeout: 20000 });
                     } catch (e) {
                         log.warning(`Full-page screenshot failed for ${context.request.url}, capturing viewport instead.`);
                         screenshotBuffer = await context.page.screenshot({ fullPage: false });
@@ -187,6 +192,17 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                     // Phase 2: High-Res Enrichment
                     const enrichedItem = await enrichItem(item);
                     await dataset.pushData(enrichedItem);
+                    
+                    // Finalize Issue Log if this item was blocked or has errors
+                    if (item.data.conversionMarkers && (item.data.conversionMarkers as string[]).some(m => m.includes('BLOCKED'))) {
+                        await reportIssue({
+                            platform,
+                            url: context.request.url,
+                            severity: 'CRITICAL',
+                            message: `Extraction finalized with BLOCKED status.`,
+                            screenshotUrl,
+                        });
+                    }
                 }
 
                 log.info(`Scraped ${items.length} items with screenshot and enrichment`, { platform, url: context.request.url });

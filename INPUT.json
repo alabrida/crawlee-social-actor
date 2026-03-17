@@ -1,18 +1,11 @@
 {
-  "platforms": ["reddit"],
+  "platforms": ["facebook", "instagram", "twitter", "google-maps", "reddit"],
   "urls": [
-    { "platform": "reddit", "url": "https://www.reddit.com/user/GallowBoob" },
-    { "platform": "reddit", "url": "https://www.reddit.com/user/spez" },
-    { "platform": "reddit", "url": "https://www.reddit.com/user/Poem_for_your_sprog" },
-    { "platform": "reddit", "url": "https://www.reddit.com/user/shittymorph" },
-    { "platform": "reddit", "url": "https://www.reddit.com/user/thisuserdefinitelydoesnotexist99999" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/technology" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/entrepreneur" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/smallbusiness" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/SideProject" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/Futurology" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/thissubredditdefinitelydoesnotexist99" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/AskReddit" }
+    { "platform": "facebook", "url": "https://www.facebook.com/Nike/" },
+    { "platform": "instagram", "url": "https://www.instagram.com/nike/" },
+    { "platform": "twitter", "url": "https://x.com/elonmusk" },
+    { "platform": "google-maps", "url": "https://www.google.com/maps/place/Eiffel+Tower/" },
+    { "platform": "reddit", "url": "https://www.reddit.com/user/GallowBoob" }
   ],
   "proxy": {
     "useApifyProxy": true,

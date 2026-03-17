@@ -1,8 +1,10 @@
 import { chromium } from 'playwright';
 import metaHandler from '../../src/handlers/meta.js';
 import { log } from '../../src/utils/logger.js';
+import { injectCookies } from '../../src/utils/auth.js';
 import fs from 'fs';
 import path from 'path';
+import 'dotenv/config'; // Load .env
 
 async function runHardenSweep() {
     console.log('--- STARTING META (FB/IG) HARDEN SWEEP ---');
@@ -39,6 +41,13 @@ async function runHardenSweep() {
         });
         const page = await context.newPage();
         
+        const platform = url.includes('facebook') ? 'facebook' : 'instagram' as any;
+        const tokenString = platform === 'facebook' ? process.env.AUTH_TOKENS_FACEBOOK : process.env.AUTH_TOKENS_INSTAGRAM;
+        
+        if (tokenString) {
+            await injectCookies(page, platform, tokenString, url);
+        }
+
         const crawlingContext: any = {
             page,
             request: { url, userData: { platform: url.includes('facebook') ? 'facebook' : 'instagram' } },
@@ -56,7 +65,7 @@ async function runHardenSweep() {
 
         try {
             const results = await metaHandler.handle(crawlingContext, handlerContext);
-            const data = results[0].data;
+            const data = results[0].data as any;
             const isValid = metaHandler.validate(data);
             const isBlocked = metaHandler.detectBlock(data.profileHtml);
             
@@ -71,6 +80,9 @@ async function runHardenSweep() {
             console.log(`  - Markers: ${resultEntry.markers}`);
 
             if (isBlocked) {
+                const screenshotPath = `results/debug-meta-block-${Date.now()}.png`;
+                await page.screenshot({ path: screenshotPath });
+                console.log(`  - [DEBUG] Block screenshot saved to ${screenshotPath}`);
                 console.log('  - [DEBUG] Block detected in content.');
             }
         } catch (e: any) {
