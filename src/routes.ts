@@ -171,8 +171,9 @@ export function buildPlaywrightRouter(handlerContext: HandlerContext) {
                     await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
                     const storeId = Actor.getEnv().defaultKeyValueStoreId || 'default';
                     screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
-                } catch (screenshotError: any) {
-                    log.error(`Failed to capture screenshot for ${context.request.url}: ${screenshotError.message}`);
+                } catch (screenshotError: unknown) {
+                    const msg = screenshotError instanceof Error ? screenshotError.message : String(screenshotError);
+                    log.error(`Failed to capture screenshot for ${context.request.url}: ${msg}`);
                 }
 
                 const dataset = await Actor.openDataset();

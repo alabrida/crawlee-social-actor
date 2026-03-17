@@ -176,15 +176,16 @@ async function main(): Promise<void> {
             const dataset = await Actor.openDataset();
             await dataset.pushData(finalItem);
             pwLog.info(`Finalized item with screenshot for: ${originalUrl}`);
-        } catch (e: any) {
-            pwLog.error(`[Screenshot Collector] Failed for ${originalUrl}: ${e.message}`);
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            pwLog.error(`[Screenshot Collector] Failed for ${originalUrl}: ${msg}`);
             // Fallback: try to push data even without screenshot
             const cheerioResult = await Actor.getValue<any>(dataKey);
             if (cheerioResult) {
                 const dataset = await Actor.openDataset();
                 await dataset.pushData({
                     ...cheerioResult,
-                    errors: [...(cheerioResult.errors || []), `Screenshot failed: ${e.message}`]
+                    errors: [...(cheerioResult.errors || []), `Screenshot failed: ${msg}`]
                 });
             }
         }

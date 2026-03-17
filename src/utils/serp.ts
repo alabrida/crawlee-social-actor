@@ -49,8 +49,9 @@ export async function fetchSerpApi(query: string, apiKey: string): Promise<SerpD
 
         const data = await response.json() as SerpData;
         return data;
-    } catch (e: any) {
-        log.error(`[SerpApi] Error fetching search results`, { error: e.message });
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        log.error(`[SerpApi] Error fetching search results`, { error: msg });
         return null;
     }
 }
