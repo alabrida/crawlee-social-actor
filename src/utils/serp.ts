@@ -5,6 +5,7 @@
  */
 
 import { log } from './logger.js';
+import { sanitizeQuery } from './validation.js';
 
 export interface OrganicResult {
     position: number;
@@ -30,15 +31,16 @@ export interface SerpData {
  * @returns Parsed SERP data.
  */
 export async function fetchSerpApi(query: string, apiKey: string): Promise<SerpData | null> {
+    const sanitizedQuery = sanitizeQuery(query);
     const params = new URLSearchParams({
         engine: 'google',
-        q: query,
+        q: sanitizedQuery,
         api_key: apiKey,
         num: '10', // Top 10 results for ranking position
     });
 
     const url = `https://serpapi.com/search?${params.toString()}`;
-    log.info(`[SerpApi] Fetching results for: "${query}"`);
+    log.info(`[SerpApi] Fetching results for: "${sanitizedQuery}"`);
 
     try {
         const response = await fetch(url);
