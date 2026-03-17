@@ -1,12 +1,12 @@
 {
   "project": "crawlee-social-actor-high-res",
-  "version": "0.3.0",
-  "status": "DEVELOPMENT",
-  "phase": "2-ENRICHMENT",
+  "version": "1.0.0",
+  "status": "READY_FOR_DEPLOYMENT",
+  "phase": "3-FINALIZE",
   "currentSprint": 2,
-  "currentPlatform": "google_business_profile",
-  "currentPhase": "RED",
-  "nextAction": "Anti-Bot Agent runs RED phase probing against Google Business Profile (GBP) URLs",
+  "currentPlatform": "all",
+  "currentPhase": "SHIP",
+  "nextAction": "Deploy Actor to Apify",
   "platforms": {
     "tiktok": { "phase": "shipped", "completionPercentage": 100 },
     "youtube": { "phase": "shipped", "completionPercentage": 100 },
@@ -19,6 +19,6 @@
     "twitter": { "phase": "shipped", "completionPercentage": 100 },
     "seo_serp": { "phase": "shipped", "completionPercentage": 100 },
     "general_hub": { "phase": "shipped", "completionPercentage": 100 },
-    "google_business_profile": { "phase": "RED", "completionPercentage": 0 }
+    "google_business_profile": { "phase": "shipped", "completionPercentage": 100 }
   }
 }

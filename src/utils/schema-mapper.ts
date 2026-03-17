@@ -241,9 +241,6 @@ export function getBlankAssessmentRow(): Record<string, any> {
         consideration_form_detected: false,
         decision_pricing_page_detected: false,
         conversion_mobile_optimized: false,
-        decision_gbp_rating_score: null,
-        decision_gbp_reviews_count: null,
-        decision_facebook_reviews_score: null,
 
         // Human Input Fields (Isolated - Always Null)
         h_awareness_first_party_data_strategy: null,

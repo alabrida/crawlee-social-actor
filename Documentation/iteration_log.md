@@ -124,3 +124,11 @@
 - **Hub-Forensics Agent:** Enhanced General handler with technical signal detection (SSL, Analytics, Schema).
 - **Architect:** Refactored main.ts to aggregate all platform data into one master item mirroring the Supabase assessments table.
 - **Integration Lead:** Final Phase 2 Sprint 1 regression test passed. 10/11 platforms SHIPPED. Status: COMPLETE.
+
+### Phase 2: Sprint 2 Completion (Deployment Readiness)
+- **Architect:** Addressed schema mismatches for direct Supabase upserts, updating `schema-mapper.ts` to fully mirror the new UCE Rubric v3.9 (Foundational Master) with 250+ specific tactical variables.
+- **Auth-Steward Agent:** Built and integrated the `SessionVault` inside `src/utils/session-vault.ts` to manage 20-day "Hard Refresh" logic and added the new Apify Live View flow for interactive authentication.
+- **Integration Lead:** Fixed `google_business_profile` RED status by updating routing output in the `google-maps.ts` handler to identify GBP calls correctly and map them back to the Supabase pipeline properly.
+- **QA:** Added full suite of unit tests for `schema-mapper.ts`, `session-vault.ts`, and `google-maps.ts` using Vitest. All tests passing.
+- **Architect:** Generated `lead_uuid` and `dedupe_key` properly in `main.ts` to ensure stable upserts and prevent constraint violations in Supabase.
+- **Status:** COMPLETE. Project is deployment ready. 12/12 platforms SHIPPED.

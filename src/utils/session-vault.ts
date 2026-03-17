@@ -87,7 +87,7 @@ export class SessionVault {
         const proxyConfiguration = await createProxyConfig(proxyConfig);
 
         // As per memory, use default unnamed request queue for login
-        const requestQueue = await RequestQueue.open();
+        const requestQueue = await RequestQueue.open('AUTH_SETUP_QUEUE');
 
         // Add auth-wall URLs to queue
         await requestQueue.addRequests([
@@ -116,7 +116,8 @@ export class SessionVault {
                 // Allow user 3 minutes per platform to login
                 await page.waitForTimeout(180000);
 
-                const cookies = await page.context().cookies();
+                // Only get cookies for the specific platform's domain to avoid mixing tokens
+                const cookies = await page.context().cookies([request.url]);
 
                 // Convert cookies back to a token string for simple storage
                 const tokenString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
