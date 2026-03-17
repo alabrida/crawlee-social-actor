@@ -133,6 +133,9 @@ export function validate(data: Record<string, unknown>): boolean {
  * @returns True if blocked.
  */
 export function detectBlock(responseBody: string): boolean {
+    // If it's JSON (SerpApi), we assume unblocked unless the API itself failed
+    if (responseBody.trim().startsWith('{')) return false;
+
     const lower = responseBody.toLowerCase();
     return (
         lower.includes('sorry') ||

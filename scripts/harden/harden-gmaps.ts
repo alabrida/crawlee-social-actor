@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
-import googleMapsHandler from '../src/handlers/google-maps.js';
-import { log } from '../src/utils/logger.js';
+import googleMapsHandler from '../../src/handlers/google-maps.js';
+import { log } from '../../src/utils/logger.js';
 import fs from 'fs';
 
 const testUrls = [

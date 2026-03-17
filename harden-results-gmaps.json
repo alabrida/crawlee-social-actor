@@ -1,0 +1,137 @@
+{
+  "timestamp": "2026-03-17T12:31:21.631Z",
+  "total": 10,
+  "success": 10,
+  "rate": "100%",
+  "results": [
+    {
+      "url": "https://www.google.com/maps/search/Eiffel+Tower/",
+      "status": "PASS",
+      "markers": [
+        "Title: Eiffel Tower",
+        "Category: Historical landmark",
+        "Address: Av. Gustave Eiffel, 75007 Paris, France",
+        "Signal: Has Photos",
+        "Rating: 4.7",
+        "Reviews: 5,605"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/Empire+State+Building/",
+      "status": "PASS",
+      "markers": [
+        "Title: Empire State Building",
+        "Category: Historical landmark",
+        "Address: 20 W 34th St., New York, NY 10001",
+        "Signal: Has Photos",
+        "Rating: 4.7",
+        "Reviews: 2,260"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/Sydney+Opera+House/",
+      "status": "PASS",
+      "markers": [
+        "Title: Sydney Opera House",
+        "Category: Performing arts theater",
+        "Phone: +61 1300 764 849",
+        "Phone: Copy phone number",
+        "Address: Bennelong Point, Sydney NSW 2000, Australia",
+        "Signal: Has Photos",
+        "Rating: 4.8",
+        "Reviews: 12,400"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/Colosseum/",
+      "status": "PASS",
+      "markers": [
+        "Title: Colosseum",
+        "Category: Historical landmark",
+        "Phone: +39 06 2111 5843",
+        "Phone: Copy phone number",
+        "Address: P.za del Colosseo, 1, 00184 Roma RM, Italy",
+        "Signal: Has Photos",
+        "Rating: 4.8"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/Statue+of+Liberty/",
+      "status": "PASS",
+      "markers": [
+        "Title: Statue of Liberty",
+        "Category: Historical landmark",
+        "Phone: (212) 363-3200",
+        "Phone: Copy phone number",
+        "Address: New York, NY 10004",
+        "Signal: Has Photos",
+        "Rating: 4.7",
+        "Reviews: 2,271"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/Burj+Khalifa/",
+      "status": "PASS",
+      "markers": [
+        "Title: Burj Khalifa",
+        "Category: Landmark",
+        "Phone: +971 4 888 8888",
+        "Phone: Copy phone number",
+        "Address: 1 Sheikh Mohammed bin Rashid Blvd - Burj Khalifa - Downtown Dubai - Dubai - United Arab Emirates",
+        "Signal: Has Photos",
+        "Rating: 4.7",
+        "Reviews: 138,396"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/Machu+Picchu/",
+      "status": "PASS",
+      "markers": [
+        "Title: Historic Sanctuary of Machu Picchu",
+        "Category: Historical place",
+        "Phone: +51 84 582030",
+        "Phone: Copy phone number",
+        "Address: 08680, Peru",
+        "Signal: Has Photos",
+        "Rating: 4.8",
+        "Reviews: 264"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/Taj+Mahal/",
+      "status": "PASS",
+      "markers": [
+        "Title: Results",
+        "Rating: 4.6"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/The+British+Museum/",
+      "status": "PASS",
+      "markers": [
+        "Title: The British Museum",
+        "Category: Museum",
+        "Phone: +44 20 7323 8000",
+        "Phone: Copy phone number",
+        "Address: Great Russell St, London WC1B 3DG, United Kingdom",
+        "Signal: Has Photos",
+        "Rating: 4.7",
+        "Reviews: 564"
+      ]
+    },
+    {
+      "url": "https://www.google.com/maps/search/Louvre+Museum/",
+      "status": "PASS",
+      "markers": [
+        "Title: Louvre Museum",
+        "Category: Art museum",
+        "Phone: +33 1 40 20 53 17",
+        "Phone: Copy phone number",
+        "Address: 75001 Paris, France",
+        "Signal: Has Photos",
+        "Rating: 4.7",
+        "Reviews: 1,654"
+      ]
+    }
+  ]
+}

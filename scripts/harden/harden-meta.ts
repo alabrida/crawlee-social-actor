@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
-import metaHandler from '../src/handlers/meta.js';
-import { log } from '../src/utils/logger.js';
+import metaHandler from '../../src/handlers/meta.js';
+import { log } from '../../src/utils/logger.js';
 import fs from 'fs';
 import path from 'path';
 

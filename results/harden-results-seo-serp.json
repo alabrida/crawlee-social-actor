@@ -1,0 +1,100 @@
+[
+  {
+    "url": "https://www.google.com/search?q=Apify",
+    "success": true,
+    "blocked": false,
+    "errors": [],
+    "links": [
+      "https://apify.com/",
+      "https://github.com/apify",
+      "https://www.linkedin.com/company/apify",
+      "https://www.youtube.com/apify",
+      "https://x.com/apify"
+    ],
+    "markers": 5
+  },
+  {
+    "url": "https://www.google.com/search?q=Crawlee",
+    "success": true,
+    "blocked": false,
+    "errors": [],
+    "links": [
+      "https://crawlee.dev/",
+      "https://github.com/apify/crawlee",
+      "https://crawlee.dev/js",
+      "https://crawlee.dev/python/",
+      "https://www.reddit.com/r/webscraping/comments/1cl9o3y/why_shouldnt_i_use_crawlee/",
+      "https://pypi.org/project/crawlee/",
+      "https://crawlee.dev/js/docs/quick-start",
+      "https://docs.apify.com/sdk/python/docs/guides/crawlee"
+    ],
+    "markers": 8
+  },
+  {
+    "url": "https://www.google.com/search?q=Supabase",
+    "success": true,
+    "blocked": false,
+    "errors": [],
+    "links": [
+      "https://supabase.com/",
+      "https://github.com/supabase/supabase",
+      "https://www.reddit.com/r/Supabase/comments/18lvcrf/supabase_seems_too_good_to_be_true_someone/",
+      "https://www.linkedin.com/company/supabase",
+      "https://x.com/supabase"
+    ],
+    "markers": 5
+  },
+  {
+    "url": "https://www.google.com/search?q=Playwright+Browser",
+    "success": true,
+    "blocked": false,
+    "errors": [],
+    "links": [
+      "https://playwright.dev/docs/browsers",
+      "https://playwright.dev/",
+      "https://playwright.dev/docs/api/class-browser",
+      "https://github.com/microsoft/playwright",
+      "https://www.opcito.com/blogs/how-to-set-up-playwright-for-end-to-end-browser-automation",
+      "https://playwright.dev/docs/intro",
+      "https://modern-web.dev/docs/test-runner/browser-launchers/playwright/"
+    ],
+    "markers": 7
+  },
+  {
+    "url": "https://www.google.com/search?q=Social+Media+Scraper",
+    "success": true,
+    "blocked": false,
+    "errors": [],
+    "links": [
+      "https://brightdata.com/products/web-scraper/social-media-scrape",
+      "https://aimultiple.com/social-media-scraping",
+      "https://www.reddit.com/r/webscraping/comments/w5fibb/social_media_scraping/",
+      "https://www.zyte.com/data-types/social-media-scraper/",
+      "https://guides.lib.utexas.edu/web-scrapping/scraping-social-media",
+      "https://profilespider.com/blog/best-social-media-scrapers",
+      "https://chromewebstore.google.com/detail/social-media-scraper-tool/fehkebbnpbhmimkchacifhkmphifacog",
+      "https://www.octoparse.com/template/categories/social-media",
+      "https://proxyway.com/best/social-media-scrapers"
+    ],
+    "markers": 9
+  },
+  {
+    "url": "https://www.google.com/search?q=Revenue+Journey+Audit",
+    "success": true,
+    "blocked": false,
+    "errors": [],
+    "links": [
+      "https://deliberatedirections.com/customer-journey-audit-find-revenue-leaks/",
+      "https://www.rivethealth.com/blog/how-to-perform-a-revenue-cycle-audit",
+      "https://mcbeeassociates.com/insights/blog/comprehensive-internal-audits-achieving-revenue-cycle-compliance/",
+      "https://www.youtube.com/watch?v=Lky7-DyyMyM",
+      "https://storybrand.com/the-revenue-story-audit/",
+      "https://claimocity.com/revenue-cycle-audits-a-complete-guide/",
+      "https://www.rightrev.com/revenue-audit-guide/",
+      "https://www.linkedin.com/posts/taiwo-ade-jones-a36409ba_the-customer-journey-audit-that-saved-this-activity-7363518485710127108-5DUG",
+      "https://mdaudit.com/news/revenue-cycle-auditing-software-the-hidden-key-to-cost-savings/",
+      "https://www.deloitte.com/us/en/services/consulting/services/revenue-recognition.html"
+    ],
+    "markers": 10
+  }
+]

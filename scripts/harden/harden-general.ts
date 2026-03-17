@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
-import generalHandler from '../src/handlers/general.js';
-import { log } from '../src/utils/logger.js';
+import generalHandler from '../../src/handlers/general.js';
+import { log } from '../../src/utils/logger.js';
 import fs from 'fs';
 import path from 'path';
 

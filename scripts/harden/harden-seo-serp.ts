@@ -109,11 +109,11 @@ async function runHardenSweep() {
     const estimatedCU = (durationSec / 30) * 0.1;
     console.log(`Estimated CU Consumption: ${estimatedCU.toFixed(4)} CU`);
 
-    await browser.close();
-    await Actor.exit();
-    
     fs.writeFileSync('results/harden-results-seo-serp.json', JSON.stringify(resultsSummary, null, 2));
     console.log('\nResults saved to results/harden-results-seo-serp.json');
+
+    await browser.close();
+    await Actor.exit();
 }
 
 runHardenSweep().catch(err => {
