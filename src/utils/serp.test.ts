@@ -47,8 +47,9 @@ describe('fetchSerpApi', () => {
         await fetchSerpApi(query, apiKey);
 
         const expectedQuery = 'search query';
+        // URLSearchParams translates spaces to '+'
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(`q=${encodeURIComponent(expectedQuery)}`)
+            expect.stringContaining(`q=${expectedQuery.replace(' ', '+')}`)
         );
         expect(global.fetch).toHaveBeenCalledWith(
             expect.stringContaining(`api_key=${apiKey}`)

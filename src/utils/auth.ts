@@ -14,27 +14,36 @@ export async function injectCookies(
     page: Page,
     platform: Platform,
     tokenString: string,
-    url: string
+    _url: string
 ): Promise<void> {
     if (!tokenString) return;
 
     try {
-        const urlObj = new URL(url);
-        // Determine base domain (e.g., .linkedin.com, .instagram.com)
-        const hostname = urlObj.hostname;
-        const hostParts = hostname.split('.');
-        let domain: string;
+        // Strict mapping of platform to allowed domains to prevent cookie leakage
+        // to arbitrary domains requested by malicious users.
+        const platformDomains: Partial<Record<Platform, string[]>> = {
+            linkedin: ['.linkedin.com'],
+            facebook: ['.facebook.com'],
+            instagram: ['.instagram.com'],
+            twitter: ['.twitter.com', '.x.com'],
+            tiktok: ['.tiktok.com'],
+            youtube: ['.youtube.com'],
+            pinterest: ['.pinterest.com'],
+            reddit: ['.reddit.com'],
+            google_maps: ['.google.com'],
+            google_business_profile: ['.google.com'],
+        };
 
-        if (hostParts.length >= 2) {
-            // For standard domains, use the last two parts with a leading dot
-            // This works for instagram.com, facebook.com, twitter.com, linkedin.com
-            // Note: This is a simplified approach; in production, one might use a TLD list.
-            domain = `.${hostParts[hostParts.length - 2]}.${hostParts[hostParts.length - 1]}`;
-        } else {
-            domain = hostname;
+        const allowedDomains = platformDomains[platform];
+
+        if (!allowedDomains || allowedDomains.length === 0) {
+            log.warning(`[Auth] No strict domain mapping found for platform: ${platform}. Skipping cookie injection.`);
+            return;
         }
 
-        const cookies = tokenString.split(';')
+        const cookiesToInject: any[] = [];
+
+        const parsedCookies = tokenString.split(';')
             .map((c: string) => c.trim())
             .filter((c: string) => c)
             .map((c: string) => {
@@ -42,19 +51,26 @@ export async function injectCookies(
                 if (sepIndex === -1) return null;
                 const name = c.substring(0, sepIndex);
                 const value = c.substring(sepIndex + 1);
-                return {
-                    name,
-                    value,
-                    domain,
-                    path: '/'
-                };
+                return { name, value, path: '/' };
             })
             .filter((c: any): c is any => c !== null);
 
-        if (cookies.length > 0) {
-            console.log(`[DEBUG] Injecting ${cookies.length} cookies for ${platform} onto domain ${domain}`);
-            log.info(`Injecting ${cookies.length} auth cookies for ${platform}`);
-            await page.context().addCookies(cookies);
+        // Inject the cookies for all mapped domains associated with the platform
+        for (const domain of allowedDomains) {
+            for (const c of parsedCookies) {
+                cookiesToInject.push({
+                    name: c.name,
+                    value: c.value,
+                    domain,
+                    path: c.path
+                });
+            }
+        }
+
+        if (cookiesToInject.length > 0) {
+            console.log(`[DEBUG] Injecting ${cookiesToInject.length} cookies for ${platform} onto domains: ${allowedDomains.join(', ')}`);
+            log.info(`Injecting ${cookiesToInject.length} auth cookies for ${platform}`);
+            await page.context().addCookies(cookiesToInject);
         }
     } catch (e: any) {
         log.error(`[Auth] Failed to inject cookies for ${platform}: ${e.message}`);
