@@ -2,6 +2,7 @@ import type { PlaywrightCrawlingContext } from 'crawlee';
 import { blockResources } from '../utils/resources.js';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 import { fetchSerpApi } from '../utils/serp.js';
+import { sanitizeQuery } from '../utils/validation.js';
 
 /**
  * Handle Google SERP (Search Engine Results Page) URLs to determine brand ranking.
@@ -17,7 +18,7 @@ export async function handle(
     const url = request.url;
     
     const urlObj = new URL(url);
-    const keyword = urlObj.searchParams.get('q') || 'Unknown';
+    const keyword = sanitizeQuery(urlObj.searchParams.get('q') || 'Unknown');
 
     log.info(`[SEO-SERP] Analyzing search results for keyword: "${keyword}"`);
 
