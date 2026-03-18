@@ -10,6 +10,66 @@ import { sanitizeQuery } from '../utils/validation.js';
  * @param _handlerContext - Shared handler context containing target domain.
  * @returns Array of scraped items.
  */
+export async function extractFromSerpApi(keyword: string, serpApiKey: string, log: any) {
+    const links: string[] = [];
+    const ctas: string[] = [];
+    const conversionMarkers: string[] = [];
+    let profileHtml = '';
+
+    log.info(`[SEO-SERP] Using SerpApi for reliable extraction.`);
+    const serpData = await fetchSerpApi(keyword, serpApiKey);
+
+    if (serpData && serpData.organic_results) {
+        serpData.organic_results.forEach((res) => {
+            links.push(res.link);
+            conversionMarkers.push(`Position ${res.position}: ${new URL(res.link).hostname}`);
+        });
+        if (serpData.local_results && serpData.local_results.length > 0) {
+            ctas.push('Local Pack Present');
+        }
+        profileHtml = JSON.stringify(serpData, null, 2);
+    }
+
+    return { links, ctas, conversionMarkers, profileHtml };
+}
+
+export async function extractFromDom(page: any, log: any) {
+    const links: string[] = [];
+    const ctas: string[] = [];
+    const conversionMarkers: string[] = [];
+
+    log.info(`[SEO-SERP] Attempting DOM extraction fallback.`);
+    const mainResultsArea = page.locator('#search, #res, #main');
+    const resultLocators = mainResultsArea.locator('a[href^="http"]:not([href*="google.com"])');
+    const count = await resultLocators.count();
+
+    const seenDomains = new Set<string>();
+    let position = 1;
+
+    for (let i = 0; i < count; i++) {
+        if (position > 10) break;
+        const href = await resultLocators.nth(i).getAttribute('href');
+        if (!href) continue;
+        try {
+            const hostname = new URL(href).hostname;
+            if (!seenDomains.has(hostname)) {
+                seenDomains.add(hostname);
+                links.push(href);
+                conversionMarkers.push(`Position ${position}: ${hostname}`);
+                position++;
+            }
+        } catch (e) {}
+    }
+
+    // Check for Local Pack presence in DOM
+    const localPack = page.locator('[data-entityname], .lsbb');
+    if (await localPack.count() > 0) {
+        ctas.push('Local Pack Present');
+    }
+
+    return { links, ctas, conversionMarkers };
+}
+
 export async function handle(
     context: PlaywrightCrawlingContext,
     _handlerContext: HandlerContext,
@@ -22,27 +82,19 @@ export async function handle(
 
     log.info(`[SEO-SERP] Analyzing search results for keyword: "${keyword}"`);
 
-    const links: string[] = [];
-    const ctas: string[] = [];
-    const conversionMarkers: string[] = [];
+    let links: string[] = [];
+    let ctas: string[] = [];
+    let conversionMarkers: string[] = [];
     let profileHtml = '';
 
     // Phase 2 Optimization: Check for SerpApi Key
     const serpApiKey = process.env.SERP_API_KEY;
     if (serpApiKey) {
-        log.info(`[SEO-SERP] Using SerpApi for reliable extraction.`);
-        const serpData = await fetchSerpApi(keyword, serpApiKey);
-        
-        if (serpData && serpData.organic_results) {
-            serpData.organic_results.forEach((res) => {
-                links.push(res.link);
-                conversionMarkers.push(`Position ${res.position}: ${new URL(res.link).hostname}`);
-            });
-            if (serpData.local_results && serpData.local_results.length > 0) {
-                ctas.push('Local Pack Present');
-            }
-            profileHtml = JSON.stringify(serpData, null, 2);
-        }
+        const apiData = await extractFromSerpApi(keyword, serpApiKey, log);
+        links = apiData.links;
+        ctas = apiData.ctas;
+        conversionMarkers = apiData.conversionMarkers;
+        profileHtml = apiData.profileHtml;
     }
 
     // Always navigate with Playwright for screenshot parity
@@ -84,6 +136,7 @@ export async function handle(
                 } catch (e: unknown) {
                     const msg = e instanceof Error ? e.message : String(e);
                     log.debug(`[SEO-SERP] Failed to parse URL hostname: ${msg}`);
+                    log.debug(`[SEO-SERP] Failed to parse URL "${href}": ${msg}`);
                 }
             }
             
@@ -92,6 +145,10 @@ export async function handle(
             if (await localPack.count() > 0) {
                 ctas.push('Local Pack Present');
             }
+            const domData = await extractFromDom(page, log);
+            links = domData.links;
+            ctas = domData.ctas;
+            conversionMarkers = domData.conversionMarkers;
         }
     } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);

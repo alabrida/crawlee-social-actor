@@ -52,7 +52,7 @@ export async function injectCookies(
             .filter((c: any): c is any => c !== null);
 
         if (cookies.length > 0) {
-            console.log(`[DEBUG] Injecting ${cookies.length} cookies for ${platform} onto domain ${domain}`);
+            log.debug(`Injecting ${cookies.length} cookies for ${platform} onto domain ${domain}`);
             log.info(`Injecting ${cookies.length} auth cookies for ${platform}`);
             await page.context().addCookies(cookies);
         }
