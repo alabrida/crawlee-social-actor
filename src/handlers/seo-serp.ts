@@ -63,14 +63,17 @@ export async function handle(
             log.info(`[SEO-SERP] Attempting DOM extraction fallback.`);
             const mainResultsArea = page.locator('#search, #res, #main');
             const resultLocators = mainResultsArea.locator('a[href^="http"]:not([href*="google.com"])');
-            const count = await resultLocators.count();
+
+            // Extract all hrefs in a single call to avoid N+1 query overhead
+            const allHrefs = await resultLocators.evaluateAll((elements) =>
+                elements.map(el => (el as HTMLAnchorElement).href)
+            );
             
             const seenDomains = new Set<string>();
             let position = 1;
 
-            for (let i = 0; i < count; i++) {
+            for (const href of allHrefs) {
                 if (position > 10) break;
-                const href = await resultLocators.nth(i).getAttribute('href');
                 if (!href) continue;
                 try {
                     const hostname = new URL(href).hostname;
@@ -80,7 +83,7 @@ export async function handle(
                         conversionMarkers.push(`Position ${position}: ${hostname}`);
                         position++;
                     }
-                } catch (e) {}
+                } catch (e) { continue; }
             }
             
             // Check for Local Pack presence in DOM
