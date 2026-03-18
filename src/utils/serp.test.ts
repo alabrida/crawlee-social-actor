@@ -47,6 +47,9 @@ describe('fetchSerpApi', () => {
         await fetchSerpApi(query, apiKey);
 
         const expectedQuery = 'search query';
+        // URLSearchParams uses '+' for spaces, while encodeURIComponent uses '%20'
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining(`q=${expectedQuery.replace(/ /g, '+')}`)
         // fetch actually uses URLSearchParams or + for spaces, let's just check the whole string or handle both
         expect(global.fetch).toHaveBeenCalledWith(
             expect.stringMatching(/q=search(%20|\+)query/)

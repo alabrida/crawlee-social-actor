@@ -17,7 +17,7 @@ import { upsertAssessment } from './utils/supabase.js';
 import { FEATURES } from './utils/mode-gate.js';
 import { SessionVault } from './utils/session-vault.js';
 import { injectCookies } from './utils/auth.js';
-import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
+import type { ActorInput, Platform, HandlerContext, UrlEntry, ScrapedItem } from './types.js';
 import { PLATFORM_CRAWLER_MAP } from './types.js';
 
 /**
@@ -231,6 +231,8 @@ export async function handleScreenshotCollection({ page, request, log: pwLog }: 
             screenshotBuffer = await page.screenshot({ fullPage: false });
         }
 
+            // 2. Retrieve the data previously extracted by Cheerio
+            const cheerioResult = await Actor.getValue<ScrapedItem>(dataKey);
         await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
         const storeId = Actor.getEnv().defaultKeyValueStoreId || 'default';
         const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
@@ -242,6 +244,20 @@ export async function handleScreenshotCollection({ page, request, log: pwLog }: 
             return;
         }
 
+            const dataset = await Actor.openDataset();
+            await dataset.pushData(finalItem);
+            pwLog.info(`Finalized item with screenshot for: ${originalUrl}`);
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            pwLog.error(`[Screenshot Collector] Failed for ${originalUrl}: ${msg}`);
+            // Fallback: try to push data even without screenshot
+            const cheerioResult = await Actor.getValue<ScrapedItem>(dataKey);
+            if (cheerioResult) {
+                const dataset = await Actor.openDataset();
+                await dataset.pushData({
+                    ...cheerioResult,
+                    errors: [...(cheerioResult.errors || []), `Screenshot failed: ${msg}`]
+                });
         const finalItem = {
             ...cheerioResult,
             data: {
