@@ -100,12 +100,12 @@ export async function handle(
  * @returns True if required fields are present.
  */
 export function validate(data: Record<string, unknown>): boolean {
-    const payload = data as any;
+    if (!data || typeof data !== 'object') return false;
+
     return (
-        payload &&
-        payload.revenueIndicators &&
-        typeof payload.profileHtml === 'string' &&
-        typeof payload.screenshotUrl === 'string'
+        'revenueIndicators' in data &&
+        typeof data.profileHtml === 'string' &&
+        typeof data.screenshotUrl === 'string'
     );
 }
 
