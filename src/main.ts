@@ -17,7 +17,7 @@ import { upsertAssessment } from './utils/supabase.js';
 import { FEATURES } from './utils/mode-gate.js';
 import { SessionVault } from './utils/session-vault.js';
 import { injectCookies } from './utils/auth.js';
-import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
+import type { ActorInput, Platform, HandlerContext, UrlEntry, ScrapedItem } from './types.js';
 import { PLATFORM_CRAWLER_MAP } from './types.js';
 
 /**
@@ -184,7 +184,7 @@ async function main(): Promise<void> {
             const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
 
             // 2. Retrieve the data previously extracted by Cheerio
-            const cheerioResult = await Actor.getValue<any>(dataKey);
+            const cheerioResult = await Actor.getValue<ScrapedItem>(dataKey);
 
             if (!cheerioResult) {
                 pwLog.error(`Could not find Enriched Cheerio-extracted data for: ${originalUrl} (Key: ${dataKey})`);
@@ -207,7 +207,7 @@ async function main(): Promise<void> {
             const msg = e instanceof Error ? e.message : String(e);
             pwLog.error(`[Screenshot Collector] Failed for ${originalUrl}: ${msg}`);
             // Fallback: try to push data even without screenshot
-            const cheerioResult = await Actor.getValue<any>(dataKey);
+            const cheerioResult = await Actor.getValue<ScrapedItem>(dataKey);
             if (cheerioResult) {
                 const dataset = await Actor.openDataset();
                 await dataset.pushData({
