@@ -167,7 +167,7 @@ async function main(): Promise<void> {
             await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
             
             // Extra wait for dynamic content/images to settle
-            await page.waitForTimeout(3000);
+            await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
             
             const screenshotKey = `screenshot_${request.id}.png`;
             // Defensive screenshot
