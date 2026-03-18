@@ -49,6 +49,7 @@ describe('fetchSerpApi', () => {
         const expectedQuery = 'search query';
         // URLSearchParams translates spaces to '+'
         expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining(`q=search+query`)
             expect.stringContaining(`q=${expectedQuery.replace(' ', '+')}`)
         const expectedParams = new URLSearchParams({
             engine: 'google',
