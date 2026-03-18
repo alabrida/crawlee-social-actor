@@ -1,6 +1,96 @@
 import type { PlaywrightCrawlingContext } from 'crawlee';
+import type { Page } from 'playwright';
 import { blockResources } from '../utils/resources.js';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+
+export interface Forensics {
+    hasSsl: boolean;
+    hasGoogleAnalytics: boolean;
+    hasJsonLd: boolean;
+    hasMetaDescription: boolean;
+    hasCanonical: boolean;
+    hasNewsletter: boolean;
+    hasPrivacyPolicy: boolean;
+}
+
+/**
+ * Extracts initial forensics data based on URL and raw HTML content.
+ * @param url - The requested URL.
+ * @param content - The raw HTML content of the page.
+ * @returns Initial forensics object.
+ */
+export function extractInitialForensics(url: string, content: string): Forensics {
+    return {
+        hasSsl: url.startsWith('https'),
+        hasGoogleAnalytics: content.includes('UA-') || content.includes('G-') || content.includes('googletagmanager.com'),
+        hasJsonLd: content.includes('application/ld+json'),
+        hasMetaDescription: false,
+        hasCanonical: false,
+        hasNewsletter: false,
+        hasPrivacyPolicy: false,
+    };
+}
+
+/**
+ * Parses the page DOM to extract SEO markers, privacy policy, and CTA indicators.
+ * Updates the forensics object and returns arrays of CTAs and conversion markers.
+ * @param page - Playwright Page object.
+ * @param forensics - The forensics object to update.
+ * @param log - Logger instance for debugging.
+ * @returns Object containing extracted ctas and conversionMarkers arrays.
+ */
+export async function extractPageData(
+    page: Page,
+    forensics: Forensics,
+    log: PlaywrightCrawlingContext['log']
+): Promise<{ ctas: string[], conversionMarkers: string[] }> {
+    const ctas: string[] = [];
+    const conversionMarkers: string[] = [];
+
+    try {
+        // Check for SEO metadata
+        const metaDescription = await page.locator('meta[name="description"]').getAttribute('content').catch(() => null);
+        if (metaDescription) forensics.hasMetaDescription = true;
+
+        const canonical = await page.locator('link[rel="canonical"]').getAttribute('href').catch(() => null);
+        if (canonical) forensics.hasCanonical = true;
+
+        // Check for Privacy Policy
+        const privacyLinkCount = await page.locator('a[href*="privacy"]').count();
+        if (privacyLinkCount > 0) forensics.hasPrivacyPolicy = true;
+
+        const textContent = await page.innerText('body');
+        const lowerText = textContent.toLowerCase();
+
+        const indicators = [
+            { term: 'book now', label: 'Booking CTA' },
+            { term: 'contact us', label: 'Contact CTA' },
+            { term: 'pricing', label: 'Pricing Link' },
+            { term: 'free trial', label: 'Trial CTA' },
+            { term: 'get started', label: 'Onboarding CTA' },
+            { term: 'sign up', label: 'Signup CTA' },
+            { term: 'newsletter', label: 'Newsletter' },
+            { term: 'subscribe', label: 'Subscription' },
+        ];
+
+        for (const ind of indicators) {
+            if (lowerText.includes(ind.term)) {
+                ctas.push(ind.label);
+                if (ind.term === 'newsletter' || ind.term === 'subscribe') forensics.hasNewsletter = true;
+            }
+        }
+
+        // Map forensics to markers for immediate visibility
+        Object.entries(forensics).forEach(([key, val]) => {
+            if (val) conversionMarkers.push(`Signal: ${key}`);
+        });
+
+    } catch (e) {
+        log.debug('[General] Failed to parse body text', { error: String(e) });
+    }
+
+    return { ctas, conversionMarkers };
+}
 
 /**
  * Handle general business website URLs.
@@ -32,63 +122,17 @@ export async function handle(
     }
 
     const links: string[] = [];
-    const ctas: string[] = [];
-    const conversionMarkers: string[] = [];
+    let ctas: string[] = [];
+    let conversionMarkers: string[] = [];
 
     // Phase 2: Technical Forensics
-    const forensics = {
-        hasSsl: request.url.startsWith('https'),
-        hasGoogleAnalytics: content.includes('UA-') || content.includes('G-') || content.includes('googletagmanager.com'),
-        hasJsonLd: content.includes('application/ld+json'),
-        hasMetaDescription: false,
-        hasCanonical: false,
-        hasNewsletter: false,
-        hasPrivacyPolicy: false,
-    };
+    const forensics = extractInitialForensics(request.url, content);
 
     // Generic extraction: look for "Book Now", "Contact", "Pricing", etc.
     if (!isBlocked) {
-        try {
-            // Check for SEO metadata
-            const metaDescription = await page.locator('meta[name="description"]').getAttribute('content').catch(() => null);
-            if (metaDescription) forensics.hasMetaDescription = true;
-
-            const canonical = await page.locator('link[rel="canonical"]').getAttribute('href').catch(() => null);
-            if (canonical) forensics.hasCanonical = true;
-
-            // Check for Privacy Policy
-            const privacyLinkCount = await page.locator('a[href*="privacy"]').count();
-            if (privacyLinkCount > 0) forensics.hasPrivacyPolicy = true;
-
-            const textContent = await page.innerText('body');
-            const lowerText = textContent.toLowerCase();
-
-            const indicators = [
-                { term: 'book now', label: 'Booking CTA' },
-                { term: 'contact us', label: 'Contact CTA' },
-                { term: 'pricing', label: 'Pricing Link' },
-                { term: 'free trial', label: 'Trial CTA' },
-                { term: 'get started', label: 'Onboarding CTA' },
-                { term: 'sign up', label: 'Signup CTA' },
-                { term: 'newsletter', label: 'Newsletter' },
-                { term: 'subscribe', label: 'Subscription' },
-            ];
-
-            for (const ind of indicators) {
-                if (lowerText.includes(ind.term)) {
-                    ctas.push(ind.label);
-                    if (ind.term === 'newsletter' || ind.term === 'subscribe') forensics.hasNewsletter = true;
-                }
-            }
-
-            // Map forensics to markers for immediate visibility
-            Object.entries(forensics).forEach(([key, val]) => {
-                if (val) conversionMarkers.push(`Signal: ${key}`);
-            });
-
-        } catch (e) {
-            log.debug('[General] Failed to parse body text', { error: String(e) });
-        }
+        const extractedData = await extractPageData(page, forensics, log);
+        ctas = extractedData.ctas;
+        conversionMarkers = extractedData.conversionMarkers;
     } else {
         conversionMarkers.push('BLOCKED: WAF Challenge Detected');
     }

@@ -71,6 +71,10 @@ export async function injectCookies(
             console.log(`[DEBUG] Injecting ${cookiesToInject.length} cookies for ${platform} onto domains: ${allowedDomains.join(', ')}`);
             log.info(`Injecting ${cookiesToInject.length} auth cookies for ${platform}`);
             await page.context().addCookies(cookiesToInject);
+        if (cookies.length > 0) {
+            log.debug(`Injecting ${cookies.length} cookies for ${platform} onto domain ${domain}`);
+            log.info(`Injecting ${cookies.length} auth cookies for ${platform}`);
+            await page.context().addCookies(cookies);
         }
     } catch (e: any) {
         log.error(`[Auth] Failed to inject cookies for ${platform}: ${e.message}`);
