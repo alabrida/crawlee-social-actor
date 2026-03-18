@@ -50,6 +50,26 @@ describe('fetchSerpApi', () => {
         const expectedEncodedQuery = new URLSearchParams({ q: expectedQuery }).toString().split('=')[1];
         expect(global.fetch).toHaveBeenCalledWith(
             expect.stringContaining(`q=${expectedEncodedQuery}`)
+        // URLSearchParams encodes spaces as '+'
+        const encodedQuery = new URLSearchParams({ q: expectedQuery }).toString();
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining(encodedQuery)
+        // URLSearchParams translates spaces to '+'
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining(`q=search+query`)
+            expect.stringContaining(`q=${expectedQuery.replace(' ', '+')}`)
+        const expectedParams = new URLSearchParams({
+            engine: 'google',
+            q: expectedQuery,
+            api_key: apiKey,
+            num: '10'
+        });
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining(`q=${expectedParams.get('q')?.replace(/ /g, '+')}`)
+        const expectedQuery = 'search+query';
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining(`q=${expectedQuery}`)
         );
         expect(global.fetch).toHaveBeenCalledWith(
             expect.stringContaining(`api_key=${apiKey}`)
