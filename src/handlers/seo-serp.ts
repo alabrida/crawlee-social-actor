@@ -103,8 +103,9 @@ export async function handle(
 
     try {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForSelector('#search, #res, #main, [role="main"]', { timeout: 15000 }).catch(() => {
-            log.warning(`[SEO-SERP] Main result container not found during fallback: ${url}`);
+        await page.waitForSelector('#search, #res, #main, [role="main"]', { timeout: 15000 }).catch((e: unknown) => {
+            const msg = e instanceof Error ? e.message : String(e);
+            log.warning(`[SEO-SERP] Main result container not found during fallback: ${url} - ${msg}`);
         });
         
         const content = await page.content();
@@ -134,6 +135,7 @@ export async function handle(
                     }
                 } catch (e: unknown) {
                     const msg = e instanceof Error ? e.message : String(e);
+                    log.debug(`[SEO-SERP] Failed to parse URL hostname: ${msg}`);
                     log.debug(`[SEO-SERP] Failed to parse URL "${href}": ${msg}`);
                 }
             }
@@ -179,10 +181,10 @@ export async function handle(
  * @returns True if valid.
  */
 export function validate(data: Record<string, unknown>): boolean {
-    const payload = data as any;
+    const payload = data as { revenueIndicators?: unknown; profileHtml?: unknown; screenshotUrl?: unknown };
     return (
         payload &&
-        payload.revenueIndicators &&
+        payload.revenueIndicators !== undefined &&
         typeof payload.profileHtml === 'string' &&
         typeof payload.screenshotUrl === 'string'
     );
