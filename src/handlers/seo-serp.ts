@@ -112,6 +112,37 @@ export async function handle(
 
         // If API didn't provide links (or failed), try scraping from DOM
         if (links.length === 0) {
+            log.info(`[SEO-SERP] Attempting DOM extraction fallback.`);
+            const mainResultsArea = page.locator('#search, #res, #main');
+            const resultLocators = mainResultsArea.locator('a[href^="http"]:not([href*="google.com"])');
+            const count = await resultLocators.count();
+            
+            const seenDomains = new Set<string>();
+            let position = 1;
+
+            for (let i = 0; i < count; i++) {
+                if (position > 10) break;
+                const href = await resultLocators.nth(i).getAttribute('href');
+                if (!href) continue;
+                try {
+                    const hostname = new URL(href).hostname;
+                    if (!seenDomains.has(hostname)) {
+                        seenDomains.add(hostname);
+                        links.push(href);
+                        conversionMarkers.push(`Position ${position}: ${hostname}`);
+                        position++;
+                    }
+                } catch (e: unknown) {
+                    const msg = e instanceof Error ? e.message : String(e);
+                    log.debug(`[SEO-SERP] Failed to parse URL "${href}": ${msg}`);
+                }
+            }
+            
+            // Check for Local Pack presence in DOM
+            const localPack = page.locator('[data-entityname], .lsbb');
+            if (await localPack.count() > 0) {
+                ctas.push('Local Pack Present');
+            }
             const domData = await extractFromDom(page, log);
             links = domData.links;
             ctas = domData.ctas;
