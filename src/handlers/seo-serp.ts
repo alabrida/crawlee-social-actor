@@ -80,7 +80,10 @@ export async function handle(
                         conversionMarkers.push(`Position ${position}: ${hostname}`);
                         position++;
                     }
-                } catch (e) {}
+                } catch (e: unknown) {
+                    const msg = e instanceof Error ? e.message : String(e);
+                    log.debug(`[SEO-SERP] Failed to parse URL "${href}": ${msg}`);
+                }
             }
             
             // Check for Local Pack presence in DOM
