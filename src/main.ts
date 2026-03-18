@@ -205,6 +205,26 @@ export async function handleScreenshotCollection({ page, request, log: pwLog }: 
         const screenshotKey = `screenshot_${request.id}.png`;
         let screenshotBuffer;
         try {
+            // 1. Capture the screenshot - using commit for faster load on heavy sites
+            await page.goto(originalUrl, { waitUntil: 'commit', timeout: 60000 });
+            await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
+            
+            // Extra wait for dynamic content/images to settle
+            await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
+            
+            const screenshotKey = `screenshot_${request.id}.png`;
+            // Defensive screenshot
+            let screenshotBuffer;
+            try {
+                screenshotBuffer = await page.screenshot({ fullPage: true, timeout: 15000 });
+            } catch (e) {
+                pwLog.warning(`Full-page screenshot failed for ${originalUrl}, capturing viewport instead.`);
+                screenshotBuffer = await page.screenshot({ fullPage: false });
+            }
+            
+            await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
+            const storeId = Actor.getEnv().defaultKeyValueStoreId || 'default';
+            const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
             screenshotBuffer = await page.screenshot({ fullPage: true, timeout: 15000 });
         } catch (e) {
             pwLog.warning(`Full-page screenshot failed for ${originalUrl}, capturing viewport instead.`);
