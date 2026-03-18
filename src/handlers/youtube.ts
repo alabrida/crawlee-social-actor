@@ -43,7 +43,10 @@ async function handle(
         let stringifiedData = '';
         try {
             stringifiedData = JSON.stringify(ytInitialData);
-        } catch(e) {}
+        } catch(e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            log.warning(`[YouTube] Failed to stringify ytInitialData for ${url}: ${msg}`);
+        }
 
         const headerLinksMatch = stringifiedData.match(/"urlEndpoint":\{"url":"([^"]+)"\}/g);
         if (headerLinksMatch) {
@@ -56,7 +59,10 @@ async function handle(
                             const parsedUrl = new URL(extractedUrl, 'https://www.youtube.com');
                             extractedUrl = parsedUrl.searchParams.get('q') || extractedUrl;
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        const msg = e instanceof Error ? e.message : String(e);
+                        log.debug(`[YouTube] Failed to parse URL for redirect extraction: ${msg}`);
+                    }
                     if (extractedUrl.startsWith('http') && !links.includes(extractedUrl)) {
                         links.push(extractedUrl);
                     }
