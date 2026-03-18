@@ -10,6 +10,11 @@ import { FEATURES } from './mode-gate.js';
 import type { ScrapedItem } from '../types.js';
 import { log } from './logger.js';
 
+interface RevenueIndicators {
+    conversionMarkers?: string[];
+    links?: string[];
+}
+
 /**
  * Enrich a scraped item with high-resolution structured data.
  * @param item - The raw scraped item.
@@ -17,15 +22,15 @@ import { log } from './logger.js';
  */
 export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
     const { platform, data } = item;
-    const { revenueIndicators } = data as any;
+    const revenueIndicators = data.revenueIndicators as RevenueIndicators | undefined;
 
     log.info(`[Enrichment] Processing ${platform}: ${item.url}`);
 
     // 1. Numeric Enrichment (Math-Steward)
-    const enrichedData: any = { ...data };
+    const enrichedData: Record<string, unknown> = { ...data };
     
-    if (revenueIndicators.conversionMarkers) {
-        (revenueIndicators.conversionMarkers as string[]).forEach((marker: string) => {
+    if (revenueIndicators?.conversionMarkers) {
+        revenueIndicators.conversionMarkers.forEach((marker: string) => {
             if (marker.includes('Followers Raw:')) {
                 enrichedData.followerCount = parseNumericCount(marker.split(':')[1]);
             }
@@ -33,7 +38,7 @@ export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
                 enrichedData.followingCount = parseNumericCount(marker.split(':')[1]);
             }
             // Google Business Profile (GBP) High-Res Mapping
-            if (platform === ('google_maps' as any) || platform === ('google_business_profile' as any)) {
+            if (platform === 'google_maps' || platform === 'google_business_profile') {
                 if (marker.includes('Title:')) enrichedData.gbpBusinessName = marker.split('Title:')[1].trim();
                 if (marker.includes('Category:')) enrichedData.gbpCategory = marker.split('Category:')[1].trim();
                 if (marker.includes('Rating:')) enrichedData.gbpRating = parseFloat(marker.split('Rating:')[1].trim());
@@ -46,7 +51,7 @@ export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
     }
 
     // 2. Link Enrichment (Link-Strategist) - Gated for non-public modes
-    if (FEATURES.deepLinkAudit() && revenueIndicators.links && revenueIndicators.links.length > 0) {
+    if (FEATURES.deepLinkAudit() && revenueIndicators?.links && revenueIndicators.links.length > 0) {
         const primaryLink = revenueIndicators.links[0];
         const audit = await auditLink(primaryLink);
         enrichedData.linkAudit = audit;
@@ -66,6 +71,6 @@ export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
 
     return {
         ...item,
-        data: enrichedData
+        data: enrichedData as ScrapedItem['data']
     };
 }

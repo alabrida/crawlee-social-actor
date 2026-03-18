@@ -88,6 +88,10 @@ export async function handle(
             elements.map(el => el.getAttribute('href')).filter((href): href is string => href !== null)
         );
         for (const href of extractedHrefs) {
+        const hrefs = await websiteLocator.evaluateAll(els =>
+            els.map(el => (el as HTMLAnchorElement).href).filter(href => !!href)
+        );
+        for (const href of hrefs) {
             if (href && !links.includes(href)) links.push(href);
         }
     } catch (e) { /* ignore */ }
@@ -104,6 +108,13 @@ export async function handle(
                 if (phoneText && !conversionMarkers.some(m => m.includes(phoneText))) {
                     conversionMarkers.push(`Phone: ${phoneText}`);
                 }
+        const phoneTexts = await phoneLocator.evaluateAll(els =>
+            els.map(el => el.getAttribute('aria-label') || (el as HTMLElement).innerText).filter(text => !!text)
+        );
+        for (let phoneText of phoneTexts) {
+            phoneText = phoneText.replace(/Phone:|/gi, '').trim();
+            if (phoneText && !conversionMarkers.some(m => m.includes(phoneText))) {
+                conversionMarkers.push(`Phone: ${phoneText}`);
             }
         }
     } catch (e) { /* ignore */ }
