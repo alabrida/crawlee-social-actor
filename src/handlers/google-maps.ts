@@ -84,10 +84,6 @@ export async function handle(
     // 2. Website Link
     try {
         const websiteLocator = page.locator('a[aria-label^="Website:" i], a[data-item-id="authority"], a[jsaction*="website"]');
-        const extractedHrefs = await websiteLocator.evaluateAll(elements =>
-            elements.map(el => el.getAttribute('href')).filter((href): href is string => href !== null)
-        );
-        for (const href of extractedHrefs) {
         const hrefs = await websiteLocator.evaluateAll(els =>
             els.map(el => (el as HTMLAnchorElement).href).filter(href => !!href)
         );
@@ -99,15 +95,6 @@ export async function handle(
     // 3. Phone Number
     try {
         const phoneLocator = page.locator('button[aria-label^="Phone:" i], button[data-tooltip*="phone" i], button[data-item-id^="phone" i]');
-        const extractedPhones = await phoneLocator.evaluateAll(elements =>
-            elements.map(el => el.getAttribute('aria-label') || (el as HTMLElement).innerText).filter((text): text is string => text !== null)
-        );
-        for (let phoneText of extractedPhones) {
-            if (phoneText) {
-                phoneText = phoneText.replace(/Phone:|/gi, '').trim();
-                if (phoneText && !conversionMarkers.some(m => m.includes(phoneText))) {
-                    conversionMarkers.push(`Phone: ${phoneText}`);
-                }
         const phoneTexts = await phoneLocator.evaluateAll(els =>
             els.map(el => el.getAttribute('aria-label') || (el as HTMLElement).innerText).filter(text => !!text)
         );

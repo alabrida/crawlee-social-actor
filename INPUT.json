@@ -1,19 +1,17 @@
 {
-    "platforms": ["tiktok", "instagram", "twitter", "youtube", "google_maps", "seo_serp"],
-    "urls": [
-        { "platform": "tiktok", "url": "https://www.tiktok.com/@nikenyc" },
-        { "platform": "instagram", "url": "https://www.instagram.com/nikenyc/" },
-        { "platform": "twitter", "url": "https://twitter.com/nikenyc" },
-        { "platform": "youtube", "url": "https://www.youtube.com/@NikeNYC" },
-        { "platform": "facebook", "url": "https://www.facebook.com/nikenyc" },
-        { "platform": "google_maps", "url": "https://www.google.com/maps/place/Nike+NYC+-+House+of+Innovation+000/" },
-        { "platform": "seo_serp", "url": "https://www.google.com/search?q=nike+stores+nyc" }
-    ],
-    "proxy": {
-        "useApifyProxy": true,
-        "apifyProxyGroups": ["RESIDENTIAL"],
-        "apifyProxyCountry": "US"
-    },
-    "maxConcurrency": 1,
-    "maxRequestRetries": 2
+  "platforms": ["google_maps"],
+  "urls": [
+    { "url": "https://www.google.com/maps?cid=9557479062172064673", "platform": "google_maps" }
+  ],
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": ["RESIDENTIAL"],
+    "apifyProxyCountry": "US"
+  },
+  "maxConcurrency": 1,
+  "maxRequestRetries": 1,
+  "googleMapsGrid": {
+    "enabled": false,
+    "cellSizeKm": 1
+  }
 }

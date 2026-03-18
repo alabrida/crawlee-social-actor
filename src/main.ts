@@ -21,11 +21,6 @@ import type { ActorInput, Platform, HandlerContext, UrlEntry, ScrapedItem } from
 import { PLATFORM_CRAWLER_MAP } from './types.js';
 
 /**
- * Main actor function. Initializes the Apify Actor, creates crawlers,
- * enqueues URLs, and runs scrapers per crawler type.
- * @returns Promise that resolves when all URLs have been processed.
- */
-/**
  * Sets up the Session Vault, handling interactive authentication flows
  * or pulling existing session cookies into the input.
  */
@@ -86,9 +81,6 @@ export function prepareUrls(input: ActorInput): { cheerioUrls: UrlEntry[], playw
     return { cheerioUrls, playwrightUrls, finalUrls };
 }
 
-/**
- * Runs the Cheerio crawler for lightweight, non-browser platforms.
- */
 /**
  * Aggregates extracted data into a single master row and performs a Supabase
  * upsert if in the correct operating mode.
@@ -199,40 +191,17 @@ export async function handleScreenshotCollection({ page, request, log: pwLog }: 
     try {
         await page.goto(originalUrl, { waitUntil: 'commit', timeout: 60000 });
         await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
-
         await page.waitForTimeout(3000);
 
         const screenshotKey = `screenshot_${request.id}.png`;
         let screenshotBuffer;
         try {
-            // 1. Capture the screenshot - using commit for faster load on heavy sites
-            await page.goto(originalUrl, { waitUntil: 'commit', timeout: 60000 });
-            await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
-            
-            // Extra wait for dynamic content/images to settle
-            await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
-            
-            const screenshotKey = `screenshot_${request.id}.png`;
-            // Defensive screenshot
-            let screenshotBuffer;
-            try {
-                screenshotBuffer = await page.screenshot({ fullPage: true, timeout: 15000 });
-            } catch (e) {
-                pwLog.warning(`Full-page screenshot failed for ${originalUrl}, capturing viewport instead.`);
-                screenshotBuffer = await page.screenshot({ fullPage: false });
-            }
-            
-            await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
-            const storeId = Actor.getEnv().defaultKeyValueStoreId || 'default';
-            const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
             screenshotBuffer = await page.screenshot({ fullPage: true, timeout: 15000 });
         } catch (e) {
             pwLog.warning(`Full-page screenshot failed for ${originalUrl}, capturing viewport instead.`);
             screenshotBuffer = await page.screenshot({ fullPage: false });
         }
-
-            // 2. Retrieve the data previously extracted by Cheerio
-            const cheerioResult = await Actor.getValue<ScrapedItem>(dataKey);
+        
         await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
         const storeId = Actor.getEnv().defaultKeyValueStoreId || 'default';
         const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
@@ -244,20 +213,6 @@ export async function handleScreenshotCollection({ page, request, log: pwLog }: 
             return;
         }
 
-            const dataset = await Actor.openDataset();
-            await dataset.pushData(finalItem);
-            pwLog.info(`Finalized item with screenshot for: ${originalUrl}`);
-        } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            pwLog.error(`[Screenshot Collector] Failed for ${originalUrl}: ${msg}`);
-            // Fallback: try to push data even without screenshot
-            const cheerioResult = await Actor.getValue<ScrapedItem>(dataKey);
-            if (cheerioResult) {
-                const dataset = await Actor.openDataset();
-                await dataset.pushData({
-                    ...cheerioResult,
-                    errors: [...(cheerioResult.errors || []), `Screenshot failed: ${msg}`]
-                });
         const finalItem = {
             ...cheerioResult,
             data: {
@@ -300,7 +255,24 @@ export async function runPlaywrightCrawler(
 
     playwrightRouter.addHandler('screenshot-collector', handleScreenshotCollection);
 
+    const playwrightQueue = await Actor.openRequestQueue();
+    
+    const pwRequests = playwrightUrls.map(entry => ({
+        url: entry.url,
+        label: entry.platform,
+        userData: { platform: entry.platform },
+    }));
+
+    const screenshotRequests = cheerioUrls.map(entry => ({
+        url: entry.url,
+        label: 'screenshot-collector',
+        userData: { platform: entry.platform, originalUrl: entry.url },
+    }));
+
+    await playwrightQueue.addRequests([...pwRequests, ...screenshotRequests]);
+
     const playwrightCrawler = new PlaywrightCrawler({
+        requestQueue: playwrightQueue,
         requestHandler: playwrightRouter,
         proxyConfiguration: proxyConfiguration as any,
         useSessionPool: true,
@@ -332,24 +304,12 @@ export async function runPlaywrightCrawler(
         ],
     });
 
-    log.info('Adding requests to PlaywrightCrawler...');
-    
-    const pwRequests = playwrightUrls.map(entry => ({
-        url: entry.url,
-        label: entry.platform,
-        userData: { platform: entry.platform },
-    }));
-
-    const screenshotRequests = cheerioUrls.map(entry => ({
-        url: entry.url,
-        label: 'screenshot-collector',
-        userData: { platform: entry.platform, originalUrl: entry.url },
-    }));
-
-    await playwrightCrawler.addRequests([...pwRequests, ...screenshotRequests]);
     await playwrightCrawler.run();
 }
 
+/**
+ * Runs the Cheerio crawler for lightweight, non-browser platforms.
+ */
 export async function runCheerioCrawler(
     input: ActorInput,
     handlerContext: HandlerContext,
@@ -360,7 +320,7 @@ export async function runCheerioCrawler(
 
     log.info(`Running CheerioCrawler for ${cheerioUrls.length} URLs`);
 
-    const cheerioQueue = await RequestQueue.open('cheerio-queue');
+    const cheerioQueue = await Actor.openRequestQueue();
     for (const entry of cheerioUrls) {
         let targetUrl = entry.url;
         if (entry.platform === 'reddit') {
@@ -441,6 +401,6 @@ export async function main(): Promise<void> {
 }
 
 // Only run main if this file is the entry point (not imported in tests)
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${process.argv[1]}` || import.meta.url.endsWith('src/main.ts')) {
     main();
 }
