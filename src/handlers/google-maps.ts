@@ -147,14 +147,30 @@ export async function handle(
 
     // 5. Booking/Order CTAs
     const possibleCtas = ['Book', 'Order', 'Reserve', 'Tickets', 'Menu', 'Appointments', 'Reservations'];
-    for (const cta of possibleCtas) {
-        try {
-            const btn = page.locator(`button[aria-label*="${cta}" i], a[aria-label*="${cta}" i], button:has-text("${cta}"), a:has-text("${cta}")`).first();
-            if (await btn.isVisible()) {
-                ctas.push(cta);
+    try {
+        const visibleSelectors = possibleCtas.map(cta =>
+            `button[aria-label*="${cta}" i]:visible, a[aria-label*="${cta}" i]:visible, button:has-text("${cta}"):visible, a:has-text("${cta}"):visible`
+        ).join(', ');
+
+        const matchedCtas = await page.locator(visibleSelectors).evaluateAll((els, ctasList) => {
+            const foundCtas = new Set<string>();
+            for (const el of els) {
+                const text = (el.textContent || '').toLowerCase();
+                const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
+                for (const cta of ctasList) {
+                    if (foundCtas.has(cta)) continue;
+                    const ctaLower = cta.toLowerCase();
+                    if (text.includes(ctaLower) || ariaLabel.includes(ctaLower)) {
+                        foundCtas.add(cta);
+                    }
+                }
             }
-        } catch (e) { /* ignore */ }
-    }
+            // Maintain the exact ordering of possibleCtas
+            return ctasList.filter(c => foundCtas.has(c));
+        }, possibleCtas);
+
+        ctas.push(...matchedCtas);
+    } catch (e) { /* ignore */ }
 
     // Extract profile HTML snapshot (prioritize the main info pane)
     let profileHtml = '';
