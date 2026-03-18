@@ -21,7 +21,7 @@ export interface SerpData {
         id: string;
         status: string;
     };
-    local_results?: any[];
+    local_results?: Record<string, unknown>[];
 }
 
 /**
