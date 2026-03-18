@@ -46,6 +46,8 @@ describe('fetchSerpApi', () => {
 
         await fetchSerpApi(query, apiKey);
 
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining(`q=search+query`)
         const expectedQuery = 'search query';
         // URLSearchParams uses '+' for spaces, while encodeURIComponent uses '%20'
         expect(global.fetch).toHaveBeenCalledWith(
