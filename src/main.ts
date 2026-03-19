@@ -14,6 +14,7 @@ import { getRandomUserAgent } from './utils/ua-rotation.js';
 import { buildCheerioRouter, buildPlaywrightRouter } from './routes.js';
 import { getBlankAssessmentRow } from './utils/schema-mapper.js';
 import { upsertAssessment } from './utils/supabase.js';
+import { cleanAssessmentPayload } from './utils/data-cleaner.js';
 import { FEATURES } from './utils/mode-gate.js';
 import { SessionVault } from './utils/session-vault.js';
 import { injectCookies } from './utils/auth.js';
@@ -112,20 +113,20 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
         // Generic per-platform fields
         masterItem[`has_${p}`] = true;
         masterItem[`${p}_url`] = item.url;
-        masterItem[`${p}_screenshot_url`] = item.data?.screenshotUrl;
+        masterItem[`${p}_screenshot_url`] = item.data?.screenshotUrl ?? null;
         masterItem[`${p}_scrape_date`] = item.scrapedAt;
 
-        // Map numeric metrics from structured fields (primary) or conversionMarkers fallback
-        if (item.data?.followerCount) masterItem[`${p}_followers_count`] = item.data.followerCount;
-        if (item.data?.followingCount) masterItem[`${p}_following_count`] = item.data.followingCount;
+        // Map numeric metrics — use != null to preserve real zeros
+        if (item.data?.followerCount != null) masterItem[`${p}_followers_count`] = item.data.followerCount;
+        if (item.data?.followingCount != null) masterItem[`${p}_following_count`] = item.data.followingCount;
 
         // Map business title if found on social platforms and not yet set
         if (!masterItem.business_title && item.data?.fullName) {
             masterItem.business_title = item.data.fullName;
         }
 
-        // Fallback: Parse numeric metrics from conversionMarkers if missing
-        if (masterItem[`${p}_followers_count`] === 0 && item.data?.revenueIndicators?.conversionMarkers) {
+        // Fallback: Parse numeric metrics from conversionMarkers only if still null
+        if (masterItem[`${p}_followers_count`] == null && item.data?.revenueIndicators?.conversionMarkers) {
             const markers = item.data.revenueIndicators.conversionMarkers;
             const followerMarker = markers.find((m: string) => m.startsWith('Followers Raw:'));
             if (followerMarker) {
@@ -149,7 +150,7 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.externalUrl) masterItem.instagram_external_url = item.data.externalUrl;
             if (item.data?.verified) masterItem.instagram_verified = true;
             if (item.data?.isPrivate) masterItem.instagram_is_private = true;
-            if (item.data?.postsCount) masterItem.instagram_posts_count = item.data.postsCount;
+            if (item.data?.postsCount != null) masterItem.instagram_posts_count = item.data.postsCount;
             // Fallback verified from conversionMarkers
             if (item.data?.revenueIndicators?.conversionMarkers?.includes('Status: Verified')) {
                 masterItem.instagram_verified = true;
@@ -161,7 +162,7 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.pageName) masterItem.facebook_page_name = item.data.pageName;
             if (item.data?.fullName && !masterItem.facebook_page_name) masterItem.facebook_page_name = item.data.fullName;
             if (item.data?.category) masterItem.facebook_category = item.data.category;
-            if (item.data?.likesCount) masterItem.facebook_likes_count = item.data.likesCount;
+            if (item.data?.likesCount != null) masterItem.facebook_likes_count = item.data.likesCount;
             if (item.data?.hasReviews) masterItem.facebook_has_reviews = true;
         }
 
@@ -171,7 +172,7 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.fullName) masterItem.twitter_full_name = item.data.fullName;
             if (item.data?.biography) masterItem.twitter_biography = item.data.biography;
             if (item.data?.verified) masterItem.twitter_verified = true;
-            if (item.data?.tweetsCount) masterItem.twitter_tweets_count = item.data.tweetsCount;
+            if (item.data?.tweetsCount != null) masterItem.twitter_tweets_count = item.data.tweetsCount;
         }
 
         // ─── TikTok ───────────────────────────────────────────────
@@ -180,8 +181,8 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.displayName) masterItem.tiktok_display_name = item.data.displayName;
             if (item.data?.biography) masterItem.tiktok_biography = item.data.biography;
             if (item.data?.verified) masterItem.tiktok_verified = true;
-            if (item.data?.likesCount) masterItem.tiktok_likes_count = item.data.likesCount;
-            if (item.data?.videosCount) masterItem.tiktok_videos_count = item.data.videosCount;
+            if (item.data?.likesCount != null) masterItem.tiktok_likes_count = item.data.likesCount;
+            if (item.data?.videosCount != null) masterItem.tiktok_videos_count = item.data.videosCount;
         }
 
         // ─── YouTube ──────────────────────────────────────────────
@@ -189,9 +190,9 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.channelName) masterItem.youtube_channel_name = item.data.channelName;
             if (item.data?.channelHandle) masterItem.youtube_channel_handle = item.data.channelHandle;
             if (item.data?.description) masterItem.youtube_description = item.data.description;
-            if (item.data?.subscribersCount) masterItem.youtube_subscribers_count = item.data.subscribersCount;
-            if (item.data?.videosCount) masterItem.youtube_videos_count = item.data.videosCount;
-            if (item.data?.viewsCount) masterItem.youtube_views_count = item.data.viewsCount;
+            if (item.data?.subscribersCount != null) masterItem.youtube_subscribers_count = item.data.subscribersCount;
+            if (item.data?.videosCount != null) masterItem.youtube_videos_count = item.data.videosCount;
+            if (item.data?.viewsCount != null) masterItem.youtube_views_count = item.data.viewsCount;
             if (item.data?.verified) masterItem.youtube_verified = true;
         }
 
@@ -199,25 +200,25 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
         if (p === 'google_maps' || p === 'google_business_profile') {
             masterItem.has_gbp = true;
             masterItem.gbp_url = item.url;
-            masterItem.gbp_business_name = item.data?.gbpBusinessName;
-            masterItem.gbp_category = item.data?.gbpCategory;
-            masterItem.gbp_rating = item.data?.gbpRating;
-            masterItem.gbp_reviews_count = item.data?.gbpReviewsCount;
-            masterItem.gbp_address = item.data?.gbpAddress;
+            masterItem.gbp_business_name = item.data?.gbpBusinessName ?? null;
+            masterItem.gbp_category = item.data?.gbpCategory ?? null;
+            masterItem.gbp_rating = item.data?.gbpRating ?? null;
+            masterItem.gbp_reviews_count = item.data?.gbpReviewsCount ?? null;
+            masterItem.gbp_address = item.data?.gbpAddress ?? null;
             // Fix phone: prefer the real phone if available, filter out "Copy phone number"
             const rawPhone = item.data?.gbpPhone;
             if (rawPhone && rawPhone !== 'Copy phone number') {
                 masterItem.gbp_phone = rawPhone;
             }
-            masterItem.gbp_website = item.data?.gbpWebsite || null;
+            masterItem.gbp_website = item.data?.gbpWebsite ?? null;
             masterItem.gbp_has_photos = item.data?.gbpHasPhotos || false;
-            masterItem.gbp_screenshot_url = item.data?.screenshotUrl;
+            masterItem.gbp_screenshot_url = item.data?.screenshotUrl ?? null;
             masterItem.gbp_scrape_date = item.scrapedAt;
 
             // Also set google_maps prefixed fields
             masterItem.has_google_maps = true;
             masterItem.google_maps_url = item.url;
-            masterItem.google_maps_screenshot_url = item.data?.screenshotUrl;
+            masterItem.google_maps_screenshot_url = item.data?.screenshotUrl ?? null;
             masterItem.google_maps_scrape_date = item.scrapedAt;
         }
 
@@ -235,17 +236,17 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.metaDescription) masterItem.business_meta_description = item.data.metaDescription;
             if (item.data?.canonicalUrl) masterItem.business_canonical_url = item.data.canonicalUrl;
             if (item.data?.loadedUrl) masterItem.business_loaded_url = item.data.loadedUrl;
-            if (item.data?.httpStatus) masterItem.business_http_status = item.data.httpStatus;
+            if (item.data?.httpStatus != null) masterItem.business_http_status = item.data.httpStatus;
             if (item.data?.scrapeSuccess !== undefined) masterItem.business_scrape_success = item.data.scrapeSuccess;
-            masterItem.business_screenshot_url = item.data?.screenshotUrl;
+            masterItem.business_screenshot_url = item.data?.screenshotUrl ?? null;
             masterItem.business_screenshot_captured_at = item.scrapedAt;
         }
 
         // ─── LinkedIn ─────────────────────────────────────────────
         if (p === 'linkedin') {
             if (item.data?.username) masterItem.linkedin_full_name = item.data.fullName;
-            if (item.data?.followerCount) masterItem.linkedin_followers_count = item.data.followerCount;
-            if (item.data?.connectionsCount) masterItem.linkedin_connections_count = item.data.connectionsCount;
+            if (item.data?.followerCount != null) masterItem.linkedin_followers_count = item.data.followerCount;
+            if (item.data?.connectionsCount != null) masterItem.linkedin_connections_count = item.data.connectionsCount;
             if (item.data?.headline) masterItem.linkedin_headline = item.data.headline;
             if (item.data?.location) masterItem.linkedin_location = item.data.location;
             if (item.data?.companyName) masterItem.linkedin_company_name = item.data.companyName;
@@ -255,22 +256,22 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
         // ─── Reddit ───────────────────────────────────────────────
         if (p === 'reddit') {
             if (item.data?.username) masterItem.reddit_username = item.data.username;
-            if (item.data?.karma) masterItem.reddit_karma = item.data.karma;
-            if (item.data?.postKarma) masterItem.reddit_post_karma = item.data.postKarma;
-            if (item.data?.commentKarma) masterItem.reddit_comment_karma = item.data.commentKarma;
-            if (item.data?.accountAgeDays) masterItem.reddit_account_age_days = item.data.accountAgeDays;
-            if (item.data?.postsCount) masterItem.reddit_posts_count = item.data.postsCount;
+            if (item.data?.karma != null) masterItem.reddit_karma = item.data.karma;
+            if (item.data?.postKarma != null) masterItem.reddit_post_karma = item.data.postKarma;
+            if (item.data?.commentKarma != null) masterItem.reddit_comment_karma = item.data.commentKarma;
+            if (item.data?.accountAgeDays != null) masterItem.reddit_account_age_days = item.data.accountAgeDays;
+            if (item.data?.postsCount != null) masterItem.reddit_posts_count = item.data.postsCount;
         }
 
         // ─── Pinterest ────────────────────────────────────────────
         if (p === 'pinterest') {
             if (item.data?.username) masterItem.pinterest_username = item.data.username;
             if (item.data?.fullName) masterItem.pinterest_full_name = item.data.fullName;
-            if (item.data?.followerCount) masterItem.pinterest_followers_count = item.data.followerCount;
-            if (item.data?.followingCount) masterItem.pinterest_following_count = item.data.followingCount;
-            if (item.data?.pinsCount) masterItem.pinterest_pins_count = item.data.pinsCount;
-            if (item.data?.boardsCount) masterItem.pinterest_boards_count = item.data.boardsCount;
-            if (item.data?.monthlyViews) masterItem.pinterest_monthly_views = item.data.monthlyViews;
+            if (item.data?.followerCount != null) masterItem.pinterest_followers_count = item.data.followerCount;
+            if (item.data?.followingCount != null) masterItem.pinterest_following_count = item.data.followingCount;
+            if (item.data?.pinsCount != null) masterItem.pinterest_pins_count = item.data.pinsCount;
+            if (item.data?.boardsCount != null) masterItem.pinterest_boards_count = item.data.boardsCount;
+            if (item.data?.monthlyViews != null) masterItem.pinterest_monthly_views = item.data.monthlyViews;
         }
 
         // ─── SEO-SERP ─────────────────────────────────────────────
@@ -284,11 +285,14 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
         }
     });
 
+    // Clean the payload: remove nulls/undefined while preserving valid 0 and false
+    const cleanedItem = cleanAssessmentPayload(masterItem);
+
     const finalDataset = await Actor.openDataset('revenue-journey-assessments');
-    await finalDataset.pushData(masterItem);
+    await finalDataset.pushData(cleanedItem);
 
     log.info('Master Assessment complete.', {
-        columnsMapped: Object.keys(masterItem).length,
+        columnsMapped: Object.keys(cleanedItem).length,
         outputDataset: 'revenue-journey-assessments'
     });
 
@@ -298,7 +302,7 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
 
         if (supabaseUrl && supabaseKey) {
             log.info('[Consultant Workflow] Internal Mode detected. Triggering direct upsert...');
-            const result = await upsertAssessment(masterItem, supabaseUrl, supabaseKey);
+            const result = await upsertAssessment(cleanedItem, supabaseUrl, supabaseKey);
             if (result.success) {
                 log.info('[Consultant Workflow] Data is now live in Supabase dashboard.');
             } else {

@@ -50,7 +50,7 @@ export function getBlankAssessmentRow(): Record<string, any> {
         has_pinterest: false,
         has_google_business_profile: false,
 
-        // Instagram Metrics
+        // Instagram Metrics (null = not yet assessed)
         instagram_url: null,
         instagram_username: null,
         instagram_full_name: null,
@@ -58,42 +58,42 @@ export function getBlankAssessmentRow(): Record<string, any> {
         instagram_external_url: null,
         instagram_verified: false,
         instagram_is_private: false,
-        instagram_followers_count: 0,
-        instagram_following_count: 0,
-        instagram_posts_count: 0,
+        instagram_followers_count: null,
+        instagram_following_count: null,
+        instagram_posts_count: null,
         instagram_latest_post_date: null,
-        instagram_post_frequency_days: 0,
+        instagram_post_frequency_days: null,
         instagram_has_reels: false,
-        instagram_engagement_rate_estimate: 0,
+        instagram_engagement_rate_estimate: null,
         instagram_screenshot_url: null,
         instagram_scrape_date: null,
         instagram_activity_status: 'unknown',
         instagram_days_since_post: null,
 
-        // Twitter/X Metrics
+        // Twitter/X Metrics (null = not yet assessed)
         twitter_url: null,
         twitter_username: null,
         twitter_full_name: null,
         twitter_biography: null,
         twitter_verified: false,
-        twitter_followers_count: 0,
-        twitter_following_count: 0,
-        twitter_tweets_count: 0,
+        twitter_followers_count: null,
+        twitter_following_count: null,
+        twitter_tweets_count: null,
         twitter_latest_tweet_date: null,
-        twitter_tweet_frequency_days: 0,
+        twitter_tweet_frequency_days: null,
         twitter_has_media_tweets: false,
         twitter_screenshot_url: null,
         twitter_scrape_date: null,
         twitter_activity_status: 'unknown',
         twitter_days_since_post: null,
 
-        // LinkedIn Metrics
+        // LinkedIn Metrics (null = not yet assessed)
         linkedin_url: null,
         linkedin_full_name: null,
         linkedin_headline: null,
         linkedin_location: null,
-        linkedin_connections_count: 0,
-        linkedin_followers_count: 0,
+        linkedin_connections_count: null,
+        linkedin_followers_count: null,
         linkedin_company_name: null,
         linkedin_has_recent_activity: false,
         linkedin_screenshot_url: null,
@@ -101,14 +101,14 @@ export function getBlankAssessmentRow(): Record<string, any> {
         linkedin_activity_status: 'unknown',
         linkedin_days_since_post: null,
 
-        // Facebook Metrics
+        // Facebook Metrics (null = not yet assessed)
         facebook_url: null,
         facebook_page_name: null,
         facebook_category: null,
-        facebook_likes_count: 0,
-        facebook_followers_count: 0,
-        facebook_checkins_count: 0,
-        facebook_posts_count: 0,
+        facebook_likes_count: null,
+        facebook_followers_count: null,
+        facebook_checkins_count: null,
+        facebook_posts_count: null,
         facebook_latest_post_date: null,
         facebook_has_reviews: false,
         facebook_screenshot_url: null,
@@ -116,33 +116,33 @@ export function getBlankAssessmentRow(): Record<string, any> {
         facebook_activity_status: 'unknown',
         facebook_days_since_post: null,
 
-        // TikTok Metrics
+        // TikTok Metrics (null = not yet assessed)
         tiktok_url: null,
         tiktok_username: null,
         tiktok_display_name: null,
         tiktok_biography: null,
         tiktok_verified: false,
-        tiktok_followers_count: 0,
-        tiktok_following_count: 0,
-        tiktok_likes_count: 0,
-        tiktok_videos_count: 0,
+        tiktok_followers_count: null,
+        tiktok_following_count: null,
+        tiktok_likes_count: null,
+        tiktok_videos_count: null,
         tiktok_latest_video_date: null,
-        tiktok_video_frequency_days: 0,
+        tiktok_video_frequency_days: null,
         tiktok_screenshot_url: null,
         tiktok_scrape_date: null,
         tiktok_activity_status: 'unknown',
         tiktok_days_since_post: null,
 
-        // YouTube Metrics
+        // YouTube Metrics (null = not yet assessed)
         youtube_url: null,
         youtube_channel_name: null,
         youtube_channel_handle: null,
         youtube_description: null,
-        youtube_subscribers_count: 0,
-        youtube_videos_count: 0,
-        youtube_views_count: 0,
+        youtube_subscribers_count: null,
+        youtube_videos_count: null,
+        youtube_views_count: null,
         youtube_latest_video_date: null,
-        youtube_video_frequency_days: 0,
+        youtube_video_frequency_days: null,
         youtube_has_shorts: false,
         youtube_verified: false,
         youtube_screenshot_url: null,
@@ -150,12 +150,12 @@ export function getBlankAssessmentRow(): Record<string, any> {
         youtube_activity_status: 'unknown',
         youtube_days_since_post: null,
 
-        // Google Business Profile (GBP)
+        // Google Business Profile (GBP) (null = not yet assessed)
         gbp_url: null,
         gbp_business_name: null,
         gbp_category: null,
-        gbp_rating: 0,
-        gbp_reviews_count: 0,
+        gbp_rating: null,
+        gbp_reviews_count: null,
         gbp_address: null,
         gbp_phone: null,
         gbp_website: null,
@@ -163,27 +163,27 @@ export function getBlankAssessmentRow(): Record<string, any> {
         gbp_screenshot_url: null,
         gbp_scrape_date: null,
 
-        // Reddit Metrics
+        // Reddit Metrics (null = not yet assessed)
         reddit_url: null,
         reddit_username: null,
-        reddit_karma: 0,
-        reddit_post_karma: 0,
-        reddit_comment_karma: 0,
-        reddit_account_age_days: 0,
-        reddit_posts_count: 0,
+        reddit_karma: null,
+        reddit_post_karma: null,
+        reddit_comment_karma: null,
+        reddit_account_age_days: null,
+        reddit_posts_count: null,
         reddit_latest_activity_date: null,
         reddit_screenshot_url: null,
         reddit_scrape_date: null,
 
-        // Pinterest Metrics
+        // Pinterest Metrics (null = not yet assessed)
         pinterest_url: null,
         pinterest_username: null,
         pinterest_full_name: null,
-        pinterest_followers_count: 0,
-        pinterest_following_count: 0,
-        pinterest_pins_count: 0,
-        pinterest_boards_count: 0,
-        pinterest_monthly_views: 0,
+        pinterest_followers_count: null,
+        pinterest_following_count: null,
+        pinterest_pins_count: null,
+        pinterest_boards_count: null,
+        pinterest_monthly_views: null,
         pinterest_screenshot_url: null,
         pinterest_scrape_date: null,
 
@@ -196,7 +196,7 @@ export function getBlankAssessmentRow(): Record<string, any> {
         has_youtube_in_bio: false,
         link_in_bio_url: null,
         link_in_bio_service: null,
-        unified_ecosystem_score: 0,
+        unified_ecosystem_score: null,
         connectivity_matrix: {},
 
         // Forensics & Technical Signals
@@ -204,7 +204,7 @@ export function getBlankAssessmentRow(): Record<string, any> {
         count_pages: null,
         has_blog: false,
         has_contact_form: false,
-        count_case_studies: 0,
+        count_case_studies: null,
         consideration_has_testimonials: false,
         has_logos: false,
         has_video_testimonials: false,
@@ -265,20 +265,20 @@ export function getBlankAssessmentRow(): Record<string, any> {
         stage_3_automated_score: null,
         stage_4_automated_score: null,
         stage_5_automated_score: null,
-        overall_machine_score_percentage: 0,
+        overall_machine_score_percentage: null,
         overall_tier_automated: null,
-        digital_presence_score: 0,
+        digital_presence_score: null,
         
-        // SEO/SERP
-        serp_ranking_position: 0,
+        // SEO/SERP (null = not yet assessed)
+        serp_ranking_position: null,
         serp_keyword_used: null,
         serp_check_date: null,
-        seo_ranking_position: 0,
+        seo_ranking_position: null,
 
         // AI/RAG Hooks
         rag_interpretation_complete: false,
         rag_recommendations: null,
         rag_processing_timestamp: null,
-        gemini_tokens_used: 0
+        gemini_tokens_used: null,
     };
 }

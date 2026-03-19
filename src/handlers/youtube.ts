@@ -45,17 +45,18 @@ async function handle(
     // Initialize structured data fields
     let channelName: string | null = null;
     let description: string | null = null;
-    let subscribersCount = 0;
-    let videosCount = 0;
-    let viewsCount = 0;
+    let subscribersCount: number | null = null;
+    let videosCount: number | null = null;
+    let viewsCount: number | null = null;
     let isVerified = false;
 
     // Parse shorthand counts (e.g. "1.2K", "3M", "1,234")
-    const parseCount = (raw: string): number => {
-        if (!raw) return 0;
+    const parseCount = (raw: string): number | null => {
+        if (!raw) return null;
         const cleaned = raw.replace(/,/g, '').replace(/subscribers?|videos?|views?/gi, '').trim();
+        if (cleaned === '') return null;
         let num = parseFloat(cleaned);
-        if (isNaN(num)) return 0;
+        if (isNaN(num)) return null;
         if (cleaned.toLowerCase().endsWith('k')) num *= 1000;
         if (cleaned.toLowerCase().endsWith('m')) num *= 1000000;
         if (cleaned.toLowerCase().endsWith('b')) num *= 1000000000;

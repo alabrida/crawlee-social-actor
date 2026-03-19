@@ -88,12 +88,12 @@ export async function handle(
     let externalUrl: string | null = null;
     let verified = false;
     let isPrivate = false;
-    let followerCount = 0;
-    let followingCount = 0;
-    let postsCount = 0;
+    let followerCount: number | null = null;
+    let followingCount: number | null = null;
+    let postsCount: number | null = null;
     let pageName: string | null = null;
     let category: string | null = null;
-    let likesCount = 0;
+    let likesCount: number | null = null;
     let hasReviews = false;
 
     const scrapedItem: ScrapedItem = {

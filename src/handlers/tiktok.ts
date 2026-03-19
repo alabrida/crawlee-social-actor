@@ -55,11 +55,12 @@ async function handle(
     const username = usernameMatch ? usernameMatch[1] : null;
 
     // Parse numeric counts
-    const parseCount = (raw: string): number => {
-        if (!raw) return 0;
+    const parseCount = (raw: string): number | null => {
+        if (!raw) return null;
         const cleaned = raw.replace(/,/g, '').trim();
+        if (cleaned === '') return null;
         let num = parseFloat(cleaned);
-        if (isNaN(num)) return 0;
+        if (isNaN(num)) return null;
         if (cleaned.toLowerCase().endsWith('k')) num *= 1000;
         if (cleaned.toLowerCase().endsWith('m')) num *= 1000000;
         return Math.floor(num);
@@ -98,10 +99,10 @@ async function handle(
             displayName: extractedData.displayName || null,
             biography: extractedData.bio || null,
             verified: extractedData.isVerified,
-            followerCount: parseCount(extractedData.followers),
-            followingCount: parseCount(extractedData.following),
-            likesCount: parseCount(extractedData.likes),
-            videosCount: parseCount(extractedData.videosCount),
+            followerCount: parseCount(extractedData.followers) ?? null,
+            followingCount: parseCount(extractedData.following) ?? null,
+            likesCount: parseCount(extractedData.likes) ?? null,
+            videosCount: parseCount(extractedData.videosCount) ?? null,
         } as any,
         errors: []
     };

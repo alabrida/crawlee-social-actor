@@ -181,6 +181,34 @@ export async function handle(
         ? 'google_business_profile'
         : 'google_maps';
 
+    // Parse structured GBP fields from conversionMarkers
+    let gbpBusinessName: string | null = null;
+    let gbpCategory: string | null = null;
+    let gbpRating: number | null = null;
+    let gbpReviewsCount: number | null = null;
+    let gbpPhone: string | null = null;
+    let gbpAddress: string | null = null;
+    let gbpHasPhotos = false;
+
+    for (const marker of conversionMarkers) {
+        if (marker.startsWith('Title:')) gbpBusinessName = marker.split('Title:')[1].trim();
+        if (marker.startsWith('Category:')) gbpCategory = marker.split('Category:')[1].trim();
+        if (marker.startsWith('Rating:')) {
+            const ratingVal = parseFloat(marker.split('Rating:')[1].trim());
+            if (!isNaN(ratingVal)) gbpRating = ratingVal;
+        }
+        if (marker.startsWith('Reviews:')) {
+            const reviewsVal = parseInt(marker.split('Reviews:')[1].replace(/[^\d]/g, ''), 10);
+            if (!isNaN(reviewsVal)) gbpReviewsCount = reviewsVal;
+        }
+        if (marker.startsWith('Phone:')) {
+            const phoneVal = marker.split('Phone:')[1].trim();
+            if (phoneVal && phoneVal !== 'Copy phone number') gbpPhone = phoneVal;
+        }
+        if (marker.startsWith('Address:')) gbpAddress = marker.split('Address:')[1].trim();
+        if (marker.includes('Signal: Has Photos')) gbpHasPhotos = true;
+    }
+
     const scrapedItem: ScrapedItem = {
         platform: outputPlatform,
         url: request.url,
@@ -195,6 +223,13 @@ export async function handle(
             profileHtml: profileHtml,
             screenshotUrl: '',
             // Structured fields for direct Supabase mapping
+            gbpBusinessName,
+            gbpCategory,
+            gbpRating,
+            gbpReviewsCount,
+            gbpPhone,
+            gbpAddress,
+            gbpHasPhotos,
             gbpWebsite: links.length > 0 ? links[0] : null,
         } as any,
         errors: []

@@ -90,11 +90,11 @@ export async function handle(
             // Structured fields for direct Supabase mapping
             username: userData?.username || slug || null,
             fullName: userData?.full_name || null,
-            followerCount: userData?.follower_count || 0,
-            followingCount: userData?.following_count || 0,
-            pinsCount: userData?.pin_count || 0,
-            boardsCount: userData?.board_count || 0,
-            monthlyViews: userData?.monthly_views || 0,
+            followerCount: userData?.follower_count ?? null,
+            followingCount: userData?.following_count ?? null,
+            pinsCount: userData?.pin_count ?? null,
+            boardsCount: userData?.board_count ?? null,
+            monthlyViews: userData?.monthly_views ?? null,
         } as any,
         errors: []
     };

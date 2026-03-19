@@ -103,7 +103,7 @@ async function handle(
     const username = usernameMatch ? usernameMatch[1] : null;
 
     // Parse follower count from raw text (e.g. "1,234 followers")
-    let followerCount = 0;
+    let followerCount: number | null = null;
     if (extractData.followers) {
         const numMatch = extractData.followers.match(/([\d,.]+)/);
         if (numMatch) {
@@ -133,7 +133,7 @@ async function handle(
             headline: null, // LinkedIn requires auth for headline
             location: null, // LinkedIn requires auth for location
             followerCount,
-            connectionsCount: 0,
+            connectionsCount: null,
             companyName: null,
             hasRecentActivity: extractData.ctas.length > 0 || extractData.links.length > 0,
         } as any,

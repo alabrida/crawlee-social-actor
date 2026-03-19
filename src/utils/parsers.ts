@@ -9,11 +9,13 @@
  * @param value - The string to parse.
  * @returns The parsed integer, or 0 if parsing fails.
  */
-export function parseNumericCount(value: string | number | undefined | null): number {
-    if (value === undefined || value === null) return 0;
+export function parseNumericCount(value: string | number | undefined | null): number | null {
+    if (value === undefined || value === null) return null;
     if (typeof value === 'number') return Math.floor(value);
 
     const cleanValue = value.toString().trim().toUpperCase().replace(/,/g, '');
+    if (cleanValue === '') return null;
+
     const match = cleanValue.match(/^(\d+\.?\d*)([KMB]?)$/);
 
     if (!match) {
@@ -23,7 +25,7 @@ export function parseNumericCount(value: string | number | undefined | null): nu
             return multiplyMultiplier(parseFloat(deepMatch[1]), deepMatch[2]);
         }
         const simpleMatch = cleanValue.match(/(\d+)/);
-        return simpleMatch ? parseInt(simpleMatch[1], 10) : 0;
+        return simpleMatch ? parseInt(simpleMatch[1], 10) : null;
     }
 
     const num = parseFloat(match[1]);

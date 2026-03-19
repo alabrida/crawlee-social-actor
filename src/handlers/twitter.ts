@@ -49,16 +49,17 @@ export async function handle(
     let fullName: string | null = null;
     let biography: string | null = null;
     let verified = false;
-    let followerCount = 0;
-    let followingCount = 0;
-    let tweetsCount = 0;
+    let followerCount: number | null = null;
+    let followingCount: number | null = null;
+    let tweetsCount: number | null = null;
 
     // Parse shorthand counts (e.g. "1.2K", "3M")
-    const parseCount = (raw: string): number => {
-        if (!raw) return 0;
+    const parseCount = (raw: string): number | null => {
+        if (!raw) return null;
         const cleaned = raw.replace(/,/g, '').trim();
+        if (cleaned === '') return null;
         let num = parseFloat(cleaned);
-        if (isNaN(num)) return 0;
+        if (isNaN(num)) return null;
         if (cleaned.toLowerCase().endsWith('k')) num *= 1000;
         if (cleaned.toLowerCase().endsWith('m')) num *= 1000000;
         return Math.floor(num);

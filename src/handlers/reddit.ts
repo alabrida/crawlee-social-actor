@@ -133,16 +133,16 @@ async function handle(
 
     // Compute structured data fields
     let username: string | null = null;
-    let karma = 0;
-    let postKarma = 0;
-    let commentKarma = 0;
-    let accountAgeDays = 0;
+    let karma: number | null = null;
+    let postKarma: number | null = null;
+    let commentKarma: number | null = null;
+    let accountAgeDays: number | null = null;
 
     if (isUser) {
         username = data.name || null;
-        karma = data.total_karma || 0;
-        postKarma = data.link_karma || 0;
-        commentKarma = data.comment_karma || 0;
+        karma = data.total_karma ?? null;
+        postKarma = data.link_karma ?? null;
+        commentKarma = data.comment_karma ?? null;
         if (data.created_utc) {
             const createdDate = new Date(data.created_utc * 1000);
             accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -173,7 +173,7 @@ async function handle(
             postKarma,
             commentKarma,
             accountAgeDays,
-            postsCount: 0, // Not available from about.json endpoint
+            postsCount: null, // Not available from about.json endpoint
         } as any,
         errors: [],
     };
