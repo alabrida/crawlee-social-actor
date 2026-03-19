@@ -87,7 +87,15 @@ export async function handle(
             profileHtml,
             apiSnapshots: [initialProps], // Save the whole parsed object
             screenshotUrl: '',
-        },
+            // Structured fields for direct Supabase mapping
+            username: userData?.username || slug || null,
+            fullName: userData?.full_name || null,
+            followerCount: userData?.follower_count || 0,
+            followingCount: userData?.following_count || 0,
+            pinsCount: userData?.pin_count || 0,
+            boardsCount: userData?.board_count || 0,
+            monthlyViews: userData?.monthly_views || 0,
+        } as any,
         errors: []
     };
 

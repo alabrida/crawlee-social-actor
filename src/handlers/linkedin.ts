@@ -98,6 +98,22 @@ async function handle(
     if (extractData.followers) conversionMarkers.push(`Followers Raw: ${extractData.followers}`);
     if (extractData.isVerified) conversionMarkers.push('Status: Verified');
 
+    // Extract username from URL
+    const usernameMatch = url.match(/linkedin\.com\/(?:in|company)\/([^/?#]+)/);
+    const username = usernameMatch ? usernameMatch[1] : null;
+
+    // Parse follower count from raw text (e.g. "1,234 followers")
+    let followerCount = 0;
+    if (extractData.followers) {
+        const numMatch = extractData.followers.match(/([\d,.]+)/);
+        if (numMatch) {
+            let num = parseFloat(numMatch[1].replace(/,/g, ''));
+            if (extractData.followers.toLowerCase().includes('k')) num *= 1000;
+            if (extractData.followers.toLowerCase().includes('m')) num *= 1000000;
+            followerCount = Math.floor(num);
+        }
+    }
+
     const scrapedItem: ScrapedItem = {
         platform: 'linkedin',
         url,
@@ -111,7 +127,16 @@ async function handle(
             },
             profileHtml: extractData.profileHtml,
             screenshotUrl: '',
-        },
+            // Structured fields for direct Supabase mapping
+            username,
+            fullName: null, // LinkedIn requires auth for name extraction
+            headline: null, // LinkedIn requires auth for headline
+            location: null, // LinkedIn requires auth for location
+            followerCount,
+            connectionsCount: 0,
+            companyName: null,
+            hasRecentActivity: extractData.ctas.length > 0 || extractData.links.length > 0,
+        } as any,
         errors: []
     };
 

@@ -161,12 +161,12 @@ describe('General Platform Handler', () => {
 
             expect(item.platform).toBe('general');
             expect(item.url).toBe('https://example.com');
-            expect(item.data.profileHtml).toBe('<html>UA-123456</html>');
-            expect(item.data.forensics.hasGoogleAnalytics).toBe(true);
-            expect(item.data.forensics.hasMetaDescription).toBe(true);
+            expect((item.data as any).profileHtml).toBe('<html>UA-123456</html>');
+            expect((item.data as any).forensics.hasGoogleAnalytics).toBe(true);
+            expect((item.data as any).forensics.hasMetaDescription).toBe(true);
 
-            expect(item.data.revenueIndicators.ctas).toContain('Contact CTA');
-            expect(item.data.revenueIndicators.ctas).toContain('Pricing Link');
+            expect((item.data as any).revenueIndicators.ctas).toContain('Contact CTA');
+            expect((item.data as any).revenueIndicators.ctas).toContain('Pricing Link');
         });
 
         it('should handle blocked pages', async () => {
@@ -187,8 +187,9 @@ describe('General Platform Handler', () => {
 
             expect(result).toHaveLength(1);
             expect(mockContext.log.warning).toHaveBeenCalled();
-            expect(result[0].data.revenueIndicators.conversionMarkers).toContain('BLOCKED: WAF Challenge Detected');
-            expect(result[0].data.revenueIndicators.ctas).toHaveLength(0);
+            expect(result[0].data.revenueIndicators as any).toBeDefined();
+            expect((result[0].data as any).revenueIndicators.conversionMarkers).toContain('BLOCKED: WAF Challenge Detected');
+            expect((result[0].data as any).revenueIndicators.ctas).toHaveLength(0);
         });
     });
 });

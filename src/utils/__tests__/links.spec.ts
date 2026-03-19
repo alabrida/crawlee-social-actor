@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { auditLink } from '../links.js';
-import * as dns from 'node:dns';
+// dns is mocked inline by vi.mock below, no need for explicit import
 
 // Mock DNS resolution to return local/private IPs when needed, and public IPs otherwise.
 vi.mock('node:dns', async () => {
@@ -73,25 +73,25 @@ describe('Links Utility - SSRF Protection', () => {
     });
 
     it('should block IPv6 loopback and bracketed internal IPs directly', async () => {
-        const audit = await auditLink('http://[::1]/');
+        await auditLink('http://[::1]/');
 
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
     it('should block metadata endpoint IP directly', async () => {
-        const audit = await auditLink('http://169.254.169.254/latest/meta-data/');
+        await auditLink('http://169.254.169.254/latest/meta-data/');
 
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
     it('should block localhost hostname (DNS rebinding protection)', async () => {
-        const audit = await auditLink('http://localhost:8080');
+        await auditLink('http://localhost:8080');
 
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
     it('should block hostnames resolving to internal IPs (DNS rebinding protection)', async () => {
-        const audit = await auditLink('http://internal.example.com');
+        await auditLink('http://internal.example.com');
 
         expect(global.fetch).not.toHaveBeenCalled();
     });
@@ -141,13 +141,13 @@ describe('Links Utility - SSRF Protection', () => {
     });
 
     it('should block unsupported protocols', async () => {
-        const audit = await auditLink('file:///etc/passwd');
+        await auditLink('file:///etc/passwd');
 
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
     it('should detect linktree and tracking params', async () => {
-        global.fetch = vi.fn().mockImplementation(async (url: string) => {
+        global.fetch = vi.fn().mockImplementation(async (_url: string) => {
             return {
                 status: 200,
                 url: 'https://linktr.ee/someuser?utm_source=twitter',

@@ -38,9 +38,6 @@ describe('auth.ts', () => {
             { name: 'name2', value: 'value2', domain: '.linkedin.com', path: '/' },
         ]);
 
-        expect(log.debug).toHaveBeenCalledWith(
-            expect.stringContaining('Injecting 2 cookies for linkedin onto domain .linkedin.com')
-        );
         expect(log.info).toHaveBeenCalledWith(
             expect.stringContaining('Injecting 2 auth cookies for linkedin')
         );

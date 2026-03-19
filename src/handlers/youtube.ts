@@ -37,6 +37,30 @@ async function handle(
     const ctas: string[] = [];
     const links: string[] = [];
     const conversionMarkers: string[] = [];
+
+    // Extract handle from URL
+    const handleMatch = url.match(/youtube\.com\/@([^/?#]+)/);
+    const channelHandle = handleMatch ? `@${handleMatch[1]}` : null;
+
+    // Initialize structured data fields
+    let channelName: string | null = null;
+    let description: string | null = null;
+    let subscribersCount = 0;
+    let videosCount = 0;
+    let viewsCount = 0;
+    let isVerified = false;
+
+    // Parse shorthand counts (e.g. "1.2K", "3M", "1,234")
+    const parseCount = (raw: string): number => {
+        if (!raw) return 0;
+        const cleaned = raw.replace(/,/g, '').replace(/subscribers?|videos?|views?/gi, '').trim();
+        let num = parseFloat(cleaned);
+        if (isNaN(num)) return 0;
+        if (cleaned.toLowerCase().endsWith('k')) num *= 1000;
+        if (cleaned.toLowerCase().endsWith('m')) num *= 1000000;
+        if (cleaned.toLowerCase().endsWith('b')) num *= 1000000000;
+        return Math.floor(num);
+    };
     
     // Attempt to extract from ytInitialData
     if (ytInitialData) {
@@ -46,6 +70,49 @@ async function handle(
         } catch(e) {
             const msg = e instanceof Error ? e.message : String(e);
             log.warning(`[YouTube] Failed to stringify ytInitialData for ${url}: ${msg}`);
+        }
+
+        // Extract channel name from metadata
+        try {
+            const header = ytInitialData?.header?.c4TabbedHeaderRenderer;
+            if (header) {
+                channelName = header.title || null;
+                if (header.subscriberCountText?.simpleText) {
+                    subscribersCount = parseCount(header.subscriberCountText.simpleText);
+                }
+                if (header.videosCountText?.runs) {
+                    const videosText = header.videosCountText.runs.map((r: any) => r.text).join('');
+                    videosCount = parseCount(videosText);
+                }
+                if (header.badges) {
+                    isVerified = header.badges.some((b: any) =>
+                        b.metadataBadgeRenderer?.style === 'BADGE_STYLE_TYPE_VERIFIED' ||
+                        b.metadataBadgeRenderer?.tooltip === 'Verified'
+                    );
+                }
+            }
+
+            // Fallback: pageHeaderRenderer (newer YT layout)
+            const pageHeader = ytInitialData?.header?.pageHeaderRenderer;
+            if (pageHeader && !channelName) {
+                const title = pageHeader?.pageTitle;
+                if (title) channelName = title;
+            }
+
+            // Extract from metadata object
+            const metadata = ytInitialData?.metadata?.channelMetadataRenderer;
+            if (metadata) {
+                if (!channelName) channelName = metadata.title || null;
+                description = metadata.description || null;
+            }
+
+            // Try microformat for view counts
+            const microformat = ytInitialData?.microformat?.microformatDataRenderer;
+            if (microformat?.tags) {
+                // tags can have video counts etc. - not always view counts
+            }
+        } catch (e) {
+            log.debug(`[YouTube] Failed to parse structured channel data for ${url}`);
         }
 
         const headerLinksMatch = stringifiedData.match(/"urlEndpoint":\{"url":"([^"]+)"\}/g);
@@ -85,9 +152,16 @@ async function handle(
 
     // Attempt to find business email / booking keywords in description
     const metaDescription = $('meta[name="description"]').attr('content') || '';
+    if (!description && metaDescription) description = metaDescription;
     if (metaDescription.toLowerCase().includes('shop')) conversionMarkers.push('Shop');
     if (metaDescription.toLowerCase().includes('book')) conversionMarkers.push('Booking');
     if (metaDescription.toLowerCase().includes('contact') || metaDescription.includes('@')) conversionMarkers.push('Contact Info');
+
+    // Fallback: extract channel name from <title>
+    if (!channelName) {
+        const titleTag = $('title').text();
+        if (titleTag) channelName = titleTag.replace(/- YouTube$/i, '').trim() || null;
+    }
 
     // Extract profile HTML snippet (mostly what's in head and main container, YouTube's DOM is CSR heavy)
     const profileHtml = $('title').prop('outerHTML') + ($('meta[name="description"]').prop('outerHTML') || '');
@@ -105,8 +179,16 @@ async function handle(
             },
             profileHtml,
             // screenshotUrl placeholder, filled by Playwright screenshot-collector
-            screenshotUrl: '' 
-        },
+            screenshotUrl: '',
+            // Structured fields for direct Supabase mapping
+            channelName,
+            channelHandle,
+            description,
+            subscribersCount,
+            videosCount,
+            viewsCount,
+            verified: isVerified,
+        } as any,
         errors: []
     };
 

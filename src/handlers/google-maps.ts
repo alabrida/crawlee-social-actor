@@ -194,7 +194,9 @@ export async function handle(
             },
             profileHtml: profileHtml,
             screenshotUrl: '',
-        },
+            // Structured fields for direct Supabase mapping
+            gbpWebsite: links.length > 0 ? links[0] : null,
+        } as any,
         errors: []
     };
 

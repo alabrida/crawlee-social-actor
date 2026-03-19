@@ -31,6 +31,10 @@ async function handle(
         const followersEl = document.querySelector('[data-e2e="followers-count"]');
         const followingEl = document.querySelector('[data-e2e="following-count"]');
         const likesEl = document.querySelector('[data-e2e="likes-count"]');
+        const videosCountEl = document.querySelector('[data-e2e="video-count"]');
+        const displayNameEl = document.querySelector('[data-e2e="user-subtitle"]') ||
+                              document.querySelector('h1[data-e2e="user-title"]') ||
+                              document.querySelector('h2[data-e2e="user-subtitle"]');
 
         return {
             bio: bioEl?.textContent?.trim() || '',
@@ -38,11 +42,28 @@ async function handle(
             followers: followersEl?.textContent?.trim() || '',
             following: followingEl?.textContent?.trim() || '',
             likes: likesEl?.textContent?.trim() || '',
+            videosCount: videosCountEl?.textContent?.trim() || '',
+            displayName: displayNameEl?.textContent?.trim() || '',
             isVerified: !!document.querySelector('[data-e2e="verify-icon"]'),
             profileHtml: document.querySelector('div[data-e2e="user-profile-section"]')?.innerHTML || 
                          document.querySelector('main')?.innerHTML || ''
         };
     });
+
+    // Extract username from URL (e.g. https://www.tiktok.com/@publicserviceplumbers)
+    const usernameMatch = url.match(/tiktok\.com\/@([^/?#]+)/);
+    const username = usernameMatch ? usernameMatch[1] : null;
+
+    // Parse numeric counts
+    const parseCount = (raw: string): number => {
+        if (!raw) return 0;
+        const cleaned = raw.replace(/,/g, '').trim();
+        let num = parseFloat(cleaned);
+        if (isNaN(num)) return 0;
+        if (cleaned.toLowerCase().endsWith('k')) num *= 1000;
+        if (cleaned.toLowerCase().endsWith('m')) num *= 1000000;
+        return Math.floor(num);
+    };
 
     const ctas: string[] = [];
     if (extractedData.externalLink) {
@@ -72,7 +93,16 @@ async function handle(
             },
             profileHtml: extractedData.profileHtml,
             screenshotUrl: '',
-        },
+            // Structured fields for direct Supabase mapping
+            username: username,
+            displayName: extractedData.displayName || null,
+            biography: extractedData.bio || null,
+            verified: extractedData.isVerified,
+            followerCount: parseCount(extractedData.followers),
+            followingCount: parseCount(extractedData.following),
+            likesCount: parseCount(extractedData.likes),
+            videosCount: parseCount(extractedData.videosCount),
+        } as any,
         errors: []
     };
 

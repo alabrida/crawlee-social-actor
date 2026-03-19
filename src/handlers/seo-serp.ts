@@ -123,6 +123,26 @@ export async function handle(
         log.warning(`[SEO-SERP] Playwright navigation failed: ${msg}`);
     }
 
+    // Determine brand ranking position from conversionMarkers
+    let serpRankingPosition: number | null = null;
+    const targetDomain = _handlerContext.input?.businessUrl
+        ? new URL(_handlerContext.input.businessUrl).hostname.replace('www.', '')
+        : null;
+
+    if (targetDomain) {
+        for (const marker of conversionMarkers) {
+            const posMatch = marker.match(/Position (\d+): (.+)/);
+            if (posMatch) {
+                const pos = parseInt(posMatch[1], 10);
+                const hostname = posMatch[2];
+                if (hostname.includes(targetDomain)) {
+                    serpRankingPosition = pos;
+                    break;
+                }
+            }
+        }
+    }
+
     const scrapedItem: ScrapedItem = {
         platform: 'seo_serp',
         url: request.url,
@@ -136,7 +156,11 @@ export async function handle(
             },
             profileHtml,
             screenshotUrl: '', // Populated by main.ts
-        },
+            // Structured fields for direct Supabase mapping
+            serpRankingPosition,
+            serpKeyword: keyword,
+            serpCheckDate: new Date().toISOString(),
+        } as any,
         errors: []
     };
 

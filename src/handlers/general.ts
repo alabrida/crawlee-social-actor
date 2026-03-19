@@ -11,6 +11,7 @@ export interface Forensics {
     hasCanonical: boolean;
     hasNewsletter: boolean;
     hasPrivacyPolicy: boolean;
+    hasCookieBanner: boolean;
 }
 
 /**
@@ -28,6 +29,7 @@ export function extractInitialForensics(url: string, content: string): Forensics
         hasCanonical: false,
         hasNewsletter: false,
         hasPrivacyPolicy: false,
+        hasCookieBanner: content.toLowerCase().includes('cookie') && (content.toLowerCase().includes('consent') || content.toLowerCase().includes('accept')),
     };
 }
 
@@ -137,6 +139,25 @@ export async function handle(
         conversionMarkers.push('BLOCKED: WAF Challenge Detected');
     }
 
+    // Extract additional structured fields for business hub mapping
+    let metaDescription: string | null = null;
+    let canonicalUrl: string | null = null;
+    let loadedUrl: string | null = null;
+    let httpStatus: number | null = null;
+
+    try {
+        const metaDesc = await page.locator('meta[name="description"]').getAttribute('content').catch(() => null);
+        if (metaDesc) metaDescription = metaDesc;
+
+        const canonical = await page.locator('link[rel="canonical"]').getAttribute('href').catch(() => null);
+        if (canonical) canonicalUrl = canonical;
+
+        loadedUrl = page.url();
+        httpStatus = response ? response.status() : null;
+    } catch (e) {
+        // ignore extraction failures
+    }
+
     const scrapedItem: ScrapedItem = {
         platform: 'general',
         url: request.url,
@@ -151,7 +172,13 @@ export async function handle(
             forensics, // Phase 2 Structured Data
             profileHtml: content,
             screenshotUrl: '',
-        },
+            // Structured fields for direct Supabase mapping
+            metaDescription,
+            canonicalUrl,
+            loadedUrl,
+            httpStatus,
+            scrapeSuccess: !isBlocked && (response ? response.status() < 400 : false),
+        } as any,
         errors: []
     };
 

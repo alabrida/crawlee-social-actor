@@ -72,54 +72,29 @@ export async function handle(
     const ctas: string[] = [];
     const conversionMarkers: string[] = [];
 
-    // Skip extraction if blocked to avoid timeouts on missing elements
-    if (!isBlocked) {
-        if (platform === 'instagram') {
-            try {
-                const bioLinkLocator = page.locator('header section a[target="_blank"]').first();
-                if (await bioLinkLocator.count() > 0) {
-                    const bioLink = await bioLinkLocator.getAttribute('href');
-                    if (bioLink) links.push(bioLink);
-                }
-                
-                const nameLocator = page.locator('header section h1').first();
-                if (await nameLocator.count() > 0) {
-                    const fullName = await nameLocator.textContent();
-                    if (fullName) conversionMarkers.push(`Name: ${fullName.trim()}`);
-                }
-
-                // Phase 2: Raw Metrics for Instagram
-                const followerText = await page.locator('header section ul li:nth-child(2) span').first().getAttribute('title').catch(() => null);
-                if (followerText) conversionMarkers.push(`Followers Raw: ${followerText}`);
-                
-                const isVerified = await page.locator('header section span[title="Verified"]').count() > 0;
-                if (isVerified) conversionMarkers.push('Status: Verified');
-
-            } catch (e) {
-                log.debug('[Meta] Instagram extraction failed on some elements', { url: request.url });
-            }
-        } else {
-            // Facebook extraction
-            try {
-                const introLocator = page.locator('[role="main"] div').first();
-                if (await introLocator.count() > 0) {
-                    const introText = await introLocator.textContent();
-                    if (introText) conversionMarkers.push(`Intro detected: ${introText.substring(0, 50)}...`);
-                }
-
-                // Phase 2: Raw Metrics for Facebook (often in intro or followers link)
-                const followersLink = page.locator('a[href*="followers"]').first();
-                if (await followersLink.count() > 0) {
-                    const followersText = await followersLink.textContent();
-                    if (followersText) conversionMarkers.push(`Followers Raw: ${followersText.trim()}`);
-                }
-            } catch (e) {
-                log.debug('[Meta] Facebook extraction failed on some elements', { url: request.url });
-            }
-        }
+    // Extract username from URL
+    let username: string | null = null;
+    if (platform === 'instagram') {
+        const match = request.url.match(/instagram\.com\/([^/?#]+)/);
+        if (match && match[1] !== 'accounts') username = match[1];
     } else {
-        conversionMarkers.push('BLOCKED: Login Wall / Anti-Bot');
+        const match = request.url.match(/facebook\.com\/([^/?#]+)/);
+        if (match && !['pages', 'profile.php', 'groups'].includes(match[1])) username = match[1];
     }
+
+    // Initialize structured data fields
+    let fullName: string | null = null;
+    let biography: string | null = null;
+    let externalUrl: string | null = null;
+    let verified = false;
+    let isPrivate = false;
+    let followerCount = 0;
+    let followingCount = 0;
+    let postsCount = 0;
+    let pageName: string | null = null;
+    let category: string | null = null;
+    let likesCount = 0;
+    let hasReviews = false;
 
     const scrapedItem: ScrapedItem = {
         platform,
@@ -132,12 +107,179 @@ export async function handle(
                 links,
                 conversionMarkers,
             },
-            profileHtml: await page.content(),
+            profileHtml: '', // Placeholder, will set full content later
             screenshotUrl: '',
         },
         errors: []
     };
 
+    // Skip extraction if blocked to avoid timeouts on missing elements
+    if (!isBlocked) {
+        if (platform === 'instagram') {
+            try {
+                const bioLinkLocator = page.locator('header section a[target="_blank"]').first();
+                if (await bioLinkLocator.count() > 0) {
+                    const bioLink = await bioLinkLocator.getAttribute('href');
+                    if (bioLink) {
+                        links.push(bioLink);
+                        externalUrl = bioLink;
+                    }
+                }
+                
+                const nameLocator = page.locator('header section h1, header section > div:first-child h2').first();
+                if (await nameLocator.count() > 0) {
+                    const nameText = await nameLocator.textContent();
+                    if (nameText) {
+                        fullName = nameText.trim();
+                        conversionMarkers.push(`Name: ${fullName}`);
+                    }
+                }
+
+                // Biography
+                const bioLocator = page.locator('header section div.-vDIg span, header section > div > span').first();
+                if (await bioLocator.count() > 0) {
+                    const bioText = await bioLocator.textContent();
+                    if (bioText && bioText.trim().length > 2) {
+                        biography = bioText.trim();
+                    }
+                }
+
+                // Posts count (first metric in the stats row)
+                const postsText = await page.locator('header section ul li:nth-child(1) span').first().textContent().catch(() => null);
+                if (postsText) {
+                    const num = parseInt(postsText.replace(/,/g, ''), 10);
+                    if (!isNaN(num)) postsCount = num;
+                }
+
+                // Followers count
+                const followerText = await page.locator('header section ul li:nth-child(2) span').first().getAttribute('title').catch(() => null);
+                if (followerText) {
+                    conversionMarkers.push(`Followers Raw: ${followerText}`);
+                    const num = parseInt(followerText.replace(/,/g, ''), 10);
+                    if (!isNaN(num)) followerCount = num;
+                }
+                
+                // Following count
+                const followingText = await page.locator('header section ul li:nth-child(3) span').first().textContent().catch(() => null);
+                if (followingText) {
+                    conversionMarkers.push(`Following Raw: ${followingText}`);
+                    const num = parseInt(followingText.replace(/,/g, ''), 10);
+                    if (!isNaN(num)) followingCount = num;
+                }
+
+                // Verified
+                const isVerified = await page.locator('header section span[title="Verified"], header section svg[aria-label="Verified"]').count() > 0;
+                if (isVerified) {
+                    conversionMarkers.push('Status: Verified');
+                    verified = true;
+                }
+
+                // Private account
+                const privateText = await page.content();
+                if (privateText.toLowerCase().includes('this account is private')) {
+                    isPrivate = true;
+                }
+
+            } catch (e) {
+                log.debug('[Meta] Instagram extraction failed on some elements', { url: request.url });
+            }
+        } else {
+            // Facebook extraction
+            try {
+                const introLocator = page.locator('[role="main"] div').first();
+                if (await introLocator.count() > 0) {
+                    const introText = await introLocator.textContent();
+                    if (introText) {
+                        const trimmedIntro = introText.trim();
+                        conversionMarkers.push(`Intro detected: ${trimmedIntro.substring(0, 50)}...`);
+                    }
+                }
+
+                // Page name from title
+                const title = await page.title();
+                if (title) {
+                    pageName = title.split('|')[0].split('-')[0].trim();
+                    fullName = pageName;
+                }
+
+                // Category
+                const categoryLocator = page.locator('[role="main"] a[href*="category"], [role="main"] span:has-text("·")').first();
+                if (await categoryLocator.count() > 0) {
+                    const catText = await categoryLocator.textContent();
+                    if (catText && catText.trim().length < 50) {
+                        category = catText.trim().replace(/^·\s*/, '');
+                    }
+                }
+
+                // Followers count
+                const followersLink = page.locator('a[href*="followers"]').first();
+                if (await followersLink.count() > 0) {
+                    const followersText = await followersLink.textContent();
+                    if (followersText) {
+                        const trimmedFollowers = followersText.trim();
+                        conversionMarkers.push(`Followers Raw: ${trimmedFollowers}`);
+                        const numMatch = trimmedFollowers.match(/([\d,.]+)/);
+                        if (numMatch) {
+                            let numStr = numMatch[1].replace(/,/g, '');
+                            let num = parseFloat(numStr);
+                            if (trimmedFollowers.toLowerCase().includes('k')) num *= 1000;
+                            if (trimmedFollowers.toLowerCase().includes('m')) num *= 1000000;
+                            followerCount = Math.floor(num);
+                        }
+                    }
+                }
+
+                // Likes count
+                const likesLink = page.locator('a[href*="likes"], a[href*="followers"] + a').first();
+                if (await likesLink.count() > 0) {
+                    const likesText = await likesLink.textContent();
+                    if (likesText) {
+                        const numMatch = likesText.match(/([\d,.]+)/);
+                        if (numMatch) {
+                            let numStr = numMatch[1].replace(/,/g, '');
+                            let num = parseFloat(numStr);
+                            if (likesText.toLowerCase().includes('k')) num *= 1000;
+                            if (likesText.toLowerCase().includes('m')) num *= 1000000;
+                            likesCount = Math.floor(num);
+                        }
+                    }
+                }
+
+                // Reviews detection
+                const reviewsLocator = page.locator('a[href*="reviews"]').first();
+                if (await reviewsLocator.count() > 0) {
+                    hasReviews = true;
+                }
+
+            } catch (e) {
+                log.debug('[Meta] Facebook extraction failed on some elements', { url: request.url });
+            }
+        }
+    } else {
+        conversionMarkers.push('BLOCKED: Login Wall / Anti-Bot');
+    }
+
+    // Attach structured data fields
+    const data = scrapedItem.data as any;
+    data.username = username;
+    data.fullName = fullName;
+    data.biography = biography;
+    data.verified = verified;
+    data.followerCount = followerCount;
+    data.followingCount = followingCount;
+
+    if (platform === 'instagram') {
+        data.externalUrl = externalUrl;
+        data.postsCount = postsCount;
+        data.isPrivate = isPrivate;
+    } else {
+        data.pageName = pageName;
+        data.category = category;
+        data.likesCount = likesCount;
+        data.hasReviews = hasReviews;
+    }
+
+    scrapedItem.data.profileHtml = await page.content();
     return [scrapedItem];
 }
 

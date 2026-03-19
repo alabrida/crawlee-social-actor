@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { prepareUrls } from '../../src/main.js';
 import type { ActorInput } from '../../src/types.js';
 
@@ -14,7 +14,10 @@ describe('main.js refactored functions', () => {
                 ],
                 platforms: ['twitter', 'instagram', 'linkedin', 'facebook'],
                 maxConcurrency: 10,
-                maxRequestRetries: 3
+                maxRequestRetries: 3,
+                proxy: { useApifyProxy: true, apifyProxyGroups: [] },
+                linkedinDailyLimit: 250,
+                googleMapsGrid: { enabled: false, cellSizeKm: 10 }
             };
 
             const result = prepareUrls(mockInput);
@@ -34,7 +37,10 @@ describe('main.js refactored functions', () => {
                 platforms: ['twitter'],
                 maxConcurrency: 10,
                 maxRequestRetries: 3,
-                businessUrl: 'https://example.com'
+                businessUrl: 'https://example.com',
+                proxy: { useApifyProxy: true, apifyProxyGroups: [] },
+                linkedinDailyLimit: 250,
+                googleMapsGrid: { enabled: false, cellSizeKm: 10 }
             };
 
             const result = prepareUrls(mockInput);

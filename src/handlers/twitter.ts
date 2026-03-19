@@ -41,6 +41,29 @@ export async function handle(
     const ctas: string[] = [];
     const conversionMarkers: string[] = [];
 
+    // Extract username from URL
+    const usernameMatch = url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/);
+    const username = usernameMatch && !['home', 'search', 'explore', 'notifications'].includes(usernameMatch[1]) ? usernameMatch[1] : null;
+
+    // Initialize structured data fields
+    let fullName: string | null = null;
+    let biography: string | null = null;
+    let verified = false;
+    let followerCount = 0;
+    let followingCount = 0;
+    let tweetsCount = 0;
+
+    // Parse shorthand counts (e.g. "1.2K", "3M")
+    const parseCount = (raw: string): number => {
+        if (!raw) return 0;
+        const cleaned = raw.replace(/,/g, '').trim();
+        let num = parseFloat(cleaned);
+        if (isNaN(num)) return 0;
+        if (cleaned.toLowerCase().endsWith('k')) num *= 1000;
+        if (cleaned.toLowerCase().endsWith('m')) num *= 1000000;
+        return Math.floor(num);
+    };
+
     if (isBlocked) {
         log.warning(`[Twitter] Login wall detected at ${url}`);
         conversionMarkers.push('BLOCKED: Login Wall / Anti-Bot');
@@ -61,18 +84,52 @@ export async function handle(
                 if (bioLink) links.push(bioLink);
             }
 
-            // 2. Verified Status
+            // 2. Full Name
+            const nameLocator = page.locator('[data-testid="UserName"] div span').first();
+            if (await nameLocator.count() > 0) {
+                const nameText = await nameLocator.textContent();
+                if (nameText) fullName = nameText.trim();
+            }
+
+            // 3. Biography
+            const bioLocator = page.locator('[data-testid="UserDescription"]').first();
+            if (await bioLocator.count() > 0) {
+                const bioText = await bioLocator.textContent();
+                if (bioText) biography = bioText.trim();
+            }
+
+            // 4. Verified Status
             const verifiedLocator = page.locator('[data-testid="UserProfileHeader_Items"] [aria-label*="Verified account"]').first();
             if (await verifiedLocator.count() > 0) {
                 conversionMarkers.push('Status: Verified');
+                verified = true;
             }
 
-            // 3. Numeric Metrics (Raw signals for Math Agent)
-            const followerCount = await page.locator('a[href$="/verified_followers"] span').first().textContent();
-            if (followerCount) conversionMarkers.push(`Followers Raw: ${followerCount.trim()}`);
+            // 5. Numeric Metrics (Raw signals for Math Agent)
+            const followerLocator = page.locator('a[href$="/verified_followers"] span, a[href$="/followers"] span').first();
+            const followerCountText = await followerLocator.textContent();
+            if (followerCountText) {
+                const text = followerCountText.trim();
+                conversionMarkers.push(`Followers Raw: ${text}`);
+                followerCount = parseCount(text);
+            }
 
-            const followingCount = await page.locator('a[href$="/following"] span').first().textContent();
-            if (followingCount) conversionMarkers.push(`Following Raw: ${followingCount.trim()}`);
+            const followingCountText = await page.locator('a[href$="/following"] span').first().textContent();
+            if (followingCountText) {
+                const text = followingCountText.trim();
+                conversionMarkers.push(`Following Raw: ${text}`);
+                followingCount = parseCount(text);
+            }
+
+            // 6. Tweets count (from profile nav or header)
+            const tweetsLocator = page.locator('[data-testid="UserNav"] a[href$=""] span, div[data-testid="UserProfileHeader"] span').first();
+            if (await tweetsLocator.count() > 0) {
+                const tweetsText = await tweetsLocator.textContent();
+                if (tweetsText) {
+                    const numMatch = tweetsText.match(/([\d,.]+[KkMm]?)/);
+                    if (numMatch) tweetsCount = parseCount(numMatch[1]);
+                }
+            }
 
         } catch (e) {
             log.debug('[Twitter] Extraction encountered missing elements', { url, error: String(e) });
@@ -92,7 +149,15 @@ export async function handle(
             },
             profileHtml: content,
             screenshotUrl: '', // Populated by main.ts
-        },
+            // Structured fields for direct Supabase mapping
+            username,
+            fullName,
+            biography,
+            verified,
+            followerCount,
+            followingCount,
+            tweetsCount,
+        } as any,
         errors: []
     };
 

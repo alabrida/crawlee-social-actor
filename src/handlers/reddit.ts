@@ -131,6 +131,27 @@ async function handle(
         });
     }
 
+    // Compute structured data fields
+    let username: string | null = null;
+    let karma = 0;
+    let postKarma = 0;
+    let commentKarma = 0;
+    let accountAgeDays = 0;
+
+    if (isUser) {
+        username = data.name || null;
+        karma = data.total_karma || 0;
+        postKarma = data.link_karma || 0;
+        commentKarma = data.comment_karma || 0;
+        if (data.created_utc) {
+            const createdDate = new Date(data.created_utc * 1000);
+            accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+        }
+    } else {
+        // Subreddit: use display_name as "username"
+        username = data.display_name || null;
+    }
+
     const scrapedItem: ScrapedItem = {
         platform: 'reddit',
         url: request.loadedUrl || url,
@@ -145,8 +166,15 @@ async function handle(
             kind,
             profileHtml,
             // screenshotUrl placeholder, filled by Playwright screenshot-collector
-            screenshotUrl: '' 
-        },
+            screenshotUrl: '',
+            // Structured fields for direct Supabase mapping
+            username,
+            karma,
+            postKarma,
+            commentKarma,
+            accountAgeDays,
+            postsCount: 0, // Not available from about.json endpoint
+        } as any,
         errors: [],
     };
 

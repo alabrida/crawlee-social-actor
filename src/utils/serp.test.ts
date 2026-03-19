@@ -46,41 +46,30 @@ describe('fetchSerpApi', () => {
 
         await fetchSerpApi(query, apiKey);
 
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(`q=search+query`)
-        const expectedQuery = 'search query';
-        // URLSearchParams uses '+' for spaces, while encodeURIComponent uses '%20'
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(`q=${expectedQuery.replace(/ /g, '+')}`)
-        // fetch actually uses URLSearchParams or + for spaces, let's just check the whole string or handle both
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringMatching(/q=search(%20|\+)query/)
-        const expectedEncodedQuery = new URLSearchParams({ q: expectedQuery }).toString().split('=')[1];
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(`q=${expectedEncodedQuery}`)
         // URLSearchParams encodes spaces as '+'
-        const encodedQuery = new URLSearchParams({ q: expectedQuery }).toString();
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(encodedQuery)
-        // URLSearchParams translates spaces to '+'
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(`q=search+query`)
-            expect.stringContaining(`q=${expectedQuery.replace(' ', '+')}`)
-        const expectedParams = new URLSearchParams({
-            engine: 'google',
-            q: expectedQuery,
-            api_key: apiKey,
-            num: '10'
-        });
-
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(`q=${expectedParams.get('q')?.replace(/ /g, '+')}`)
-        const expectedQuery = 'search+query';
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining(`q=${expectedQuery}`)
+            expect.stringContaining('q=search+query')
         );
         expect(global.fetch).toHaveBeenCalledWith(
             expect.stringContaining(`api_key=${apiKey}`)
         );
+    });
+
+    it('should return null on fetch failure', async () => {
+        (global.fetch as any).mockResolvedValue({
+            ok: false,
+            status: 500,
+            statusText: 'Internal Server Error',
+        });
+
+        const result = await fetchSerpApi('test', 'key');
+        expect(result).toBeNull();
+    });
+
+    it('should return null on network error', async () => {
+        (global.fetch as any).mockRejectedValue(new Error('Network error'));
+
+        const result = await fetchSerpApi('test', 'key');
+        expect(result).toBeNull();
     });
 });
