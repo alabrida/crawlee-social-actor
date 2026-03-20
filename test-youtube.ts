@@ -1,6 +1,5 @@
 import { chromium } from 'playwright';
-
-(async () => {
+import fs from 'node:fs';(async () => {
     const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -19,13 +18,40 @@ import { chromium } from 'playwright';
         ytInitialData = JSON.parse(match[1]);
         console.log('ytInitialData found!');
         
-        // Output the full header JSON for analysis
-        require('fs').writeFileSync('d:\\Apify\\yt_header.json', JSON.stringify(ytInitialData?.header || {}, null, 2));
-        console.log('Wrote header to yt_header.json');
-
-        // Output the full metadata JSON for analysis
-        require('fs').writeFileSync('d:\\Apify\\yt_metadata.json', JSON.stringify(ytInitialData?.metadata || {}, null, 2));
-        console.log('Wrote metadata to yt_metadata.json');
+        if (ytInitialData?.header?.pageHeaderRenderer) {
+            const pageHeader = ytInitialData.header.pageHeaderRenderer;
+            let channelName = pageHeader?.pageTitle;
+            let subscribersCount = null;
+            let videosCount = null;
+            
+            const metadataRows = pageHeader?.content?.pageHeaderViewModel?.metadata?.contentMetadataViewModel?.metadataRows;
+            if (Array.isArray(metadataRows)) {
+                for (const row of metadataRows) {
+                    if (Array.isArray(row.metadataParts)) {
+                        for (const part of row.metadataParts) {
+                            const textContent = part?.text?.content || '';
+                            const parseCount = (s: string) => {
+                                const c = s.replace(/,/g, '').replace(/subscribers?|videos?|views?/gi, '').trim();
+                                let n = parseFloat(c);
+                                if(c.toLowerCase().endsWith('k')) n*=1000;
+                                if(c.toLowerCase().endsWith('m')) n*=1000000;
+                                return Math.floor(n);
+                            }
+                            if (!subscribersCount && textContent.toLowerCase().includes('subscriber')) {
+                                subscribersCount = parseCount(textContent);
+                            }
+                            if (!videosCount && textContent.toLowerCase().includes('video')) {
+                                videosCount = parseCount(textContent);
+                            }
+                        }
+                    }
+                }
+            }
+            console.log('--- OUTPUT ---');
+            console.log('Channel Name:', channelName);
+            console.log('Subs:', subscribersCount);
+            console.log('Videos:', videosCount);
+        }
     } else {
         console.log('No ytInitialData found.');
     }

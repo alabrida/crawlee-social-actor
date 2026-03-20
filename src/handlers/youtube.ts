@@ -100,9 +100,26 @@ async function handle(
 
             // Fallback: pageHeaderRenderer (newer YT layout)
             const pageHeader = ytInitialData?.header?.pageHeaderRenderer;
-            if (pageHeader && !channelName) {
-                const title = pageHeader?.pageTitle;
-                if (title) channelName = title;
+            if (pageHeader) {
+                if (!channelName && pageHeader?.pageTitle) {
+                    channelName = pageHeader.pageTitle;
+                }
+                const metadataRows = pageHeader?.content?.pageHeaderViewModel?.metadata?.contentMetadataViewModel?.metadataRows;
+                if (Array.isArray(metadataRows)) {
+                    for (const row of metadataRows) {
+                        if (Array.isArray(row.metadataParts)) {
+                            for (const part of row.metadataParts) {
+                                const textContent = part?.text?.content || '';
+                                if (!subscribersCount && textContent.toLowerCase().includes('subscriber')) {
+                                    subscribersCount = parseCount(textContent);
+                                }
+                                if (!videosCount && textContent.toLowerCase().includes('video')) {
+                                    videosCount = parseCount(textContent);
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // Extract from metadata object

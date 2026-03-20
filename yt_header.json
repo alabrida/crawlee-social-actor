@@ -1,0 +1,811 @@
+{
+  "pageHeaderRenderer": {
+    "pageTitle": "Nightcap",
+    "content": {
+      "pageHeaderViewModel": {
+        "title": {
+          "dynamicTextViewModel": {
+            "text": {
+              "content": "Nightcap",
+              "styleRuns": [
+                {
+                  "startIndex": 8,
+                  "styleRunExtensions": {
+                    "styleRunColorMapExtension": {
+                      "colorMap": [
+                        {
+                          "key": "USER_INTERFACE_THEME_DARK",
+                          "value": 4294967295
+                        },
+                        {
+                          "key": "USER_INTERFACE_THEME_LIGHT",
+                          "value": 4279440147
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "attachmentRuns": [
+                {
+                  "startIndex": 8,
+                  "length": 0,
+                  "element": {
+                    "type": {
+                      "imageType": {
+                        "image": {
+                          "sources": [
+                            {
+                              "clientResource": {
+                                "imageName": "CHECK_CIRCLE_FILLED"
+                              },
+                              "width": 24,
+                              "height": 24
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "properties": {
+                      "layoutProperties": {
+                        "height": {
+                          "value": 24,
+                          "unit": "DIMENSION_UNIT_POINT"
+                        },
+                        "width": {
+                          "value": 24,
+                          "unit": "DIMENSION_UNIT_POINT"
+                        },
+                        "margin": {
+                          "left": {
+                            "value": 8,
+                            "unit": "DIMENSION_UNIT_POINT"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "alignment": "ALIGNMENT_VERTICAL_CENTER"
+                }
+              ]
+            },
+            "maxLines": 2,
+            "rendererContext": {
+              "loggingContext": {
+                "loggingDirectives": {
+                  "trackingParams": "CCUQj-QKIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+                  "visibility": {
+                    "types": "12"
+                  },
+                  "clientVeSpec": {
+                    "uiType": 176655,
+                    "veCounter": 149684117
+                  }
+                }
+              },
+              "accessibilityContext": {
+                "label": "Nightcap, Verified"
+              }
+            }
+          }
+        },
+        "image": {
+          "decoratedAvatarViewModel": {
+            "avatar": {
+              "avatarViewModel": {
+                "image": {
+                  "sources": [
+                    {
+                      "url": "https://yt3.googleusercontent.com/ySplW7QXH-__PcvuFOUcLx6i6k2Bt3TN-mOV81j_cieHnLkc0GVpiVhlZdxBR3N4wcKQ3bq1=s72-c-k-c0x00ffffff-no-rj",
+                      "width": 72,
+                      "height": 72
+                    },
+                    {
+                      "url": "https://yt3.googleusercontent.com/ySplW7QXH-__PcvuFOUcLx6i6k2Bt3TN-mOV81j_cieHnLkc0GVpiVhlZdxBR3N4wcKQ3bq1=s120-c-k-c0x00ffffff-no-rj",
+                      "width": 120,
+                      "height": 120
+                    },
+                    {
+                      "url": "https://yt3.googleusercontent.com/ySplW7QXH-__PcvuFOUcLx6i6k2Bt3TN-mOV81j_cieHnLkc0GVpiVhlZdxBR3N4wcKQ3bq1=s160-c-k-c0x00ffffff-no-rj",
+                      "width": 160,
+                      "height": 160
+                    }
+                  ],
+                  "processor": {
+                    "borderImageProcessor": {
+                      "circular": true
+                    }
+                  }
+                },
+                "avatarImageSize": "AVATAR_SIZE_XL",
+                "loggingDirectives": {
+                  "trackingParams": "CCQQ6OENIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+                  "visibility": {
+                    "types": "12"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "metadata": {
+          "contentMetadataViewModel": {
+            "metadataRows": [
+              {
+                "metadataParts": [
+                  {
+                    "text": {
+                      "content": "@NightcapShow_",
+                      "styleRuns": [
+                        {
+                          "weightLabel": "FONT_WEIGHT_MEDIUM",
+                          "styleRunExtensions": {
+                            "styleRunColorMapExtension": {
+                              "colorMap": [
+                                {
+                                  "key": "USER_INTERFACE_THEME_DARK",
+                                  "value": 4294967295
+                                },
+                                {
+                                  "key": "USER_INTERFACE_THEME_LIGHT",
+                                  "value": 4279440147
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "enableTruncation": true
+                  }
+                ]
+              },
+              {
+                "metadataParts": [
+                  {
+                    "text": {
+                      "content": "1.99M subscribers"
+                    },
+                    "accessibilityLabel": "1.99 million subscribers"
+                  },
+                  {
+                    "text": {
+                      "content": "6.6K videos",
+                      "styleRuns": [
+                        {
+                          "startIndex": 0,
+                          "length": 11
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ],
+            "delimiter": "•",
+            "rendererContext": {
+              "loggingContext": {
+                "loggingDirectives": {
+                  "trackingParams": "CCMQ9eQKIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+                  "visibility": {
+                    "types": "12"
+                  },
+                  "clientVeSpec": {
+                    "uiType": 176757,
+                    "veCounter": 149684116
+                  }
+                }
+              }
+            }
+          }
+        },
+        "actions": {
+          "flexibleActionsViewModel": {
+            "actionsRows": [
+              {
+                "actions": [
+                  {
+                    "buttonViewModel": {
+                      "title": "Subscribe",
+                      "onTap": {
+                        "innertubeCommand": {
+                          "clickTrackingParams": "CB4QjqULIhMI4OPUhu2ukwMV0ofRBB1aqgrqygEEQYgKWw==",
+                          "commandMetadata": {
+                            "webCommandMetadata": {
+                              "ignoreNavigation": true
+                            }
+                          },
+                          "modalEndpoint": {
+                            "modal": {
+                              "modalWithTitleAndButtonRenderer": {
+                                "title": {
+                                  "simpleText": "Want to subscribe to this channel?"
+                                },
+                                "content": {
+                                  "simpleText": "Sign in to subscribe to this channel."
+                                },
+                                "button": {
+                                  "buttonRenderer": {
+                                    "style": "STYLE_MONO_FILLED",
+                                    "size": "SIZE_DEFAULT",
+                                    "isDisabled": false,
+                                    "text": {
+                                      "simpleText": "Sign in"
+                                    },
+                                    "navigationEndpoint": {
+                                      "clickTrackingParams": "CCIQ_YYEIhMI4OPUhu2ukwMV0ofRBB1aqgrqMglzdWJzY3JpYmXKAQRBiApb",
+                                      "commandMetadata": {
+                                        "webCommandMetadata": {
+                                          "url": "https://accounts.google.com/ServiceLogin?service=youtube&uilel=3&passive=true&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Ddesktop%26hl%3Den%26next%3D%252F%2540NightcapShow_%26continue_action%3DQUFFLUhqa0J4NzJHZnlkS0pFSTVaemh4MmJGQmh2WW9EZ3xBQ3Jtc0trWTFPSFQ0cGZsVFFaWTZNTmNORGJMTUFDWHZEakNtZ0RTZndNcGF4VDBfZFFLSURCUjd4RDF1QnNOVUZKZlVNUzViWmpkUW5RRWxQaFYwOWp5M055MGNKbGswV2RGMnpsTDZkcDBiM1c3OGV5a0h4SzVFZExWSFRNZThrNDFCWVVjNEVjT3ZNdW9BYXJZc2RNUEx6Z2FEUTlIY1NoX2V5Q1p0T2R2NmtSYWhNd1FTRVQ1VkpxME1YRGxSa3R2T2UyVE5nM0I&hl=en&ec=66429",
+                                          "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                                          "rootVe": 83769
+                                        }
+                                      },
+                                      "signInEndpoint": {
+                                        "nextEndpoint": {
+                                          "clickTrackingParams": "CCIQ_YYEIhMI4OPUhu2ukwMV0ofRBB1aqgrqygEEQYgKWw==",
+                                          "commandMetadata": {
+                                            "webCommandMetadata": {
+                                              "url": "/@NightcapShow_",
+                                              "webPageType": "WEB_PAGE_TYPE_CHANNEL",
+                                              "rootVe": 3611,
+                                              "apiUrl": "/youtubei/v1/browse"
+                                            }
+                                          },
+                                          "browseEndpoint": {
+                                            "browseId": "UCKnodHJpZd8UbSvAufDd3_g",
+                                            "params": "EgA%3D",
+                                            "canonicalBaseUrl": "/@NightcapShow_"
+                                          }
+                                        },
+                                        "continueAction": "QUFFLUhqa0J4NzJHZnlkS0pFSTVaemh4MmJGQmh2WW9EZ3xBQ3Jtc0trWTFPSFQ0cGZsVFFaWTZNTmNORGJMTUFDWHZEakNtZ0RTZndNcGF4VDBfZFFLSURCUjd4RDF1QnNOVUZKZlVNUzViWmpkUW5RRWxQaFYwOWp5M055MGNKbGswV2RGMnpsTDZkcDBiM1c3OGV5a0h4SzVFZExWSFRNZThrNDFCWVVjNEVjT3ZNdW9BYXJZc2RNUEx6Z2FEUTlIY1NoX2V5Q1p0T2R2NmtSYWhNd1FTRVQ1VkpxME1YRGxSa3R2T2UyVE5nM0I",
+                                        "idamTag": "66429"
+                                      }
+                                    },
+                                    "trackingParams": "CCIQ_YYEIhMI4OPUhu2ukwMV0ofRBB1aqgrq"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "accessibilityText": "Subscribe",
+                      "style": "BUTTON_VIEW_MODEL_STYLE_MONO",
+                      "trackingParams": "CB4QjqULIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+                      "isFullWidth": false,
+                      "type": "BUTTON_VIEW_MODEL_TYPE_FILLED",
+                      "buttonSize": "BUTTON_VIEW_MODEL_SIZE_DEFAULT",
+                      "state": "BUTTON_VIEW_MODEL_STATE_ACTIVE"
+                    }
+                  },
+                  {
+                    "buttonViewModel": {
+                      "iconName": "SPONSORSHIP_STAR",
+                      "title": "Join",
+                      "onTap": {
+                        "innertubeCommand": {
+                          "clickTrackingParams": "CCAQocYHGAQiEwjg49SG7a6TAxXSh9EEHVqqCurKAQRBiApb",
+                          "commandMetadata": {
+                            "webCommandMetadata": {
+                              "ignoreNavigation": true
+                            }
+                          },
+                          "modalEndpoint": {
+                            "modal": {
+                              "modalWithTitleAndButtonRenderer": {
+                                "title": {
+                                  "runs": [
+                                    {
+                                      "text": "Want to join this channel?"
+                                    }
+                                  ]
+                                },
+                                "content": {
+                                  "runs": [
+                                    {
+                                      "text": "Sign in to become a member."
+                                    }
+                                  ]
+                                },
+                                "button": {
+                                  "buttonRenderer": {
+                                    "style": "STYLE_BRAND",
+                                    "size": "SIZE_DEFAULT",
+                                    "isDisabled": false,
+                                    "text": {
+                                      "simpleText": "Sign in"
+                                    },
+                                    "navigationEndpoint": {
+                                      "clickTrackingParams": "CCEQ8FsiEwjg49SG7a6TAxXSh9EEHVqqCurKAQRBiApb",
+                                      "commandMetadata": {
+                                        "webCommandMetadata": {
+                                          "url": "https://accounts.google.com/ServiceLogin?service=youtube&uilel=3&passive=true&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Ddesktop%26hl%3Den%26next%3Dhttps%253A%252F%252Fwww.youtube.com%252F%2540NightcapShow_&hl=en",
+                                          "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                                          "rootVe": 83769
+                                        }
+                                      },
+                                      "signInEndpoint": {
+                                        "hack": true
+                                      }
+                                    },
+                                    "trackingParams": "CCEQ8FsiEwjg49SG7a6TAxXSh9EEHVqqCuo="
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "accessibilityText": "Join this channel",
+                      "style": "BUTTON_VIEW_MODEL_STYLE_MONO",
+                      "trackingParams": "CCAQocYHGAQiEwjg49SG7a6TAxXSh9EEHVqqCuo=",
+                      "isFullWidth": false,
+                      "type": "BUTTON_VIEW_MODEL_TYPE_TONAL",
+                      "buttonSize": "BUTTON_VIEW_MODEL_SIZE_DEFAULT",
+                      "state": "BUTTON_VIEW_MODEL_STATE_ACTIVE",
+                      "accessibilityId": "id.sponsor_button",
+                      "onVisible": {
+                        "innertubeCommand": {
+                          "clickTrackingParams": "CCAQocYHGAQiEwjg49SG7a6TAxXSh9EEHVqqCurKAQRBiApb",
+                          "logFlowLoggingEventCommand": {
+                            "flowEventType": 1,
+                            "flowEventNamespace": "FLOW_EVENT_NAMESPACE_SPONSORSHIPS_PURCHASE",
+                            "flowType": "FLOW_TYPE_SPONSORSHIPS_PURCHASE",
+                            "flowEventMetadata": {
+                              "sponsorshipsPurchaseContext": {
+                                "joinMethod": "SPONSORSHIPS_JOIN_METHOD_CHANNEL_PAGE_BUTTON"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "targetId": "sponsorships-button",
+                      "loggingDirectives": {
+                        "trackingParams": "CCAQocYHGAQiEwjg49SG7a6TAxXSh9EEHVqqCuo=",
+                        "visibility": {
+                          "types": "12"
+                        },
+                        "clientVeSpec": {
+                          "uiType": 123681,
+                          "veCounter": 149684115
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "actions": [
+                  {
+                    "buttonViewModel": {
+                      "iconName": "PEOPLE_GROUP",
+                      "title": "Community",
+                      "onTap": {
+                        "innertubeCommand": {
+                          "clickTrackingParams": "CB8Qg6IPGAIiEwjg49SG7a6TAxXSh9EEHVqqCurKAQRBiApb",
+                          "commandMetadata": {
+                            "webCommandMetadata": {
+                              "url": "/@NightcapShow_/community",
+                              "webPageType": "WEB_PAGE_TYPE_BROWSE",
+                              "rootVe": 6827,
+                              "apiUrl": "/youtubei/v1/browse"
+                            }
+                          },
+                          "browseEndpoint": {
+                            "browseId": "FEcommunity_page",
+                            "params": "wgkaChhVQ0tub2RISnBaZDhVYlN2QXVmRGQzX2c%3D",
+                            "canonicalBaseUrl": "/@NightcapShow_/community"
+                          }
+                        }
+                      },
+                      "accessibilityText": "Community",
+                      "style": "BUTTON_VIEW_MODEL_STYLE_MONO",
+                      "trackingParams": "CB8Qg6IPGAIiEwjg49SG7a6TAxXSh9EEHVqqCuo=",
+                      "isFullWidth": false,
+                      "type": "BUTTON_VIEW_MODEL_TYPE_TONAL",
+                      "buttonSize": "BUTTON_VIEW_MODEL_SIZE_DEFAULT",
+                      "state": "BUTTON_VIEW_MODEL_STATE_ACTIVE",
+                      "accessibilityId": "eml.header_community_button"
+                    }
+                  }
+                ]
+              }
+            ],
+            "justifyContent": "FLEXIBLE_ACTIONS_JUSTIFY_CONTENT_START",
+            "minimumRowHeight": 44,
+            "rendererContext": {
+              "loggingContext": {
+                "loggingDirectives": {
+                  "trackingParams": "CB4QjqULIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+                  "visibility": {
+                    "types": "12"
+                  },
+                  "clientVeSpec": {
+                    "uiType": 184974,
+                    "veCounter": 149684114
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": {
+          "descriptionPreviewViewModel": {
+            "description": {
+              "content": "Come for the sports, stay for the stories. You’ve never heard Shannon Sharpe and Chad \"Ochocinco\" Johnson like this. "
+            },
+            "maxLines": 2,
+            "truncationText": {
+              "content": "...more",
+              "styleRuns": [
+                {
+                  "startIndex": 0,
+                  "length": 7,
+                  "weight": 500
+                }
+              ]
+            },
+            "alwaysShowTruncationText": true,
+            "rendererContext": {
+              "loggingContext": {
+                "loggingDirectives": {
+                  "trackingParams": "CBkQr_4KIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+                  "visibility": {
+                    "types": "12"
+                  },
+                  "clientVeSpec": {
+                    "uiType": 180015,
+                    "veCounter": 149684113
+                  }
+                }
+              },
+              "accessibilityContext": {
+                "label": "Description. Come for the sports, stay for the stories. You’ve never he...tap for more."
+              },
+              "commandContext": {
+                "onTap": {
+                  "innertubeCommand": {
+                    "clickTrackingParams": "CBkQr_4KIhMI4OPUhu2ukwMV0ofRBB1aqgrqygEEQYgKWw==",
+                    "showEngagementPanelEndpoint": {
+                      "engagementPanel": {
+                        "engagementPanelSectionListRenderer": {
+                          "header": {
+                            "engagementPanelTitleHeaderRenderer": {
+                              "title": {
+                                "simpleText": "Nightcap"
+                              },
+                              "visibilityButton": {
+                                "buttonRenderer": {
+                                  "style": "STYLE_DEFAULT",
+                                  "size": "SIZE_DEFAULT",
+                                  "isDisabled": false,
+                                  "icon": {
+                                    "iconType": "CLOSE"
+                                  },
+                                  "accessibility": {
+                                    "label": "Close"
+                                  },
+                                  "trackingParams": "CB0Q8FsiEwjg49SG7a6TAxXSh9EEHVqqCuo=",
+                                  "accessibilityData": {
+                                    "accessibilityData": {
+                                      "label": "Close"
+                                    }
+                                  },
+                                  "command": {
+                                    "clickTrackingParams": "CB0Q8FsiEwjg49SG7a6TAxXSh9EEHVqqCurKAQRBiApb",
+                                    "changeEngagementPanelVisibilityAction": {
+                                      "targetId": "6b719b30-0000-2a5a-a868-d4f547f8e20c",
+                                      "visibility": "ENGAGEMENT_PANEL_VISIBILITY_HIDDEN"
+                                    }
+                                  }
+                                }
+                              },
+                              "trackingParams": "CBoQ040EIhMI4OPUhu2ukwMV0ofRBB1aqgrq"
+                            }
+                          },
+                          "content": {
+                            "sectionListRenderer": {
+                              "contents": [
+                                {
+                                  "itemSectionRenderer": {
+                                    "contents": [
+                                      {
+                                        "continuationItemRenderer": {
+                                          "trigger": "CONTINUATION_TRIGGER_ON_ITEM_SHOWN",
+                                          "continuationEndpoint": {
+                                            "clickTrackingParams": "CBwQuy8YACITCODj1IbtrpMDFdKH0QQdWqoK6soBBEGICls=",
+                                            "commandMetadata": {
+                                              "webCommandMetadata": {
+                                                "sendPost": true,
+                                                "apiUrl": "/youtubei/v1/browse"
+                                              }
+                                            },
+                                            "continuationCommand": {
+                                              "token": "4qmFsgJgEhhVQ0tub2RISnBaZDhVYlN2QXVmRGQzX2caRDhnWXJHaW1hQVNZS0pEWmlOekU1WWpNeExUQXdNREF0TW1FMVlTMWhPRFk0TFdRMFpqVTBOMlk0WlRJd1l3JTNEJTNE",
+                                              "request": "CONTINUATION_REQUEST_TYPE_BROWSE"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "trackingParams": "CBwQuy8YACITCODj1IbtrpMDFdKH0QQdWqoK6g==",
+                                    "sectionIdentifier": "6b719b31-0000-2a5a-a868-d4f547f8e20c",
+                                    "targetId": "6b719b31-0000-2a5a-a868-d4f547f8e20c"
+                                  }
+                                }
+                              ],
+                              "trackingParams": "CBsQui8iEwjg49SG7a6TAxXSh9EEHVqqCuo=",
+                              "scrollPaneStyle": {
+                                "scrollable": true
+                              }
+                            }
+                          },
+                          "targetId": "6b719b30-0000-2a5a-a868-d4f547f8e20c",
+                          "identifier": {
+                            "surface": "ENGAGEMENT_PANEL_SURFACE_BROWSE",
+                            "tag": "6b719b30-0000-2a5a-a868-d4f547f8e20c"
+                          }
+                        }
+                      },
+                      "identifier": {
+                        "surface": "ENGAGEMENT_PANEL_SURFACE_BROWSE",
+                        "tag": "6b719b30-0000-2a5a-a868-d4f547f8e20c"
+                      },
+                      "engagementPanelPresentationConfigs": {
+                        "engagementPanelPopupPresentationConfig": {
+                          "popupType": "PANEL_POPUP_TYPE_DIALOG"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "attribution": {
+          "attributionViewModel": {
+            "text": {
+              "content": "podcasts.apple.com/us/podcast/nightcap/id1706534198",
+              "commandRuns": [
+                {
+                  "startIndex": 0,
+                  "length": 51,
+                  "onTap": {
+                    "innertubeCommand": {
+                      "clickTrackingParams": "CBQQjaULIhMI4OPUhu2ukwMV0ofRBB1aqgrqygEEQYgKWw==",
+                      "commandMetadata": {
+                        "webCommandMetadata": {
+                          "url": "https://www.youtube.com/redirect?event=channel_header&redir_token=QUFFLUhqbGVJWlRoM0NiZjlfamRsekNxZEY1ellMdV9fZ3xBQ3Jtc0tsbExHdkJMQzZUMkVOY0JCUm15VVNvN1J6WWh1SWRhMDU1RU56U19UT1l4RTBKcW1lVjVvWEdFNXJRNi1HNk5ENl9BWXcxUzRwZGNQZVEyMHJxRWhId2x5Wm03RVdaTzFYdWNsY3J5dF9OaXNYX2JLSQ&q=https%3A%2F%2Fpodcasts.apple.com%2Fus%2Fpodcast%2Fnightcap%2Fid1706534198",
+                          "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                          "rootVe": 83769
+                        }
+                      },
+                      "urlEndpoint": {
+                        "url": "https://www.youtube.com/redirect?event=channel_header&redir_token=QUFFLUhqbGVJWlRoM0NiZjlfamRsekNxZEY1ellMdV9fZ3xBQ3Jtc0tsbExHdkJMQzZUMkVOY0JCUm15VVNvN1J6WWh1SWRhMDU1RU56U19UT1l4RTBKcW1lVjVvWEdFNXJRNi1HNk5ENl9BWXcxUzRwZGNQZVEyMHJxRWhId2x5Wm03RVdaTzFYdWNsY3J5dF9OaXNYX2JLSQ&q=https%3A%2F%2Fpodcasts.apple.com%2Fus%2Fpodcast%2Fnightcap%2Fid1706534198",
+                        "target": "TARGET_NEW_WINDOW"
+                      }
+                    }
+                  }
+                }
+              ],
+              "styleRuns": [
+                {
+                  "weightLabel": "FONT_WEIGHT_NORMAL",
+                  "styleRunExtensions": {
+                    "styleRunColorMapExtension": {
+                      "colorMap": [
+                        {
+                          "key": "USER_INTERFACE_THEME_DARK",
+                          "value": 4282296063
+                        },
+                        {
+                          "key": "USER_INTERFACE_THEME_LIGHT",
+                          "value": 4278607828
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "suffix": {
+              "content": "and 4 more links",
+              "commandRuns": [
+                {
+                  "startIndex": 0,
+                  "length": 16,
+                  "onTap": {
+                    "innertubeCommand": {
+                      "clickTrackingParams": "CBQQjaULIhMI4OPUhu2ukwMV0ofRBB1aqgrqygEEQYgKWw==",
+                      "showEngagementPanelEndpoint": {
+                        "engagementPanel": {
+                          "engagementPanelSectionListRenderer": {
+                            "header": {
+                              "engagementPanelTitleHeaderRenderer": {
+                                "title": {
+                                  "simpleText": "Nightcap"
+                                },
+                                "visibilityButton": {
+                                  "buttonRenderer": {
+                                    "style": "STYLE_DEFAULT",
+                                    "size": "SIZE_DEFAULT",
+                                    "isDisabled": false,
+                                    "icon": {
+                                      "iconType": "CLOSE"
+                                    },
+                                    "accessibility": {
+                                      "label": "Close"
+                                    },
+                                    "trackingParams": "CBgQ8FsiEwjg49SG7a6TAxXSh9EEHVqqCuo=",
+                                    "accessibilityData": {
+                                      "accessibilityData": {
+                                        "label": "Close"
+                                      }
+                                    },
+                                    "command": {
+                                      "clickTrackingParams": "CBgQ8FsiEwjg49SG7a6TAxXSh9EEHVqqCurKAQRBiApb",
+                                      "changeEngagementPanelVisibilityAction": {
+                                        "targetId": "6b719b32-0000-2a5a-a868-d4f547f8e20c",
+                                        "visibility": "ENGAGEMENT_PANEL_VISIBILITY_HIDDEN"
+                                      }
+                                    }
+                                  }
+                                },
+                                "trackingParams": "CBUQ040EIhMI4OPUhu2ukwMV0ofRBB1aqgrq"
+                              }
+                            },
+                            "content": {
+                              "sectionListRenderer": {
+                                "contents": [
+                                  {
+                                    "itemSectionRenderer": {
+                                      "contents": [
+                                        {
+                                          "continuationItemRenderer": {
+                                            "trigger": "CONTINUATION_TRIGGER_ON_ITEM_SHOWN",
+                                            "continuationEndpoint": {
+                                              "clickTrackingParams": "CBcQuy8YACITCODj1IbtrpMDFdKH0QQdWqoK6soBBEGICls=",
+                                              "commandMetadata": {
+                                                "webCommandMetadata": {
+                                                  "sendPost": true,
+                                                  "apiUrl": "/youtubei/v1/browse"
+                                                }
+                                              },
+                                              "continuationCommand": {
+                                                "token": "4qmFsgJgEhhVQ0tub2RISnBaZDhVYlN2QXVmRGQzX2caRDhnWXJHaW1hQVNZS0pEWmlOekU1WWpNekxUQXdNREF0TW1FMVlTMWhPRFk0TFdRMFpqVTBOMlk0WlRJd1l3JTNEJTNE",
+                                                "request": "CONTINUATION_REQUEST_TYPE_BROWSE"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "trackingParams": "CBcQuy8YACITCODj1IbtrpMDFdKH0QQdWqoK6g==",
+                                      "sectionIdentifier": "6b719b33-0000-2a5a-a868-d4f547f8e20c",
+                                      "targetId": "6b719b33-0000-2a5a-a868-d4f547f8e20c"
+                                    }
+                                  }
+                                ],
+                                "trackingParams": "CBYQui8iEwjg49SG7a6TAxXSh9EEHVqqCuo=",
+                                "scrollPaneStyle": {
+                                  "scrollable": true
+                                }
+                              }
+                            },
+                            "targetId": "6b719b32-0000-2a5a-a868-d4f547f8e20c",
+                            "identifier": {
+                              "surface": "ENGAGEMENT_PANEL_SURFACE_BROWSE",
+                              "tag": "6b719b32-0000-2a5a-a868-d4f547f8e20c"
+                            }
+                          }
+                        },
+                        "identifier": {
+                          "surface": "ENGAGEMENT_PANEL_SURFACE_BROWSE",
+                          "tag": "6b719b32-0000-2a5a-a868-d4f547f8e20c"
+                        },
+                        "engagementPanelPresentationConfigs": {
+                          "engagementPanelPopupPresentationConfig": {
+                            "popupType": "PANEL_POPUP_TYPE_DIALOG"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ],
+              "styleRuns": [
+                {
+                  "fontName": "",
+                  "fontSize": 0,
+                  "weightLabel": "FONT_WEIGHT_MEDIUM"
+                }
+              ]
+            },
+            "rendererContext": {
+              "loggingContext": {
+                "loggingDirectives": {
+                  "trackingParams": "CBQQjaULIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+                  "visibility": {
+                    "types": "12"
+                  },
+                  "clientVeSpec": {
+                    "uiType": 184973,
+                    "veCounter": 149684112
+                  }
+                }
+              }
+            }
+          }
+        },
+        "banner": {
+          "imageBannerViewModel": {
+            "image": {
+              "sources": [
+                {
+                  "url": "https://yt3.googleusercontent.com/z1W-ibRyRbIj3HTyxfQq3DrSIov5cXCAxoaK5sIPm0lhJ1pHhbxcAfU4qT2A-2Oz7DARRD_TDQU=w1060-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj",
+                  "width": 1060,
+                  "height": 175
+                },
+                {
+                  "url": "https://yt3.googleusercontent.com/z1W-ibRyRbIj3HTyxfQq3DrSIov5cXCAxoaK5sIPm0lhJ1pHhbxcAfU4qT2A-2Oz7DARRD_TDQU=w1138-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj",
+                  "width": 1138,
+                  "height": 188
+                },
+                {
+                  "url": "https://yt3.googleusercontent.com/z1W-ibRyRbIj3HTyxfQq3DrSIov5cXCAxoaK5sIPm0lhJ1pHhbxcAfU4qT2A-2Oz7DARRD_TDQU=w1707-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj",
+                  "width": 1707,
+                  "height": 283
+                },
+                {
+                  "url": "https://yt3.googleusercontent.com/z1W-ibRyRbIj3HTyxfQq3DrSIov5cXCAxoaK5sIPm0lhJ1pHhbxcAfU4qT2A-2Oz7DARRD_TDQU=w2120-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj",
+                  "width": 2120,
+                  "height": 351
+                },
+                {
+                  "url": "https://yt3.googleusercontent.com/z1W-ibRyRbIj3HTyxfQq3DrSIov5cXCAxoaK5sIPm0lhJ1pHhbxcAfU4qT2A-2Oz7DARRD_TDQU=w2276-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj",
+                  "width": 2276,
+                  "height": 377
+                },
+                {
+                  "url": "https://yt3.googleusercontent.com/z1W-ibRyRbIj3HTyxfQq3DrSIov5cXCAxoaK5sIPm0lhJ1pHhbxcAfU4qT2A-2Oz7DARRD_TDQU=w2560-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj",
+                  "width": 2560,
+                  "height": 424
+                }
+              ]
+            },
+            "style": "IMAGE_BANNER_STYLE_INSET",
+            "rendererContext": {
+              "loggingContext": {
+                "loggingDirectives": {
+                  "trackingParams": "CBMQnfILIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+                  "visibility": {
+                    "types": "12"
+                  },
+                  "clientVeSpec": {
+                    "uiType": 194845,
+                    "veCounter": 149684111
+                  }
+                }
+              }
+            }
+          }
+        },
+        "rendererContext": {
+          "loggingContext": {
+            "loggingDirectives": {
+              "trackingParams": "CBIQot8KIhMI4OPUhu2ukwMV0ofRBB1aqgrq",
+              "visibility": {
+                "types": "12"
+              },
+              "clientVeSpec": {
+                "uiType": 176034,
+                "veCounter": 149684110
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
