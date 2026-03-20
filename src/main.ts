@@ -270,34 +270,47 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             masterItem.gbp_scrape_date = item.scrapedAt;
         }
 
+        // -- Aggregate Deep Crawl Reports --
+        if (item.data?.crawlMetadata) {
+            const reportKey = (p === 'general' || p === 'general_hub') ? 'general_hub_crawl_report' : `${p}_crawl_report`;
+            if (!(masterItem as any)[reportKey]) (masterItem as any)[reportKey] = [];
+            (masterItem as any)[reportKey].push({
+                url: item.url,
+                scrapedAt: item.scrapedAt,
+                ...item.data.crawlMetadata
+            });
+        }
+
         // ─── General / General Hub ────────────────────────────────
         if (p === 'general' || p === 'general_hub') {
             const f = item.data?.forensics;
             if (f) {
-                masterItem.business_has_ssl = f.hasSsl;
-                masterItem.business_has_json_ld = f.hasJsonLd;
-                masterItem.has_google_analytics = f.hasGoogleAnalytics;
-                masterItem.has_newsletter_signup = f.hasNewsletter;
-                masterItem.has_privacy_policy = f.hasPrivacyPolicy;
-                masterItem.has_cookie_banner = f.hasCookieBanner || false;
+                if (f.hasSsl) masterItem.business_has_ssl = true;
+                if (f.hasJsonLd) masterItem.business_has_json_ld = true;
+                if (f.hasGoogleAnalytics) masterItem.has_google_analytics = true;
+                if (f.hasNewsletter) masterItem.has_newsletter_signup = true;
+                if (f.hasPrivacyPolicy) masterItem.has_privacy_policy = true;
+                if (f.hasCookieBanner) masterItem.has_cookie_banner = true;
                 
                 // Deep Signals
-                masterItem.consideration_has_case_studies = f.hasCaseStudies || false;
-                masterItem.consideration_has_testimonials = f.hasTestimonials || false;
-                masterItem.has_lead_magnet = f.hasLeadMagnet || false;
-                masterItem.has_quiz = f.hasQuiz || false;
-                masterItem.decision_pricing_page_detected = f.hasPricing || false;
-                masterItem.has_intent_tracking = f.hasIntentTracking || false;
-                masterItem.has_instant_booking = f.hasInstantBooking || false;
-                masterItem.is_ai_ready = f.isAiReady || false;
+                if (f.hasCaseStudies) masterItem.consideration_has_case_studies = true;
+                if (f.hasTestimonials) masterItem.consideration_has_testimonials = true;
+                if (f.hasLeadMagnet) masterItem.has_lead_magnet = true;
+                if (f.hasQuiz) masterItem.has_quiz = true;
+                if (f.hasPricing) masterItem.decision_pricing_page_detected = true;
+                if (f.hasIntentTracking) masterItem.has_intent_tracking = true;
+                if (f.hasInstantBooking) masterItem.has_instant_booking = true;
+                if (f.isAiReady) masterItem.is_ai_ready = true;
             }
-            if (item.data?.metaDescription) masterItem.business_meta_description = item.data.metaDescription;
-            if (item.data?.canonicalUrl) masterItem.business_canonical_url = item.data.canonicalUrl;
-            if (item.data?.loadedUrl) masterItem.business_loaded_url = item.data.loadedUrl;
-            if (item.data?.httpStatus != null) masterItem.business_http_status = item.data.httpStatus;
-            if (item.data?.scrapeSuccess !== undefined) masterItem.business_scrape_success = item.data.scrapeSuccess;
-            masterItem.business_screenshot_url = item.data?.screenshotUrl ?? null;
-            masterItem.business_screenshot_captured_at = item.scrapedAt;
+            if (!masterItem.business_meta_description && item.data?.metaDescription) masterItem.business_meta_description = item.data.metaDescription;
+            if (!masterItem.business_canonical_url && item.data?.canonicalUrl) masterItem.business_canonical_url = item.data.canonicalUrl;
+            if (!masterItem.business_loaded_url && item.data?.loadedUrl) masterItem.business_loaded_url = item.data.loadedUrl;
+            if (masterItem.business_http_status == null && item.data?.httpStatus != null) masterItem.business_http_status = item.data.httpStatus;
+            if (masterItem.business_scrape_success == null && item.data?.scrapeSuccess !== undefined) masterItem.business_scrape_success = item.data.scrapeSuccess;
+            if (!masterItem.business_screenshot_url && item.data?.screenshotUrl) {
+                masterItem.business_screenshot_url = item.data.screenshotUrl;
+                masterItem.business_screenshot_captured_at = item.scrapedAt;
+            }
         }
 
         // ─── LinkedIn ─────────────────────────────────────────────

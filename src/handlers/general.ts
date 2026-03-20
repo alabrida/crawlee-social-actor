@@ -189,6 +189,27 @@ export async function handle(
         // ignore extraction failures
     }
 
+    // Spider Architecture: Enqueue child links if this is the root request
+    if (!request.userData?.isSubPage && !isBlocked) {
+        log.info(`[General] Spawning spider for deep-link crawl on ${request.url}`);
+        await context.enqueueLinks({
+            strategy: 'same-domain',
+            limit: 50,
+            userData: {
+                ...request.userData,
+                isSubPage: true,
+            },
+        });
+    }
+
+    // Extract content snippet for the crawl report
+    let snippet = '';
+    try {
+        const text = await page.innerText('body');
+        // Clean up whitespace and grab the first 500 characters
+        snippet = text.replace(/\s+/g, ' ').trim().substring(0, 500);
+    } catch(e) {}
+
     const scrapedItem: ScrapedItem = {
         platform: 'general',
         url: request.url,
@@ -209,6 +230,13 @@ export async function handle(
             loadedUrl,
             httpStatus,
             scrapeSuccess: !isBlocked && (response ? response.status() < 400 : false),
+            crawlMetadata: {
+                title: await page.title().catch(() => ''),
+                h1: await page.locator('h1').first().innerText().catch(() => ''),
+                metaDescription: metaDescription || '',
+                httpStatus: httpStatus || 200,
+                snippet,
+            }
         } as any,
         errors: []
     };

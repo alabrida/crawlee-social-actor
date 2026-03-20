@@ -219,8 +219,24 @@ export async function handle(
                         if (datetime) latestPostDate = new Date(datetime).toISOString();
                     }
                 }
+
                 if (latestPostDate) {
                     (scrapedItem.data as any).latestPostDate = latestPostDate;
+                }
+
+                // Spider Architecture: Enqueue recent posts if root
+                if (!request.userData?.isSubPage) {
+                    const postUrls = await page.locator('article a[href^="/p/"], article a[href^="/reel/"]').evaluateAll(els => 
+                        els.map(el => (el as HTMLAnchorElement).href).slice(0, 5)
+                    );
+                    if (postUrls.length > 0) {
+                        log.info(`[Instagram] Enqueueing ${postUrls.length} recent posts for deep crawl.`);
+                        await context.enqueueLinks({
+                            urls: postUrls,
+                            userData: { ...request.userData, isSubPage: true },
+                            label: 'instagram'
+                        });
+                    }
                 }
 
             } catch (e) {
@@ -374,6 +390,21 @@ export async function handle(
                 if (postsCountFb !== null) (scrapedItem.data as any).postsCount = postsCountFb;
                 if (latestPostDate !== null) (scrapedItem.data as any).latestPostDate = latestPostDate;
 
+                // Spider Architecture: Enqueue recent posts if root
+                if (!request.userData?.isSubPage) {
+                    const postUrls = await page.locator('[role="feed"] a[href*="/posts/"], [role="feed"] a[href*="/videos/"]').evaluateAll(els => 
+                        els.map(el => (el as HTMLAnchorElement).href).filter(href => !href.includes('/groups/')).slice(0, 3)
+                    );
+                    if (postUrls.length > 0) {
+                        log.info(`[Facebook] Enqueueing ${postUrls.length} recent posts for deep crawl.`);
+                        await context.enqueueLinks({
+                            urls: postUrls,
+                            userData: { ...request.userData, isSubPage: true },
+                            label: 'facebook'
+                        });
+                    }
+                }
+
 
 
             } catch (e) {
@@ -403,6 +434,22 @@ export async function handle(
         data.likesCount = likesCount;
         data.hasReviews = hasReviews;
     }
+
+    // Add crawlMetadata for aggregated reports
+    let snippet = '';
+    try {
+        const text = await page.innerText('body');
+        // Clean up whitespace and grab the first 500 characters
+        snippet = text.replace(/\s+/g, ' ').trim().substring(0, 500);
+    } catch (e) {}
+
+    data.crawlMetadata = {
+        title: await page.title().catch(() => ''),
+        h1: await page.locator('h1').first().innerText().catch(() => ''),
+        metaDescription: biography || '', // biography is used for social "description"
+        httpStatus: 200,
+        snippet,
+    };
 
     scrapedItem.data.profileHtml = await page.content();
     return [scrapedItem];

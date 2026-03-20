@@ -129,6 +129,17 @@ async function handle(
             bannerImg: data.banner_img,
             iconImg: data.icon_img || data.community_icon,
         });
+
+        // Spider Architecture: Enqueue top posts if root
+        if (!request.userData?.isSubPage) {
+            const feedUrl = url.replace('/about.json', '.json');
+            log.info(`[Reddit] Enqueueing top posts for deep crawl from: ${feedUrl}`);
+            await context.enqueueLinks({
+                urls: [feedUrl], // Enqueue the feed itself as a sub-page to extract post metadata
+                userData: { ...request.userData, isSubPage: true },
+                label: 'reddit'
+            });
+        }
     }
 
     // Compute structured data fields
@@ -179,6 +190,13 @@ async function handle(
             commentKarma,
             accountAgeDays,
             postsCount: null, // Not available from about.json endpoint
+            crawlMetadata: {
+                title: isUser ? `Reddit: ${username}` : (data.title || ''),
+                h1: isUser ? (data.subreddit?.title || '') : (data.display_name_prefixed || ''),
+                metaDescription: isUser ? (data.subreddit?.public_description || '') : (data.public_description || ''),
+                httpStatus: 200,
+                snippet: profileHtml.substring(0, 500)
+            }
         } as any,
         errors: [],
     };

@@ -189,6 +189,17 @@ export function getBlankAssessmentRow(): Record<string, any> {
         pinterest_screenshot_url: null,
         pinterest_scrape_date: null,
 
+        // Crawl Reports
+        general_hub_crawl_report: [],
+        linkedin_crawl_report: [],
+        twitter_crawl_report: [],
+        instagram_crawl_report: [],
+        facebook_crawl_report: [],
+        tiktok_crawl_report: [],
+        pinterest_crawl_report: [],
+        youtube_crawl_report: [],
+        reddit_crawl_report: [],
+
         // CONNECTIVITY MATRIX
         link_in_bio_url: null,
         link_in_bio_service: null,

@@ -156,7 +156,10 @@ const VALID_SUPABASE_COLUMNS = new Set([
         "has_lead_magnet", "profile_image_similarity_score", "bio_similarity_score",
         "consideration_roi_calculator_detected", "has_privacy_policy", "has_cookie_banner",
         "decision_pricing_page_detected", "is_ai_ready", "has_intent_tracking", "has_instant_booking",
-        "is_self_hosted", "facebook_rating", "facebook_reviews_count"
+        "is_self_hosted", "facebook_rating", "facebook_reviews_count",
+        "general_hub_crawl_report", "linkedin_crawl_report", "twitter_crawl_report",
+        "instagram_crawl_report", "facebook_crawl_report", "tiktok_crawl_report",
+        "pinterest_crawl_report", "youtube_crawl_report", "reddit_crawl_report"
     ]);
 
     for (const [key, value] of Object.entries(masterItem)) {

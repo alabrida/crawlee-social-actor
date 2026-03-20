@@ -185,6 +185,23 @@ async function handle(
                 }
             }
         }
+
+        // Spider Architecture: Enqueue recent videos if root channel
+        if (!request.userData?.isSubPage) {
+            const videoUrls = await page.locator('a#video-title-link, a#video-title, a[href*="/watch?v="]').evaluateAll(els => 
+                els.map(el => (el as HTMLAnchorElement).href)
+                   .filter(href => href.includes('/watch?v='))
+                   .slice(0, 5)
+            );
+            if (videoUrls.length > 0) {
+                log.info(`[YouTube] Enqueueing ${videoUrls.length} recent videos for deep crawl.`);
+                await context.enqueueLinks({
+                    urls: videoUrls,
+                    userData: { ...request.userData, isSubPage: true },
+                    label: 'youtube'
+                });
+            }
+        }
     }
 
     // Attempt to find business email / booking keywords in description
@@ -229,6 +246,21 @@ async function handle(
             verified: isVerified,
         } as any,
         errors: []
+    };
+
+    // Add crawlMetadata for aggregated reports
+    let snippet = '';
+    try {
+        const text = await page.innerText('body');
+        snippet = text.replace(/\s+/g, ' ').trim().substring(0, 500);
+    } catch (e) {}
+
+    (scrapedItem.data as any).crawlMetadata = {
+        title: await page.title().catch(() => ''),
+        h1: await page.locator('h1').first().innerText().catch(() => ''),
+        metaDescription: description || '',
+        httpStatus: 200,
+        snippet,
     };
 
     if (!ytInitialData) {

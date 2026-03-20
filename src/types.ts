@@ -140,6 +140,14 @@ export interface ScrapedItem {
     data: Record<string, unknown> & {
         /** Public URL to the full-page screenshot in Apify KVS. */
         screenshotUrl: string;
+        /** Data from deep link spidering for the crawl report. */
+        crawlMetadata?: {
+            title: string;
+            h1: string;
+            metaDescription: string;
+            httpStatus: number;
+            snippet: string;
+        };
     };
     /** Non-fatal warnings or issues. */
     errors: string[];
