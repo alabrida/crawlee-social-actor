@@ -1,0 +1,17 @@
+{
+  "name": "@alabrida/core-scraper",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "apify": "3.2.6",
+    "cheerio": "1.2.0",
+    "crawlee": "3.16.0",
+    "playwright": "1.50.1"
+  }
+}

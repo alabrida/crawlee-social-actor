@@ -1,0 +1,14 @@
+{
+  "name": "agency-actor",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node --env-file=../../packages/core-scraper/.env dist/main.js",
+    "dev": "npx tsx --env-file=../../packages/core-scraper/.env src/main.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@alabrida/core-scraper": "workspace:*"
+  }
+}
