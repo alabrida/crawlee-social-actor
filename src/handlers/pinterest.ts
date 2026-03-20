@@ -13,65 +13,75 @@ export async function handle(
     _handlerContext: HandlerContext,
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
+    const isSubPage = request.userData?.isSubPage || false;
 
     // G-COST-02: Block heavy resources
     await blockResources(page, ['image', 'media', 'font']);
 
-    log.info(`[Pinterest] Extracting: ${request.url}`);
+    log.info(`[Pinterest] Extracting: ${request.url} (isSubPage: ${isSubPage})`);
 
     await page.goto(request.url, { waitUntil: 'domcontentloaded' });
 
     // Extract the embedded JSON data from the script tag
     const scriptSelector = 'script[id="__PWS_INITIAL_PROPS__"]';
-    const jsonText = await page.locator(scriptSelector).innerText();
+    const jsonText = await page.locator(scriptSelector).innerText().catch(() => '');
     
-    if (!jsonText) {
-        throw new Error('Could not find embedded __PWS_INITIAL_PROPS__ JSON data.');
+    let title = '';
+    let h1 = '';
+    let metaDescription = '';
+
+    if (jsonText) {
+        try {
+            const jsonData = JSON.parse(jsonText);
+            const initialProps = jsonData?.initialReduxState;
+            
+            // Find the user data or pin data
+            const users = initialProps?.users || {};
+            const pins = initialProps?.pins || {};
+            
+            const urlPath = new URL(request.url).pathname;
+            const slug = urlPath.split('/').filter(Boolean).pop()?.toLowerCase();
+
+            const userKey = Object.keys(users).find(k => {
+                const u = users[k];
+                if (!u) return false;
+                if (slug && u.username?.toLowerCase() === slug) return true;
+                return false;
+            }) || Object.keys(users)[0];
+
+            const userData = userKey ? users[userKey] : null;
+
+            title = await page.title();
+            h1 = userData?.full_name || '';
+            metaDescription = userData?.about || '';
+
+            // Spider Architecture: Enqueue pins if root profile
+            if (!isSubPage && userData) {
+                log.info(`[Pinterest] Enqueueing pins for deep crawl from profile: ${request.url}`);
+                const pinLinks: string[] = [];
+                Object.keys(pins).forEach((id, i) => {
+                    if (i < 5) {
+                        pinLinks.push(`https://www.pinterest.com/pin/${id}/`);
+                    }
+                });
+
+                if (pinLinks.length > 0) {
+                    const { crawler } = context;
+                    await crawler.addRequests(pinLinks.map(pUrl => ({
+                        url: pUrl,
+                        userData: { ...request.userData, isSubPage: true }
+                    })));
+                }
+            }
+        } catch (e) {
+            log.debug('[Pinterest] JSON parse failed, falling back to DOM extraction');
+        }
     }
 
-    const jsonData = JSON.parse(jsonText);
-    const initialProps = jsonData?.initialReduxState;
-
-    if (!initialProps) {
-        throw new Error('Failed to parse initialReduxState from embedded JSON.');
-    }
-    
-    log.info(`[Pinterest] Successfully parsed embedded JSON data.`);
-    
-    // Find the user data within the complex JSON structure
-    const users = initialProps.users || {};
-    
-    // Get the username slug from the URL (e.g., 'nike' from '.../nike/')
-    const urlPath = new URL(request.url).pathname;
-    const slug = urlPath.split('/').filter(Boolean).pop()?.toLowerCase();
-
-    // 1. Try to find user with domain_url
-    // 2. Fall back to finding user with matching username
-    // 3. Fall back to any user that has profile-like fields
-    const userKey = Object.keys(users).find(k => {
-        const u = users[k];
-        if (!u) return false;
-        if (u.domain_url) return true;
-        if (slug && u.username?.toLowerCase() === slug) return true;
-        return false;
-    }) || Object.keys(users).find(k => users[k]?.follower_count !== undefined);
-
-    const userData = userKey ? users[userKey] : null;
-
-    const links: string[] = [];
-    const ctas: string[] = [];
-    const conversionMarkers: string[] = [];
-    
-    if (userData) {
-        if (userData.website_url) links.push(userData.website_url);
-        if (userData.domain_verified) conversionMarkers.push('Verified Website');
-        if (userData.follower_count) conversionMarkers.push(`Follower Count: ${userData.follower_count}`);
-        if (userData.full_name) conversionMarkers.push(`Name: ${userData.full_name}`);
-    } else {
-        log.warning('[Pinterest] Could not find main user object in embedded JSON.');
-    }
-
-    const profileHtml = await page.content();
+    // Fallback DOM extraction
+    if (!title) title = await page.title().catch(() => '');
+    if (!h1) h1 = await page.locator('h1').first().innerText().catch(() => '');
+    if (!metaDescription) metaDescription = (await page.locator('meta[name="description"]').getAttribute('content').catch(() => '')) || '';
 
     const scrapedItem: ScrapedItem = {
         platform: 'pinterest',
@@ -80,21 +90,22 @@ export async function handle(
         scrapedAt: new Date().toISOString(),
         data: {
             revenueIndicators: {
-                ctas,
-                links,
-                conversionMarkers,
+                ctas: [],
+                links: [],
+                conversionMarkers: [],
             },
-            profileHtml,
-            apiSnapshots: [initialProps], // Save the whole parsed object
+            profileHtml: await page.content().catch(() => ''),
             screenshotUrl: '',
             // Structured fields for direct Supabase mapping
-            username: userData?.username || slug || null,
-            fullName: userData?.full_name || null,
-            followerCount: userData?.follower_count ?? null,
-            followingCount: userData?.following_count ?? null,
-            pinsCount: userData?.pin_count ?? null,
-            boardsCount: userData?.board_count ?? null,
-            monthlyViews: userData?.monthly_views ?? null,
+            username: request.url.split('/').filter(Boolean).pop(),
+            // Deep Link Metadata for Crawl Report
+            crawlMetadata: {
+                title,
+                h1,
+                metaDescription: metaDescription || '',
+                httpStatus: 200,
+                snippet: metaDescription || title
+            }
         } as any,
         errors: []
     };

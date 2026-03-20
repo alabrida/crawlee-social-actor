@@ -15,8 +15,9 @@ export async function handle(
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
     const url = request.url;
+    const isSubPage = request.userData?.isSubPage || false;
 
-    log.info(`[Twitter] Extracting profile: ${url}`);
+    log.info(`[Twitter] Extracting profile: ${url} (isSubPage: ${isSubPage})`);
 
     // G-COST-02: Block heavy resources (Excluding image for high-res screenshots)
     await blockResources(page, ['media', 'font'], ['image']);
@@ -77,7 +78,6 @@ export async function handle(
         });
     } else {
         // Basic extraction selectors (Targeting standard profile layout)
-        // Note: Twitter uses dynamic class names, so we prioritize data-testid or aria-labels
         try {
             // 1. Bio Link
             const bioLinkLocator = page.locator('[data-testid="UserProfileHeader_Items"] a[target="_blank"]').first();
@@ -107,37 +107,56 @@ export async function handle(
                 verified = true;
             }
 
-            // 5. Numeric Metrics (Raw signals for Math Agent)
+            // 5. Numeric Metrics
             const followerLocator = page.locator('a[href$="/verified_followers"] span, a[href$="/followers"] span').first();
-            const followerCountText = await followerLocator.textContent();
-            if (followerCountText) {
-                const text = followerCountText.trim();
-                conversionMarkers.push(`Followers Raw: ${text}`);
-                followerCount = parseCount(text);
-            }
-
-            const followingCountText = await page.locator('a[href$="/following"] span').first().textContent();
-            if (followingCountText) {
-                const text = followingCountText.trim();
-                conversionMarkers.push(`Following Raw: ${text}`);
-                followingCount = parseCount(text);
-            }
-
-            // 6. Tweets count (from profile nav or header)
-            const tweetsLocator = page.locator('[data-testid="UserNav"] a[href$=""] span, div[data-testid="UserProfileHeader"] span').first();
-            if (await tweetsLocator.count() > 0) {
-                const tweetsText = await tweetsLocator.textContent();
-                if (tweetsText) {
-                    const numMatch = tweetsText.match(/([\d,.]+[KkMm]?)/);
-                    if (numMatch) tweetsCount = parseCount(numMatch[1]);
+            if (await followerLocator.count() > 0) {
+                const followerCountText = await followerLocator.textContent();
+                if (followerCountText) {
+                    const text = followerCountText.trim();
+                    conversionMarkers.push(`Followers Raw: ${text}`);
+                    followerCount = parseCount(text);
                 }
             }
 
-            // 7. Latest Tweet Date
+            const followingLocator = page.locator('a[href$="/following"] span').first();
+            if (await followingLocator.count() > 0) {
+                const followingCountText = await followingLocator.textContent();
+                if (followingCountText) {
+                    const text = followingCountText.trim();
+                    conversionMarkers.push(`Following Raw: ${text}`);
+                    followingCount = parseCount(text);
+                }
+            }
+
+            // 6. Latest Tweet Date
             const firstTweetTime = page.locator('[data-testid="tweet"] time').first();
             if (await firstTweetTime.count() > 0) {
                 const datetime = await firstTweetTime.getAttribute('datetime');
                 if (datetime) latestTweetDate = new Date(datetime).toISOString();
+            }
+
+            // Spider Architecture: Enqueue recent tweets if root profile
+            if (!isSubPage) {
+                log.info(`[Twitter] Enqueueing recent tweets for deep crawl from profile: ${url}`);
+                const tweetLinks = await page.evaluate(() => {
+                    const tLinks: string[] = [];
+                    const anchors = document.querySelectorAll('article[data-testid="tweet"] a[href*="/status/"]');
+                    anchors.forEach((a) => {
+                        const href = (a as HTMLAnchorElement).href;
+                        if (href && !tLinks.includes(href) && tLinks.length < 5) {
+                            tLinks.push(href);
+                        }
+                    });
+                    return tLinks;
+                });
+
+                if (tweetLinks.length > 0) {
+                    const { crawler } = context;
+                    await crawler.addRequests(tweetLinks.map(tUrl => ({
+                        url: tUrl,
+                        userData: { ...request.userData, isSubPage: true }
+                    })));
+                }
             }
 
         } catch (e) {
@@ -166,6 +185,14 @@ export async function handle(
             followingCount,
             tweetsCount,
             latestTweetDate,
+            // Deep Link Metadata for Crawl Report
+            crawlMetadata: {
+                title: await page.title().catch(() => 'Twitter / X'),
+                h1: fullName || username || '',
+                metaDescription: biography || '',
+                httpStatus: 200,
+                snippet: biography || content.substring(0, 200)
+            }
         } as any,
         errors: []
     };

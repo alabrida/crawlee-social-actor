@@ -18,14 +18,33 @@ async function handle(
 ): Promise<ScrapedItem[]> {
     const { request, page, log } = context;
     const url = request.url;
+    const isSubPage = request.userData?.isSubPage || false;
 
-    log.info(`[TikTok] Extracting data from: ${url}`);
+    log.info(`[TikTok] Extracting data from: ${url} (isSubPage: ${isSubPage})`);
     await blockResources(page);
 
-    // Wait for the profile content to load
+    // Wait for the profile or video content to load
     await page.waitForTimeout(5000); 
 
-    const extractedData = await page.evaluate(() => {
+    const extractedData = await page.evaluate((isSub) => {
+        if (isSub) {
+            // Very basic video page metadata extraction
+            return {
+                bio: '',
+                externalLink: '',
+                followers: '',
+                following: '',
+                likes: '',
+                videosCount: '',
+                displayName: '',
+                isVerified: false,
+                profileHtml: document.body.innerHTML.substring(0, 10000),
+                title: document.title || '',
+                h1: document.querySelector('h1')?.textContent?.trim() || '',
+                metaDesc: document.querySelector('meta[name="description"]')?.getAttribute('content') || ''
+            };
+        }
+
         const bioEl = document.querySelector('[data-e2e="user-bio"]');
         const linkEl = document.querySelector('a[data-e2e="user-link"]');
         const followersEl = document.querySelector('[data-e2e="followers-count"]');
@@ -46,9 +65,38 @@ async function handle(
             displayName: displayNameEl?.textContent?.trim() || '',
             isVerified: !!document.querySelector('[data-e2e="verify-icon"]'),
             profileHtml: document.querySelector('div[data-e2e="user-profile-section"]')?.innerHTML || 
-                         document.querySelector('main')?.innerHTML || ''
+                         document.querySelector('main')?.innerHTML || '',
+            title: document.title || '',
+            h1: document.querySelector('h1')?.textContent?.trim() || '',
+            metaDesc: document.querySelector('meta[name="description"]')?.getAttribute('content') || ''
         };
-    });
+    }, isSubPage);
+
+    // Spider Architecture: Enqueue recent videos if it's a profile page
+    if (!isSubPage) {
+        log.info(`[TikTok] Enqueueing recent videos for deep crawl from profile: ${url}`);
+        const videoLinks = await page.evaluate(() => {
+            const links: string[] = [];
+            // Target the video grid items
+            const anchors = document.querySelectorAll('[data-e2e="user-post-item"] a[href*="/video/"]');
+            anchors.forEach((a, i) => {
+                if (i < 5) {
+                    const href = (a as HTMLAnchorElement).href;
+                    if (href) links.push(href);
+                }
+            });
+            return links;
+        });
+
+        if (videoLinks.length > 0) {
+            log.info(`[TikTok] Found ${videoLinks.length} videos to enqueue.`);
+            const { crawler } = context;
+            await crawler.addRequests(videoLinks.map(vUrl => ({
+                url: vUrl,
+                userData: { ...request.userData, isSubPage: true }
+            })));
+        }
+    }
 
     // Try to isolate the latest post time (often hidden internally by TikTok)
     const timeLocator = page.locator('[data-e2e="user-post-item"] time, [data-e2e="user-post-item"] [aria-label*="ago"], div[class*="DivTimeTag"]').first();
@@ -112,6 +160,14 @@ async function handle(
             likesCount: parseCount(extractedData.likes) ?? null,
             videosCount: parseCount(extractedData.videosCount) ?? null,
             latestVideoDate: latestVideoDate || null,
+            // Deep Link Metadata for Crawl Report
+            crawlMetadata: {
+                title: extractedData.title,
+                h1: extractedData.h1,
+                metaDescription: extractedData.metaDesc,
+                httpStatus: 200, // Playwright implies 200 if we rendered
+                snippet: extractedData.bio || extractedData.title 
+            }
         } as any,
         errors: []
     };

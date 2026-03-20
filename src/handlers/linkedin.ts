@@ -9,7 +9,7 @@ import type { PlaywrightCrawlingContext } from 'crawlee';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 import { blockResources } from '../utils/resources.js';
 
-let dailyRequestCount = 0;
+let linkedinDailyLimitCount = 0;
 
 /**
  * Handle a LinkedIn URL with authenticated DOM scraping and human-like delays.
@@ -23,150 +23,171 @@ async function handle(
 ): Promise<ScrapedItem[]> {
     const { request, page, log } = context;
     const url = request.url;
+    const isSubPage = request.userData?.isSubPage || false;
 
-    // G-COST-02: Block heavy resources (LinkedIn profiles are heavy)
-    await blockResources(page);
+    log.info(`[LinkedIn] Processing: ${url} (isSubPage: ${isSubPage})`);
 
     // G-BOT-01: Hard cap at 250 requests/day
     const maxDaily = handlerContext.input.linkedinDailyLimit || 250;
-    if (dailyRequestCount >= maxDaily) {
-        throw new Error(`LinkedIn daily request limit (${maxDaily}) reached. Aborting request for ${url}`);
+    if (linkedinDailyLimitCount >= maxDaily) {
+        log.warning(`LinkedIn daily request limit (${maxDaily}) reached. skipping ${url}`);
+        return [];
     }
-    dailyRequestCount++;
+    linkedinDailyLimitCount++;
 
-    log.info(`[LinkedIn] Extracting profile: ${url} (Req ${dailyRequestCount}/${maxDaily})`);
+    // G-BOT-02: Randomized delay to mimic human behavior
+    await page.waitForTimeout(Math.floor(Math.random() * 5000) + 2000);
 
-    // G-BOT-02: Randomize delays (2-5 seconds)
-    const delay = Math.floor(Math.random() * 3000) + 2000;
-    await page.waitForTimeout(delay);
+    // G-COST-02: Block heavy resources
+    await blockResources(page, ['media', 'font', 'stylesheet'], ['image']);
+
+    // Extraction state
+    let fullName: string | null = null;
+    let headline: string | null = null;
+    let location: string | null = null;
+    let followerCount: number | null = null;
+    let connectionsCount: number | null = null;
+    let companyName: string | null = null;
+    let latestPostDate: string | null = null;
+    let hasRecentActivity = false;
+    let profileHtml = '';
 
     try {
-        await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
-    } catch (e) {
-        log.warning(`[LinkedIn] Timeout waiting for load state on ${url}, proceeding anyway...`);
-    }
-
-    let content = '';
-    try {
-        content = await page.content();
-    } catch {
-        throw new Error('LinkedIn auth wall redirecting too fast to read content.');
-    }
-
-    if (detectBlock(content)) {
-        throw new Error('LinkedIn auth wall or block detected despite cookies.');
-    }
-
-    // Attempt to extract data
-    // Note: Since we don't have live valid cookies in dev, we use defensive selectors.
-    const extractData = await page.evaluate(() => {
-        // Find visible links in the intro section or contact info
-        const links: string[] = [];
-        document.querySelectorAll('a[href^="http"]').forEach(a => {
-            const href = a.getAttribute('href');
-            if (href && !href.includes('linkedin.com')) {
-                links.push(href);
-            }
-        });
-
-        const ctas: string[] = [];
-        document.querySelectorAll('button, a.app-aware-link').forEach(el => {
-            const text = el.textContent?.trim().toLowerCase() || '';
-            if (text.includes('connect') || text.includes('follow') || text.includes('message') || text.includes('visit website')) {
-                if (el.textContent) ctas.push(el.textContent.trim());
-            }
-        });
-
-        const profileHtml = document.querySelector('main.scaffold-layout__main')?.innerHTML || 
-                            document.querySelector('.core-rail')?.innerHTML || 
-                            document.body.innerHTML.substring(0, 5000); // Fallback snippet
-
-        // Phase 2: High-res metrics
-        let followers = document.querySelector('.pv-top-card--list-bullet li:last-child')?.textContent?.trim() || '';
-        if (!followers) {
-            // Company followers pattern
-            const p = Array.from(document.querySelectorAll('div, span')).find(el => el.textContent?.toLowerCase().includes('followers'));
-            if (p) followers = p.textContent?.trim() || '';
-        }
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
         
-        const isVerified = !!document.querySelector('.pv-top-card-section__verified-badge');
+        // Wait for profile or activity content
+        await page.waitForSelector('main, .scaffold-layout', { timeout: 15000 }).catch(() => {});
+        await page.waitForTimeout(2000);
 
-        // Extract structured profile fields
-        const fullName = document.querySelector('.text-heading-xlarge, h1.top-card-layout__title, h1.org-top-card-summary__title, h1')?.textContent?.trim() || '';
-        const headline = document.querySelector('.text-body-medium.break-words, .top-card-layout__headline, .org-top-card-summary__tagline, h2')?.textContent?.trim() || '';
-        const location = document.querySelector('.text-body-small[data-test-id="location"], .top-card-layout__first-subline, span.text-body-small.inline, .org-top-card-summary-info-list__info-item')?.textContent?.trim() || '';
-        const companyName = document.querySelector('.pv-text-details__right-panel a[href*="/company/"], a[data-field="experience_company_logo"]')?.textContent?.trim() || fullName; // Fallback to Title if it's a company page
-        const connectionsText = document.querySelector('.pv-top-card--list-bullet li:first-child')?.textContent?.trim() || '';
-
-        // Extract native post time from recent activity (e.g. "3d", "1mo")
-        let latestPostDate = null;
-        const firstPostTime = document.querySelector('time') || document.querySelector('.feed-shared-text-view span.visually-hidden');
-        if (firstPostTime) {
-            latestPostDate = firstPostTime.textContent?.trim() || null;
+        const content = await page.content();
+        if (detectBlock(content)) {
+            log.warning(`[LinkedIn] Block or Auth Wall detected at ${url}`);
+            return [];
         }
 
-        return { links: Array.from(new Set(links)), ctas: Array.from(new Set(ctas)), profileHtml, followers, isVerified, fullName, headline, location, companyName, connectionsText, latestPostDate };
-    });
+        // Sub-page check
+        if (isSubPage) {
+            log.info(`[LinkedIn] Extracting sub-page metadata: ${url}`);
+            const title = await page.title();
+            const h1 = await page.locator('h1').first().innerText().catch(() => '');
+            const metaDesc = await page.locator('meta[name="description"]').getAttribute('content').catch(() => '');
+
+            return [{
+                platform: 'linkedin',
+                url,
+                crawlerUsed: 'playwright',
+                scrapedAt: new Date().toISOString(),
+                data: {
+                    revenueIndicators: { ctas: [], links: [], conversionMarkers: [] },
+                    profileHtml: content,
+                    crawlMetadata: {
+                        title,
+                        h1,
+                        metaDescription: metaDesc || '',
+                        httpStatus: 200,
+                        snippet: metaDesc || title
+                    }
+                } as any,
+                errors: []
+            }];
+        }
+
+        // --- ROOT PROFILE EXTRACTION ---
+        profileHtml = content;
+
+        // 1. Full Name
+        const nameLocator = page.locator('h1.text-heading-xlarge, .pv-top-card--list .text-heading-xlarge').first();
+        if (await nameLocator.isVisible()) {
+            fullName = (await nameLocator.innerText()).trim();
+        }
+
+        // 2. Headline
+        const headlineLocator = page.locator('.text-body-medium.break-words').first();
+        if (await headlineLocator.isVisible()) {
+            headline = (await headlineLocator.innerText()).trim();
+        }
+
+        // 3. Location
+        const locationLocator = page.locator('.text-body-small.inline.t-black--light.break-words').first();
+        if (await locationLocator.isVisible()) {
+            location = (await locationLocator.innerText()).trim();
+        }
+
+        // 4. Followers & Connections
+        const followerLocator = page.locator('span:has-text("followers")').first();
+        if (await followerLocator.isVisible()) {
+            const text = await followerLocator.innerText();
+            const match = text.match(/([\d,]+)/);
+            if (match) followerCount = parseInt(match[1].replace(/,/g, ''), 10);
+        }
+
+        const connectionsLocator = page.locator('span:has-text("connections")').first();
+        if (await connectionsLocator.isVisible()) {
+            const text = await connectionsLocator.innerText();
+            const match = text.match(/([\d,]+)/);
+            if (match) connectionsCount = parseInt(match[1].replace(/,/g, ''), 10);
+        }
+
+        // 5. Activity Detection & Enqueueing
+        const activitySelector = 'a[href*="/recent-activity/all/"], a[href*="/recent-activity/"]';
+        const activityLink = page.locator(activitySelector).first();
+        if (await activityLink.isVisible()) {
+            hasRecentActivity = true;
+            
+            // Spider Architecture: Enqueue recent activity posts
+            log.info(`[LinkedIn] Enqueueing activity for deep crawl: ${url}`);
+            const activityHref = await activityLink.getAttribute('href');
+            if (activityHref) {
+                const fullActivityUrl = activityHref.startsWith('http') ? activityHref : `https://www.linkedin.com${activityHref}`;
+                const { crawler } = context;
+                await crawler.addRequests([{
+                    url: fullActivityUrl,
+                    userData: { ...request.userData, isSubPage: true }
+                }]);
+            }
+        }
+
+    } catch (e) {
+        log.warning(`[LinkedIn] Extraction error for ${url}: ${String(e)}`);
+    }
+
+    const ctas: string[] = [];
+    if (hasRecentActivity) ctas.push('See Activity');
 
     const conversionMarkers: string[] = [];
-    extractData.ctas.forEach(cta => {
-        if (cta.toLowerCase().includes('visit website')) conversionMarkers.push('Website Click');
-        if (cta.toLowerCase().includes('book')) conversionMarkers.push('Booking');
-    });
-
-    // Add Raw signals for Math Agent
-    if (extractData.followers) conversionMarkers.push(`Followers Raw: ${extractData.followers}`);
-    if (extractData.isVerified) conversionMarkers.push('Status: Verified');
-
-    // Extract username from URL
-    const usernameMatch = url.match(/linkedin\.com\/(?:in|company)\/([^/?#]+)/);
-    const username = usernameMatch ? usernameMatch[1] : null;
-
-    // Parse follower count from raw text (e.g. "1,234 followers")
-    let followerCount: number | null = null;
-    if (extractData.followers) {
-        const numMatch = extractData.followers.match(/([\d,.]+)/);
-        if (numMatch) {
-            let num = parseFloat(numMatch[1].replace(/,/g, ''));
-            if (extractData.followers.toLowerCase().includes('k')) num *= 1000;
-            if (extractData.followers.toLowerCase().includes('m')) num *= 1000000;
-            followerCount = Math.floor(num);
-        }
-    }
-
-    // Parse connections count from raw text (e.g. "500+ connections")
-    let connectionsCount: number | null = null;
-    if (extractData.connectionsText) {
-        const connMatch = extractData.connectionsText.match(/([\d,+]+)/);
-        if (connMatch) {
-            let num = parseInt(connMatch[1].replace(/[,+]/g, ''), 10);
-            if (!isNaN(num)) connectionsCount = num;
-        }
-    }
+    if (followerCount && followerCount > 500) conversionMarkers.push(`Influence: ${followerCount} followers`);
+    if (connectionsCount && connectionsCount >= 500) conversionMarkers.push('Network: 500+ connections');
 
     const scrapedItem: ScrapedItem = {
         platform: 'linkedin',
-        url,
+        url: request.url,
         crawlerUsed: 'playwright',
         scrapedAt: new Date().toISOString(),
         data: {
             revenueIndicators: {
-                ctas: extractData.ctas,
-                links: extractData.links,
+                ctas,
+                links: [], // LinkedIn usually doesn't have a direct external link on the main profile view without clicking
                 conversionMarkers,
             },
-            profileHtml: extractData.profileHtml,
-            screenshotUrl: '',
-            // Structured fields for direct Supabase mapping
-            username,
-            fullName: extractData.fullName || null,
-            headline: extractData.headline || null,
-            location: extractData.location || null,
+            profileHtml,
+            screenshotUrl: '', 
+            // Structured data for direct Supabase mapping
+            fullName,
+            headline,
+            location,
             followerCount,
             connectionsCount,
-            companyName: extractData.companyName || null,
-            hasRecentActivity: extractData.ctas.length > 0 || extractData.links.length > 0,
-            latestPostDate: extractData.latestPostDate || null,
+            companyName,
+            hasRecentActivity,
+            latestPostDate,
+            // Deep Link Metadata for Crawl Report
+            crawlMetadata: {
+                title: await page.title().catch(() => 'LinkedIn Profile'),
+                h1: fullName || '',
+                metaDescription: headline || '',
+                httpStatus: 200,
+                snippet: headline || ''
+            }
         } as any,
         errors: []
     };
@@ -184,7 +205,6 @@ function validate(data: Record<string, unknown>): boolean {
     if (!payload || typeof payload !== 'object') return false;
     if (!payload.revenueIndicators || !Array.isArray(payload.revenueIndicators.links)) return false;
     if (typeof payload.profileHtml !== 'string') return false;
-    return true;
     return true;
 }
 

@@ -159,7 +159,8 @@ const VALID_SUPABASE_COLUMNS = new Set([
         "is_self_hosted", "facebook_rating", "facebook_reviews_count",
         "general_hub_crawl_report", "linkedin_crawl_report", "twitter_crawl_report",
         "instagram_crawl_report", "facebook_crawl_report", "tiktok_crawl_report",
-        "pinterest_crawl_report", "youtube_crawl_report", "reddit_crawl_report"
+        "pinterest_crawl_report", "youtube_crawl_report", "reddit_crawl_report",
+        "google_maps_crawl_report", "google_business_profile_crawl_report"
     ]);
 
     for (const [key, value] of Object.entries(masterItem)) {

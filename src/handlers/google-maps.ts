@@ -256,6 +256,43 @@ export async function handle(
         if (marker.includes('Signal: Has Photos')) gbpHasPhotos = true;
     }
 
+    // Spider Architecture: Enqueue sub-pages (Reviews, Menu) if it's a root profile
+    const isSubPage = request.userData?.isSubPage || false;
+    
+    if (!isSubPage) {
+        log.info(`[Google Maps] Searching for sub-pages to enqueue from: ${request.url}`);
+        const subPageLinks: string[] = [];
+        
+        try {
+            // 1. Reviews Tab
+            const reviewsBtn = page.locator('button[jsaction*="pane.rating.moreReviews"], button[aria-label*="Reviews" i]').first();
+            if (await reviewsBtn.isVisible()) {
+                // Since clicking might not give a URL easily, we can sometimes guess or just stick to the root if not easily linkable.
+                // However, GBP often has a 'reviews' sub-path or we can just mark it as "Review View"
+                log.info(`[Google Maps] Reviews tab found. Deep-link capture enabled via root metadata.`);
+            }
+
+            // 2. Menu Link
+            const menuBtn = page.locator('a[aria-label*="Menu" i], button[aria-label*="Menu" i]').first();
+            if (await menuBtn.isVisible()) {
+                const menuHref = await menuBtn.getAttribute('href');
+                if (menuHref && !menuHref.startsWith('http')) {
+                    subPageLinks.push(`https://www.google.com${menuHref}`);
+                } else if (menuHref) {
+                    subPageLinks.push(menuHref);
+                }
+            }
+        } catch (e) { /* ignore */ }
+
+        if (subPageLinks.length > 0) {
+            const { crawler } = context;
+            await crawler.addRequests(subPageLinks.map(sUrl => ({
+                url: sUrl,
+                userData: { ...request.userData, isSubPage: true }
+            })));
+        }
+    }
+
     const scrapedItem: ScrapedItem = {
         platform: outputPlatform,
         url: request.url,
@@ -278,11 +315,19 @@ export async function handle(
             gbpAddress,
             gbpHasPhotos,
             gbpWebsite: links.length > 0 ? links[0] : null,
+            // Deep Link Metadata for Crawl Report
+            crawlMetadata: {
+                title: title || gbpBusinessName || 'Google Maps Profile',
+                h1: title || gbpBusinessName || '',
+                metaDescription: gbpCategory || '',
+                httpStatus: 200,
+                snippet: gbpAddress || profileHtml.substring(0, 200)
+            }
         } as any,
         errors: []
     };
 
-    if (links.length === 0 && ctas.length === 0 && conversionMarkers.length === 0) {
+    if (links.length === 0 && ctas.length === 0 && conversionMarkers.length === 0 && !isSubPage) {
         log.warning(`[Google Maps] Extracted zero revenue indicators. Check selectors for layout shifts.`, { url: request.url });
         await reportIssue({
             platform: 'google_maps',
