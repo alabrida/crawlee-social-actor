@@ -96,6 +96,17 @@ async function handle(
                 userData: { ...request.userData, isSubPage: true }
             })));
         }
+
+        // Link-in-Bio Spidering: Enqueue external URL for general forensics
+        if (extractedData.externalLink) {
+            log.info(`[TikTok] Enqueueing link in bio for deep forensics: ${extractedData.externalLink}`);
+            const { crawler } = context;
+            await crawler.addRequests([{
+                url: extractedData.externalLink,
+                userData: { ...request.userData, isSubPage: true, platform: 'general' },
+                label: 'general'
+            }]);
+        }
     }
 
     // Try to isolate the latest post time (often hidden internally by TikTok)

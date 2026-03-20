@@ -48,6 +48,7 @@ async function handle(
     let followerCount: number | null = null;
     let connectionsCount: number | null = null;
     let companyName: string | null = null;
+    let websiteUrl: string | null = null;
     let latestPostDate: string | null = null;
     let hasRecentActivity = false;
     let profileHtml = '';
@@ -128,7 +129,16 @@ async function handle(
             if (match) connectionsCount = parseInt(match[1].replace(/,/g, ''), 10);
         }
 
-        // 5. Activity Detection & Enqueueing
+        // 5. Website Extraction
+        const websiteLocator = page.locator('a:has-text("Visit website"), .pv-text-details__right-panel a, a[href*="redir/redirect"]').first();
+        if (await websiteLocator.isVisible()) {
+            const href = await websiteLocator.getAttribute('href');
+            if (href && !href.includes('linkedin.com')) {
+                websiteUrl = href.startsWith('http') ? href : `https://www.linkedin.com${href}`;
+            }
+        }
+
+        // 6. Activity Detection & Enqueueing
         const activitySelector = 'a[href*="/recent-activity/all/"], a[href*="/recent-activity/"]';
         const activityLink = page.locator(activitySelector).first();
         if (await activityLink.isVisible()) {
@@ -147,12 +157,24 @@ async function handle(
             }
         }
 
+        // Link-in-Bio Spidering: Enqueue website for general forensics
+        if (websiteUrl && !isSubPage) {
+            log.info(`[LinkedIn] Enqueueing website for deep forensics: ${websiteUrl}`);
+            const { crawler } = context;
+            await crawler.addRequests([{
+                url: websiteUrl,
+                userData: { ...request.userData, isSubPage: true, platform: 'general' },
+                label: 'general'
+            }]);
+        }
+
     } catch (e) {
         log.warning(`[LinkedIn] Extraction error for ${url}: ${String(e)}`);
     }
 
     const ctas: string[] = [];
     if (hasRecentActivity) ctas.push('See Activity');
+    if (websiteUrl) ctas.push('Visit Website');
 
     const conversionMarkers: string[] = [];
     if (followerCount && followerCount > 500) conversionMarkers.push(`Influence: ${followerCount} followers`);
@@ -166,7 +188,7 @@ async function handle(
         data: {
             revenueIndicators: {
                 ctas,
-                links: [], // LinkedIn usually doesn't have a direct external link on the main profile view without clicking
+                links: websiteUrl ? [websiteUrl] : [],
                 conversionMarkers,
             },
             profileHtml,

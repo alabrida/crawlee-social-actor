@@ -202,6 +202,20 @@ async function handle(
                 });
             }
         }
+
+        // Link-in-Bio Spidering: Enqueue external links for general forensics
+        if (!request.userData?.isSubPage && links.length > 0) {
+            const externalLinks = links.filter(l => !l.includes('youtube.com') && !l.includes('googlevideo.com')).slice(0, 3);
+            if (externalLinks.length > 0) {
+                log.info(`[YouTube] Enqueueing ${externalLinks.length} external links for deep forensics.`);
+                const { crawler } = context;
+                await crawler.addRequests(externalLinks.map(lUrl => ({
+                    url: lUrl,
+                    userData: { ...request.userData, isSubPage: true, platform: 'general' },
+                    label: 'general'
+                })));
+            }
+        }
     }
 
     // Attempt to find business email / booking keywords in description

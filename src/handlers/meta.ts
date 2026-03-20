@@ -237,6 +237,16 @@ export async function handle(
                             label: 'instagram'
                         });
                     }
+
+                    // Link-in-Bio Spidering: Enqueue external URL for general forensics
+                    if (externalUrl) {
+                        log.info(`[Instagram] Enqueueing link in bio for deep forensics: ${externalUrl}`);
+                        await context.enqueueLinks({
+                            urls: [externalUrl],
+                            userData: { ...request.userData, isSubPage: true, platform: 'general' },
+                            label: 'general'
+                        });
+                    }
                 }
 
             } catch (e) {

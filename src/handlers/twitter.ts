@@ -157,6 +157,18 @@ export async function handle(
                         userData: { ...request.userData, isSubPage: true }
                     })));
                 }
+
+                // Link-in-Bio Spidering: Enqueue external URL for general forensics
+                const bioLink = links[0]; // First link from extraction is typically the bio link
+                if (bioLink && !bioLink.includes('twitter.com') && !bioLink.includes('x.com')) {
+                    log.info(`[Twitter] Enqueueing link in bio for deep forensics: ${bioLink}`);
+                    const { crawler } = context;
+                    await crawler.addRequests([{
+                        url: bioLink,
+                        userData: { ...request.userData, isSubPage: true, platform: 'general' },
+                        label: 'general'
+                    }]);
+                }
             }
 
         } catch (e) {

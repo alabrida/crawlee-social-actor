@@ -54,6 +54,7 @@ export async function handle(
             title = await page.title();
             h1 = userData?.full_name || '';
             metaDescription = userData?.about || '';
+            const website = userData?.website_url || '';
 
             // Spider Architecture: Enqueue pins if root profile
             if (!isSubPage && userData) {
@@ -71,6 +72,17 @@ export async function handle(
                         url: pUrl,
                         userData: { ...request.userData, isSubPage: true }
                     })));
+                }
+
+                // Link-in-Bio Spidering: Enqueue website for general forensics
+                if (website) {
+                    log.info(`[Pinterest] Enqueueing website for deep forensics: ${website}`);
+                    const { crawler } = context;
+                    await crawler.addRequests([{
+                        url: website,
+                        userData: { ...request.userData, isSubPage: true, platform: 'general' },
+                        label: 'general'
+                    }]);
                 }
             }
         } catch (e) {
