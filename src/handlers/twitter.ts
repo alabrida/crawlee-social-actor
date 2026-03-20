@@ -52,6 +52,7 @@ export async function handle(
     let followerCount: number | null = null;
     let followingCount: number | null = null;
     let tweetsCount: number | null = null;
+    let latestTweetDate: string | null = null;
 
     // Parse shorthand counts (e.g. "1.2K", "3M")
     const parseCount = (raw: string): number | null => {
@@ -132,6 +133,13 @@ export async function handle(
                 }
             }
 
+            // 7. Latest Tweet Date
+            const firstTweetTime = page.locator('[data-testid="tweet"] time').first();
+            if (await firstTweetTime.count() > 0) {
+                const datetime = await firstTweetTime.getAttribute('datetime');
+                if (datetime) latestTweetDate = new Date(datetime).toISOString();
+            }
+
         } catch (e) {
             log.debug('[Twitter] Extraction encountered missing elements', { url, error: String(e) });
         }
@@ -150,7 +158,6 @@ export async function handle(
             },
             profileHtml: content,
             screenshotUrl: '', // Populated by main.ts
-            // Structured fields for direct Supabase mapping
             username,
             fullName,
             biography,
@@ -158,6 +165,7 @@ export async function handle(
             followerCount,
             followingCount,
             tweetsCount,
+            latestTweetDate,
         } as any,
         errors: []
     };

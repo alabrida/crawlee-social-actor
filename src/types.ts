@@ -109,6 +109,7 @@ export interface ActorInput {
         facebook?: string;
         instagram?: string;
         twitter?: string;
+        youtube?: string;
     };
     /** Interactive Session Setup flag. */
     interactiveSessionSetup?: boolean;

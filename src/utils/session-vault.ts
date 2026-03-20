@@ -21,6 +21,7 @@ export interface VaultData {
         facebook?: string;
         instagram?: string;
         twitter?: string;
+        youtube?: string;
     };
 }
 
@@ -97,6 +98,7 @@ export class SessionVault {
             { url: 'https://www.facebook.com/login', label: 'facebook' },
             { url: 'https://www.instagram.com/accounts/login/', label: 'instagram' },
             { url: 'https://twitter.com/i/flow/login', label: 'twitter' },
+            { url: 'https://accounts.google.com/signin', label: 'youtube' },
         ]);
 
         const capturedTokens: VaultData['tokens'] = {};

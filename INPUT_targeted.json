@@ -1,0 +1,22 @@
+{
+  "platforms": ["youtube", "general_hub"],
+  "businessUrl": "https://eatatjacks.com/",
+  "brandName": "Jack's Family Restaurants",
+  "consultantEmail": "validation@alabrida.com",
+  "urls": [
+    { "platform": "youtube", "url": "https://www.youtube.com/@DustysNewsNetwork" },
+    { "platform": "general_hub", "url": "https://eatatjacks.com/" }
+  ],
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": ["RESIDENTIAL"],
+    "apifyProxyCountry": "US"
+  },
+  "maxConcurrency": 1,
+  "maxRequestRetries": 1,
+  "linkedinDailyLimit": 250,
+  "googleMapsGrid": {
+    "enabled": false,
+    "cellSizeKm": 1
+  }
+}

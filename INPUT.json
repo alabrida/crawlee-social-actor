@@ -1,22 +1,41 @@
 {
-  "platforms": ["tiktok", "instagram", "twitter", "youtube", "facebook", "google_maps", "seo_serp"],
-  "businessUrl": "https://www.publicserviceplumbers.com/",
+  "platforms": [
+    "tiktok",
+    "instagram",
+    "twitter",
+    "youtube",
+    "facebook",
+    "google_maps",
+    "linkedin",
+    "reddit",
+    "pinterest",
+    "seo_serp",
+    "general_hub"
+  ],
+  "businessUrl": "https://eatatjacks.com/",
+  "brandName": "Jack's Family Restaurants",
+  "consultantEmail": "validation@alabrida.com",
   "urls": [
-    { "platform": "tiktok", "url": "https://www.tiktok.com/@publicserviceplumbers" },
-    { "platform": "instagram", "url": "https://www.instagram.com/publicserviceplumbers_dallas/" },
-    { "platform": "twitter", "url": "https://twitter.com/psplumbers" },
-    { "platform": "youtube", "url": "https://www.youtube.com/@PublicServicePlumbers" },
-    { "platform": "facebook", "url": "https://www.facebook.com/pspdallas/" },
-    { "platform": "google_maps", "url": "https://www.google.com/maps?cid=9557479062172064673" },
-    { "platform": "seo_serp", "url": "https://www.google.com/search?q=Public+Service+Plumbers+Dallas+TX" }
+    { "platform": "tiktok", "url": "https://www.tiktok.com/@jacksfamilyrestaurants" },
+    { "platform": "instagram", "url": "https://www.instagram.com/eatatjacks/" },
+    { "platform": "twitter", "url": "https://twitter.com/jacksfamilyrest" },
+    { "platform": "youtube", "url": "https://www.youtube.com/@DustysNewsNetwork" },
+    { "platform": "facebook", "url": "https://www.facebook.com/eatatjacks" },
+    { "platform": "google_maps", "url": "https://www.google.com/maps/place/Jack's/@33.5206608,-86.80249,15z/data=!4m2!3m1!1s0x0:0xbf2c8d20fe7f2025?sa=X" },
+    { "platform": "linkedin", "url": "https://www.linkedin.com/company/jacks-family-restaurants-inc/" },
+    { "platform": "reddit", "url": "https://www.reddit.com/subreddits/search.json?q=EatAtJacks" },
+    { "platform": "pinterest", "url": "https://www.pinterest.com/eatatjacks/" },
+    { "platform": "seo_serp", "url": "Jack's Family Restaurants" },
+    { "platform": "general_hub", "url": "https://eatatjacks.com/" }
   ],
   "proxy": {
     "useApifyProxy": true,
     "apifyProxyGroups": ["RESIDENTIAL"],
     "apifyProxyCountry": "US"
   },
-  "maxConcurrency": 1,
+  "maxConcurrency": 3,
   "maxRequestRetries": 1,
+  "linkedinDailyLimit": 250,
   "googleMapsGrid": {
     "enabled": false,
     "cellSizeKm": 1

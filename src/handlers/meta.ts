@@ -96,6 +96,18 @@ export async function handle(
     let likesCount: number | null = null;
     let hasReviews = false;
 
+    // Parse shorthand counts (e.g. "1.2K", "3M", "1,234")
+    const parseCount = (raw: string): number | null => {
+        if (!raw) return null;
+        const cleaned = raw.replace(/,/g, '').trim();
+        if (cleaned === '') return null;
+        let num = parseFloat(cleaned);
+        if (isNaN(num)) return null;
+        if (cleaned.toLowerCase().endsWith('k')) num *= 1000;
+        if (cleaned.toLowerCase().endsWith('m')) num *= 1000000;
+        return Math.floor(num);
+    };
+
     const scrapedItem: ScrapedItem = {
         platform,
         url: request.url,
@@ -117,14 +129,16 @@ export async function handle(
     if (!isBlocked) {
         if (platform === 'instagram') {
             try {
-                const bioLinkLocator = page.locator('header section a[target="_blank"]').first();
+                // External Link
+                const bioLinkLocator = page.locator('header section a[target="_blank"], header section a[role="link"]').filter({ hasNotText: 'followers' }).filter({ hasNotText: 'following' }).last();
                 if (await bioLinkLocator.count() > 0) {
                     const bioLink = await bioLinkLocator.getAttribute('href');
-                    if (bioLink) {
+                    if (bioLink && bioLink.startsWith('http')) {
                         links.push(bioLink);
                         externalUrl = bioLink;
                     }
                 }
+                
                 
                 const nameLocator = page.locator('header section h1, header section > div:first-child h2').first();
                 if (await nameLocator.count() > 0) {
@@ -147,24 +161,29 @@ export async function handle(
                 // Posts count (first metric in the stats row)
                 const postsText = await page.locator('header section ul li:nth-child(1) span').first().textContent().catch(() => null);
                 if (postsText) {
-                    const num = parseInt(postsText.replace(/,/g, ''), 10);
-                    if (!isNaN(num)) postsCount = num;
+                    const parsed = parseCount(postsText);
+                    if (parsed != null) postsCount = parsed;
                 }
 
-                // Followers count
-                const followerText = await page.locator('header section ul li:nth-child(2) span').first().getAttribute('title').catch(() => null);
+                // Followers count — try title attribute first, fall back to textContent
+                let followerText = await page.locator('header section ul li:nth-child(2) span').first().getAttribute('title').catch(() => null);
+                if (!followerText) {
+                    followerText = await page.locator('header section ul li:nth-child(2) span').first().textContent().catch(() => null);
+                }
                 if (followerText) {
-                    conversionMarkers.push(`Followers Raw: ${followerText}`);
-                    const num = parseInt(followerText.replace(/,/g, ''), 10);
-                    if (!isNaN(num)) followerCount = num;
+                    const trimmed = followerText.trim();
+                    conversionMarkers.push(`Followers Raw: ${trimmed}`);
+                    const parsed = parseCount(trimmed);
+                    if (parsed != null) followerCount = parsed;
                 }
                 
                 // Following count
                 const followingText = await page.locator('header section ul li:nth-child(3) span').first().textContent().catch(() => null);
                 if (followingText) {
-                    conversionMarkers.push(`Following Raw: ${followingText}`);
-                    const num = parseInt(followingText.replace(/,/g, ''), 10);
-                    if (!isNaN(num)) followingCount = num;
+                    const trimmed = followingText.trim();
+                    conversionMarkers.push(`Following Raw: ${trimmed}`);
+                    const parsed = parseCount(trimmed);
+                    if (parsed != null) followingCount = parsed;
                 }
 
                 // Verified
@@ -178,6 +197,30 @@ export async function handle(
                 const privateText = await page.content();
                 if (privateText.toLowerCase().includes('this account is private')) {
                     isPrivate = true;
+                }
+
+                // Latest Post Date (from first image alt text or time tag)
+                let latestPostDate: string | null = null;
+                const firstGridImage = page.locator('article a[href^="/p/"] img, article a[href^="/reel/"] img').first();
+                if (await firstGridImage.count() > 0) {
+                    const altText = await firstGridImage.getAttribute('alt');
+                    if (altText) {
+                        const dateMatch = altText.match(/on ([a-zA-Z]+ \d{1,2}, \d{4})/i);
+                        if (dateMatch) {
+                            const dateObj = new Date(dateMatch[1]);
+                            if (!isNaN(dateObj.getTime())) latestPostDate = dateObj.toISOString();
+                        }
+                    }
+                }
+                if (!latestPostDate) {
+                    const timeTag = page.locator('article a[href^="/p/"] time, article a[href^="/reel/"] time').first();
+                    if (await timeTag.count() > 0) {
+                        const datetime = await timeTag.getAttribute('datetime');
+                        if (datetime) latestPostDate = new Date(datetime).toISOString();
+                    }
+                }
+                if (latestPostDate) {
+                    (scrapedItem.data as any).latestPostDate = latestPostDate;
                 }
 
             } catch (e) {
@@ -245,11 +288,93 @@ export async function handle(
                     }
                 }
 
-                // Reviews detection
+                // Reviews detection & count
+                let facebookReviewsCount: number | null = null;
                 const reviewsLocator = page.locator('a[href*="reviews"]').first();
                 if (await reviewsLocator.count() > 0) {
                     hasReviews = true;
+                    const reviewsText = await reviewsLocator.textContent();
+                    if (reviewsText) {
+                        // Match patterns like "123 reviews", "1,234 reviews", "1.2K reviews"
+                        const countMatch = reviewsText.match(/([\d,.]+)\s*(?:K|k)?\s*(?:reviews?|ratings?)/i);
+                        if (countMatch) {
+                            let numStr = countMatch[1].replace(/,/g, '');
+                            let num = parseFloat(numStr);
+                            if (reviewsText.toLowerCase().includes('k')) num *= 1000;
+                            if (!isNaN(num)) facebookReviewsCount = Math.floor(num);
+                        }
+                    }
                 }
+                if (facebookReviewsCount != null) {
+                    (scrapedItem.data as any).facebookReviewsCount = facebookReviewsCount;
+                }
+
+                // Overall Rating (e.g. "4.5 out of 5")
+                let facebookRating: number | null = null;
+                const ratingLocator = page.locator('[role="main"] span').filter({ hasText: /^\d\.\d$/ }).first();
+                if (await ratingLocator.count() > 0) {
+                    const ratingText = await ratingLocator.textContent();
+                    if (ratingText) {
+                        const parsed = parseFloat(ratingText.trim());
+                        if (!isNaN(parsed) && parsed >= 1 && parsed <= 5) facebookRating = parsed;
+                    }
+                }
+                if (!facebookRating) {
+                    // Fallback: look for "X.X out of 5" pattern in page text
+                    const mainText = await page.locator('[role="main"]').first().textContent() || '';
+                    const ratingMatch = mainText.match(/(\d\.\d)\s*(?:out of 5|\/\s*5)/i);
+                    if (ratingMatch) {
+                        const parsed = parseFloat(ratingMatch[1]);
+                        if (!isNaN(parsed) && parsed >= 1 && parsed <= 5) facebookRating = parsed;
+                    }
+                }
+                if (facebookRating) {
+                    (scrapedItem.data as any).facebookRating = facebookRating;
+                }
+
+                // Check-ins
+                let checkinsCount: number | null = null;
+                const checkinLocator = page.locator('div, span').filter({ hasText: /people checked in here|check-ins/i }).first();
+                if (await checkinLocator.count() > 0) {
+                    const checkinText = await checkinLocator.textContent();
+                    if (checkinText) {
+                        const numMatch = checkinText.match(/([\d,.]+)/);
+                        if (numMatch) {
+                            let numStr = numMatch[1].replace(/,/g, '');
+                            let num = parseFloat(numStr);
+                            if (checkinText.toLowerCase().includes('k')) num *= 1000;
+                            if (checkinText.toLowerCase().includes('m')) num *= 1000000;
+                            checkinsCount = Math.floor(num);
+                        }
+                    }
+                }
+
+                // Posts count
+                let postsCountFb: number | null = null;
+                const postsLocator = page.locator('span').filter({ hasText: /^\d[\d,]*\s+posts$/i }).first();
+                if (await postsLocator.isVisible()) {
+                   const pt = await postsLocator.textContent();
+                   if (pt) {
+                       const parsed = parseCount(pt.replace(/posts/i, '').trim());
+                       if (parsed != null) postsCountFb = parsed;
+                   }
+                }
+
+                // Latest post date
+                let latestPostDate: string | null = null;
+                const firstPostTimer = page.locator('[role="feed"] div[data-ad-preview="message"] time, [role="feed"] a[role="link"][tabindex="0"] span[id] > span, [role="feed"] a:has(span > span[id])').first();
+                if (await firstPostTimer.count() > 0) {
+                    const ariaLabel = await firstPostTimer.getAttribute('aria-label') || await firstPostTimer.textContent();
+                    if (ariaLabel && ariaLabel.length > 5) {
+                        latestPostDate = ariaLabel.trim();
+                    }
+                }
+                
+                if (checkinsCount !== null) (scrapedItem.data as any).checkinsCount = checkinsCount;
+                if (postsCountFb !== null) (scrapedItem.data as any).postsCount = postsCountFb;
+                if (latestPostDate !== null) (scrapedItem.data as any).latestPostDate = latestPostDate;
+
+
 
             } catch (e) {
                 log.debug('[Meta] Facebook extraction failed on some elements', { url: request.url });

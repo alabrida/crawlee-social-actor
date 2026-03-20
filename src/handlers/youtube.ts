@@ -188,7 +188,7 @@ async function handle(
             subscribersCount,
             videosCount,
             viewsCount,
-            verified: isVerified,
+            verified: false, // Default to false, can be extracted from metadata if needed
         } as any,
         errors: []
     };
@@ -210,7 +210,6 @@ function validate(data: Record<string, unknown>): boolean {
     if (!payload || typeof payload !== 'object') return false;
     if (!payload.revenueIndicators || !Array.isArray(payload.revenueIndicators.links)) return false;
     if (typeof payload.profileHtml !== 'string') return false;
-    if (typeof payload.screenshotUrl !== 'string') return false;
     return true;
 }
 

@@ -53,6 +53,7 @@ export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
         facebook: input.authTokens?.facebook || process.env.AUTH_TOKENS_FACEBOOK,
         instagram: input.authTokens?.instagram || process.env.AUTH_TOKENS_INSTAGRAM,
         twitter: input.authTokens?.twitter || process.env.AUTH_TOKENS_X,
+        youtube: input.authTokens?.youtube || process.env.AUTH_TOKENS_YOUTUBE,
     };
 }
 
@@ -110,11 +111,15 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
         const p = item.platform;
         if (!p) return;
 
-        // Generic per-platform fields
-        masterItem[`has_${p}`] = true;
-        masterItem[`${p}_url`] = item.url;
-        masterItem[`${p}_screenshot_url`] = item.data?.screenshotUrl ?? null;
-        masterItem[`${p}_scrape_date`] = item.scrapedAt;
+        // Generic per-platform fields — only for platforms with matching DB columns
+        // Platforms like google_maps, seo_serp, general use their own dedicated mappings below
+        const GENERIC_PLATFORMS = new Set(['instagram', 'twitter', 'linkedin', 'facebook', 'tiktok', 'youtube', 'reddit', 'pinterest']);
+        if (GENERIC_PLATFORMS.has(p)) {
+            masterItem[`has_${p}`] = true;
+            masterItem[`${p}_url`] = item.url;
+            masterItem[`${p}_screenshot_url`] = item.data?.screenshotUrl ?? null;
+            masterItem[`${p}_scrape_date`] = item.scrapedAt;
+        }
 
         // Map numeric metrics — use != null to preserve real zeros
         if (item.data?.followerCount != null) masterItem[`${p}_followers_count`] = item.data.followerCount;
@@ -151,6 +156,11 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.verified) masterItem.instagram_verified = true;
             if (item.data?.isPrivate) masterItem.instagram_is_private = true;
             if (item.data?.postsCount != null) masterItem.instagram_posts_count = item.data.postsCount;
+            if (item.data?.latestPostDate) {
+                masterItem.instagram_latest_post_date = item.data.latestPostDate;
+                const daysSince = Math.floor((Date.now() - new Date(item.data.latestPostDate).getTime()) / (1000 * 3600 * 24));
+                if (!isNaN(daysSince)) masterItem.instagram_days_since_post = daysSince;
+            }
             // Fallback verified from conversionMarkers
             if (item.data?.revenueIndicators?.conversionMarkers?.includes('Status: Verified')) {
                 masterItem.instagram_verified = true;
@@ -164,6 +174,18 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.category) masterItem.facebook_category = item.data.category;
             if (item.data?.likesCount != null) masterItem.facebook_likes_count = item.data.likesCount;
             if (item.data?.hasReviews) masterItem.facebook_has_reviews = true;
+            if (item.data?.facebookRating != null) masterItem.facebook_rating = item.data.facebookRating;
+            if (item.data?.facebookReviewsCount != null) masterItem.facebook_reviews_count = item.data.facebookReviewsCount;
+            if (item.data?.postsCount != null) masterItem.facebook_posts_count = item.data.postsCount;
+            if (item.data?.checkinsCount != null) masterItem.facebook_checkins_count = item.data.checkinsCount;
+            if (item.data?.latestPostDate) {
+                masterItem.facebook_latest_post_date = item.data.latestPostDate;
+                const fbDate = new Date(item.data.latestPostDate);
+                if (!isNaN(fbDate.getTime())) {
+                    const daysSinceFb = Math.floor((Date.now() - fbDate.getTime()) / (1000 * 3600 * 24));
+                    masterItem.facebook_days_since_post = daysSinceFb;
+                }
+            }
         }
 
         // ─── Twitter ──────────────────────────────────────────────
@@ -173,6 +195,11 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.biography) masterItem.twitter_biography = item.data.biography;
             if (item.data?.verified) masterItem.twitter_verified = true;
             if (item.data?.tweetsCount != null) masterItem.twitter_tweets_count = item.data.tweetsCount;
+            if (item.data?.latestTweetDate) {
+                masterItem.twitter_latest_tweet_date = item.data.latestTweetDate;
+                const daysSince = Math.floor((Date.now() - new Date(item.data.latestTweetDate).getTime()) / (1000 * 3600 * 24));
+                if (!isNaN(daysSince)) masterItem.twitter_days_since_post = daysSince;
+            }
         }
 
         // ─── TikTok ───────────────────────────────────────────────
@@ -183,6 +210,32 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.verified) masterItem.tiktok_verified = true;
             if (item.data?.likesCount != null) masterItem.tiktok_likes_count = item.data.likesCount;
             if (item.data?.videosCount != null) masterItem.tiktok_videos_count = item.data.videosCount;
+            if (item.data?.latestVideoDate) {
+                masterItem.tiktok_latest_video_date = item.data.latestVideoDate;
+                const str = String(item.data.latestVideoDate).toLowerCase();
+                let daysSince = null;
+                if (str.includes('h') || str.includes('m') && !str.includes('mo')) daysSince = 0; // Contains hour or minute
+                else if (str.includes('d')) daysSince = parseInt(str);
+                else if (str.includes('w')) daysSince = parseInt(str) * 7;
+                else {
+                    const parsedObj = new Date(str);
+                    if (!isNaN(parsedObj.getTime())) daysSince = Math.floor((Date.now() - parsedObj.getTime()) / (1000 * 3600 * 24));
+                }
+                if (daysSince !== null && !isNaN(daysSince)) {
+                    masterItem.tiktok_days_since_post = daysSince;
+                }
+            }
+        }
+
+        // ─── Pinterest ────────────────────────────────────────────
+        if (p === 'pinterest') {
+            if (item.data?.username) masterItem.pinterest_username = item.data.username;
+            if (item.data?.fullName) masterItem.pinterest_full_name = item.data.fullName;
+            if (item.data?.followerCount != null) masterItem.pinterest_followers_count = item.data.followerCount;
+            if (item.data?.followingCount != null) masterItem.pinterest_following_count = item.data.followingCount;
+            if (item.data?.pinsCount != null) masterItem.pinterest_pins_count = item.data.pinsCount;
+            if (item.data?.boardsCount != null) masterItem.pinterest_boards_count = item.data.boardsCount;
+            if (item.data?.monthlyViews != null) masterItem.pinterest_monthly_views = typeof item.data.monthlyViews === 'string' ? parseInt(item.data.monthlyViews.replace(/,/g, '')) : item.data.monthlyViews;
         }
 
         // ─── YouTube ──────────────────────────────────────────────
@@ -199,6 +252,7 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
         // ─── Google Maps / GBP ────────────────────────────────────
         if (p === 'google_maps' || p === 'google_business_profile') {
             masterItem.has_gbp = true;
+            masterItem.has_google_business_profile = true;
             masterItem.gbp_url = item.url;
             masterItem.gbp_business_name = item.data?.gbpBusinessName ?? null;
             masterItem.gbp_category = item.data?.gbpCategory ?? null;
@@ -214,12 +268,6 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             masterItem.gbp_has_photos = item.data?.gbpHasPhotos || false;
             masterItem.gbp_screenshot_url = item.data?.screenshotUrl ?? null;
             masterItem.gbp_scrape_date = item.scrapedAt;
-
-            // Also set google_maps prefixed fields
-            masterItem.has_google_maps = true;
-            masterItem.google_maps_url = item.url;
-            masterItem.google_maps_screenshot_url = item.data?.screenshotUrl ?? null;
-            masterItem.google_maps_scrape_date = item.scrapedAt;
         }
 
         // ─── General / General Hub ────────────────────────────────
@@ -244,13 +292,25 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
 
         // ─── LinkedIn ─────────────────────────────────────────────
         if (p === 'linkedin') {
-            if (item.data?.username) masterItem.linkedin_full_name = item.data.fullName;
+            if (item.data?.fullName) masterItem.linkedin_full_name = item.data.fullName;
             if (item.data?.followerCount != null) masterItem.linkedin_followers_count = item.data.followerCount;
             if (item.data?.connectionsCount != null) masterItem.linkedin_connections_count = item.data.connectionsCount;
             if (item.data?.headline) masterItem.linkedin_headline = item.data.headline;
             if (item.data?.location) masterItem.linkedin_location = item.data.location;
             if (item.data?.companyName) masterItem.linkedin_company_name = item.data.companyName;
             if (item.data?.hasRecentActivity) masterItem.linkedin_has_recent_activity = true;
+            if (item.data?.latestPostDate) {
+                const str = String(item.data.latestPostDate).toLowerCase();
+                let daysSince = null;
+                if (str.includes('h')) daysSince = 0;
+                else if (str.includes('d')) daysSince = parseInt(str);
+                else if (str.includes('w')) daysSince = parseInt(str) * 7;
+                else if (str.includes('mo')) daysSince = parseInt(str) * 30;
+                else if (str.includes('y')) daysSince = parseInt(str) * 365;
+                if (daysSince !== null && !isNaN(daysSince)) {
+                    masterItem.linkedin_days_since_post = daysSince;
+                }
+            }
         }
 
         // ─── Reddit ───────────────────────────────────────────────
@@ -395,14 +455,26 @@ export async function runPlaywrightCrawler(
 
     const playwrightQueue = await Actor.openRequestQueue();
     
-    const pwRequests = playwrightUrls.map(entry => ({
-        url: entry.url,
-        label: entry.platform,
-        userData: { platform: entry.platform },
-    }));
+    const pwRequests = playwrightUrls.map(entry => {
+        let targetUrl = entry.url;
+        if (!targetUrl.startsWith('http')) {
+            if (entry.platform === 'google_maps' || entry.platform === 'google_business_profile') {
+                // Route to Google Maps search instead of web search so that
+                // the Maps side-pane renders with h1, rating, reviews, etc.
+                targetUrl = `https://www.google.com/maps/search/${encodeURIComponent(targetUrl)}`;
+            } else {
+                targetUrl = `https://www.google.com/search?q=${encodeURIComponent(targetUrl)}`;
+            }
+        }
+        return {
+            url: targetUrl,
+            label: entry.platform,
+            userData: { platform: entry.platform },
+        };
+    });
 
     const screenshotRequests = cheerioUrls.map(entry => ({
-        url: entry.url,
+        url: entry.url.startsWith('http') ? entry.url : `https://www.google.com/search?q=${encodeURIComponent(entry.url)}`,
         label: 'screenshot-collector',
         userData: { platform: entry.platform, originalUrl: entry.url },
     }));
@@ -495,6 +567,7 @@ export async function runCheerioCrawler(
                 options.headers = {
                     ...options.headers,
                     'User-Agent': getRandomUserAgent(),
+                    'Cookie': 'SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg',
                 };
             },
         ],

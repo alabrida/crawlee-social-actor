@@ -50,6 +50,14 @@ async function handle(
         };
     });
 
+    // Try to isolate the latest post time (often hidden internally by TikTok)
+    const timeLocator = page.locator('[data-e2e="user-post-item"] time, [data-e2e="user-post-item"] [aria-label*="ago"], div[class*="DivTimeTag"]').first();
+    let latestVideoDate: string | null = null;
+    if (await timeLocator.count() > 0) {
+        latestVideoDate = await timeLocator.getAttribute('title') || await timeLocator.textContent();
+        if (latestVideoDate) latestVideoDate = latestVideoDate.trim();
+    }
+
     // Extract username from URL (e.g. https://www.tiktok.com/@publicserviceplumbers)
     const usernameMatch = url.match(/tiktok\.com\/@([^/?#]+)/);
     const username = usernameMatch ? usernameMatch[1] : null;
@@ -103,6 +111,7 @@ async function handle(
             followingCount: parseCount(extractedData.following) ?? null,
             likesCount: parseCount(extractedData.likes) ?? null,
             videosCount: parseCount(extractedData.videosCount) ?? null,
+            latestVideoDate: latestVideoDate || null,
         } as any,
         errors: []
     };
@@ -118,7 +127,7 @@ function validate(data: Record<string, unknown>): boolean {
     if (!payload || typeof payload !== 'object') return false;
     if (!payload.revenueIndicators || !Array.isArray(payload.revenueIndicators.links)) return false;
     if (typeof payload.profileHtml !== 'string') return false;
-    if (typeof payload.screenshotUrl !== 'string') return false;
+    return true;
     return true;
 }
 

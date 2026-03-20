@@ -1,0 +1,15 @@
+{
+    "businessUrl": "https://eatatjacks.com",
+    "platforms": ["facebook", "instagram", "linkedin", "twitter", "tiktok", "pinterest", "youtube", "reddit"],
+    "urls": [
+        { "platform": "facebook", "url": "https://www.facebook.com/eatatjacks/" },
+        { "platform": "instagram", "url": "https://www.instagram.com/eatatjacks/" },
+        { "platform": "linkedin", "url": "https://www.linkedin.com/company/jack's-family-restaurants-inc/" },
+        { "platform": "twitter", "url": "https://twitter.com/eatatjacks" },
+        { "platform": "tiktok", "url": "https://www.tiktok.com/@eatatjacks" },
+        { "platform": "youtube", "url": "https://www.youtube.com/@DustyNewsNetwork" },
+        { "platform": "reddit", "url": "https://www.reddit.com/r/Birmingham/" }
+    ],
+    "maxConcurrency": 3,
+    "maxRequestRetries": 1
+}

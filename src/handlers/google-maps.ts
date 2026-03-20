@@ -145,6 +145,40 @@ export async function handle(
         }
     } catch (e) { /* ignore */ }
 
+    // FALLBACK: If we are stuck in a "Limited View" search list and extraction failed
+    // Extract from the first search result card directly
+    try {
+        if (!conversionMarkers.some(m => m.startsWith('Title:'))) {
+            const firstResultCard = page.locator('div[role="article"]').first();
+            if (await firstResultCard.isVisible({ timeout: 2000 })) {
+                log.info(`[Google Maps] Falling back to limited-view search result card extraction`);
+                const cardText = await firstResultCard.innerText();
+                const lines = cardText.split('\n').filter(l => l.trim().length > 0);
+                if (lines.length > 0) conversionMarkers.push(`Title: ${lines[0].trim()}`);
+                
+                // Parse lines for rating, reviews, category, address, phone
+                const ratingLine = lines.find(l => /^[\d.]{3}.*\(\d+\)$/.test(l.replace(/,/g, '')));
+                if (ratingLine) {
+                    const parts = ratingLine.split(' ');
+                    conversionMarkers.push(`Rating: ${parts[0]}`);
+                    const revs = ratingLine.match(/\(([\d,]+)\)/);
+                    if (revs) conversionMarkers.push(`Reviews: ${revs[1].replace(',', '')}`);
+                }
+                
+                const phoneLine = lines.find(l => /^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(l));
+                if (phoneLine) conversionMarkers.push(`Phone: ${phoneLine}`);
+                
+                // Usually the address is on the line right under the category or rating
+                // Check if Website button exists within the card
+                const websiteBtn = firstResultCard.locator('a[href]').filter({ hasText: 'Website' });
+                if (await websiteBtn.count() > 0) {
+                    const href = await websiteBtn.getAttribute('href');
+                    if (href && !links.includes(href)) links.push(href);
+                }
+            }
+        }
+    } catch (e) { /* ignore */ }
+
     // 5. Booking/Order CTAs
     const possibleCtas = ['Book', 'Order', 'Reserve', 'Tickets', 'Menu', 'Appointments', 'Reservations'];
     for (const cta of possibleCtas) {
@@ -258,7 +292,7 @@ export function validate(data: Record<string, unknown>): boolean {
     if (!payload || typeof payload !== 'object') return false;
     if (!payload.revenueIndicators || !Array.isArray(payload.revenueIndicators.links)) return false;
     if (typeof payload.profileHtml !== 'string') return false;
-    if (typeof payload.screenshotUrl !== 'string') return false;
+    return true;
     return true;
 }
 

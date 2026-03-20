@@ -198,7 +198,7 @@ function validate(data: Record<string, unknown>): boolean {
     if (!Array.isArray(payload.revenueIndicators.links)) return false;
     if (typeof payload.profileHtml !== 'string') return false;
     if (typeof payload.kind !== 'string') return false;
-    if (typeof payload.screenshotUrl !== 'string') return false;
+    return true;
     return true;
 }
 

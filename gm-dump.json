@@ -1,0 +1,57 @@
+{
+  "title": "",
+  "buttons": [
+    "Collapse side panel",
+    "Collapse side panel",
+    "Collapse side panel",
+    "Search",
+    "Directions",
+    "Collapse side panel",
+    "Next page",
+    "Collapse side panel",
+    "Menu",
+    "Directions",
+    "Save",
+    "Nearby",
+    "Send to phone",
+    "Share",
+    "Sign in",
+    "Collapse side panel",
+    "Collapse side panel",
+    "Collapse side panel",
+    "Close",
+    "Show Your Location",
+    "Zoom in",
+    "Zoom out",
+    "Browse Street View images",
+    "Show imagery",
+    "Collapse side panel",
+    "Zoom in",
+    "Zoom out",
+    "Close"
+  ],
+  "links": [
+    {
+      "label": "About this data",
+      "href": "https://support.google.com/local-listings?p=how_google_sources&authuser=0&hl=en"
+    },
+    {
+      "label": "Google apps",
+      "href": "https://www.google.com/intl/en/about/products?tab=lh"
+    },
+    {
+      "label": "Sign in",
+      "href": "https://accounts.google.com/ServiceLogin?hl=en&passive=true&continue=https%3A%2F%2Fwww.google.com%2Fmaps%2Fplace%2FJack's%2F%4033.5206608%2C-86.80249%2C15z%2Fdata%3D!4m2!3m1!1s0x0%3A0xbf2c8d20fe7f2025%3Fsa%3DX&service=local&ec=GAZAcQ"
+    }
+  ],
+  "allDivs": [
+    "Google Maps",
+    "Map · Use arrow keys to pan the map. · Get details about a place by pressing its corresponding number key.",
+    "Available search options for this area",
+    "Actions for ",
+    "Explore this area",
+    "Interactive map",
+    "Zoom out and see the world in 3D"
+  ],
+  "htmlPreview": "<div class=\"ZKCDEc\"><div class=\"RZ66Rb FgCUCc\"><div class=\"aoRNLd kn2E5e lvtCsd \" jslog=\"15130; mutable:true;\"><img decoding=\"async\" src=\"//maps.gstatic.com/tactile/pane/default_geocode-1x.png\" style=\"position: absolute; top: 50%; left: 50%; width: 408px; height: 256px; transform: translateY(-50%) translateX(-50%);\"></div></div><div class=\"jwfPme\"></div><div class=\"YNB9Sd\"></div></div><div class=\"TIHn2 \" style=\"\"><div class=\"tAiQdd\"><div class=\"lMbq3e\" style=\"padding-bottom: 4px;\"><div><div clas"
+}

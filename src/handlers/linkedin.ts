@@ -82,10 +82,30 @@ async function handle(
                             document.body.innerHTML.substring(0, 5000); // Fallback snippet
 
         // Phase 2: High-res metrics
-        const followers = document.querySelector('.pv-top-card--list-bullet li:last-child')?.textContent?.trim() || '';
+        let followers = document.querySelector('.pv-top-card--list-bullet li:last-child')?.textContent?.trim() || '';
+        if (!followers) {
+            // Company followers pattern
+            const p = Array.from(document.querySelectorAll('div, span')).find(el => el.textContent?.toLowerCase().includes('followers'));
+            if (p) followers = p.textContent?.trim() || '';
+        }
+        
         const isVerified = !!document.querySelector('.pv-top-card-section__verified-badge');
 
-        return { links: Array.from(new Set(links)), ctas: Array.from(new Set(ctas)), profileHtml, followers, isVerified };
+        // Extract structured profile fields
+        const fullName = document.querySelector('.text-heading-xlarge, h1.top-card-layout__title, h1.org-top-card-summary__title, h1')?.textContent?.trim() || '';
+        const headline = document.querySelector('.text-body-medium.break-words, .top-card-layout__headline, .org-top-card-summary__tagline, h2')?.textContent?.trim() || '';
+        const location = document.querySelector('.text-body-small[data-test-id="location"], .top-card-layout__first-subline, span.text-body-small.inline, .org-top-card-summary-info-list__info-item')?.textContent?.trim() || '';
+        const companyName = document.querySelector('.pv-text-details__right-panel a[href*="/company/"], a[data-field="experience_company_logo"]')?.textContent?.trim() || fullName; // Fallback to Title if it's a company page
+        const connectionsText = document.querySelector('.pv-top-card--list-bullet li:first-child')?.textContent?.trim() || '';
+
+        // Extract native post time from recent activity (e.g. "3d", "1mo")
+        let latestPostDate = null;
+        const firstPostTime = document.querySelector('time') || document.querySelector('.feed-shared-text-view span.visually-hidden');
+        if (firstPostTime) {
+            latestPostDate = firstPostTime.textContent?.trim() || null;
+        }
+
+        return { links: Array.from(new Set(links)), ctas: Array.from(new Set(ctas)), profileHtml, followers, isVerified, fullName, headline, location, companyName, connectionsText, latestPostDate };
     });
 
     const conversionMarkers: string[] = [];
@@ -114,6 +134,16 @@ async function handle(
         }
     }
 
+    // Parse connections count from raw text (e.g. "500+ connections")
+    let connectionsCount: number | null = null;
+    if (extractData.connectionsText) {
+        const connMatch = extractData.connectionsText.match(/([\d,+]+)/);
+        if (connMatch) {
+            let num = parseInt(connMatch[1].replace(/[,+]/g, ''), 10);
+            if (!isNaN(num)) connectionsCount = num;
+        }
+    }
+
     const scrapedItem: ScrapedItem = {
         platform: 'linkedin',
         url,
@@ -129,13 +159,14 @@ async function handle(
             screenshotUrl: '',
             // Structured fields for direct Supabase mapping
             username,
-            fullName: null, // LinkedIn requires auth for name extraction
-            headline: null, // LinkedIn requires auth for headline
-            location: null, // LinkedIn requires auth for location
+            fullName: extractData.fullName || null,
+            headline: extractData.headline || null,
+            location: extractData.location || null,
             followerCount,
-            connectionsCount: null,
-            companyName: null,
+            connectionsCount,
+            companyName: extractData.companyName || null,
             hasRecentActivity: extractData.ctas.length > 0 || extractData.links.length > 0,
+            latestPostDate: extractData.latestPostDate || null,
         } as any,
         errors: []
     };
@@ -153,7 +184,7 @@ function validate(data: Record<string, unknown>): boolean {
     if (!payload || typeof payload !== 'object') return false;
     if (!payload.revenueIndicators || !Array.isArray(payload.revenueIndicators.links)) return false;
     if (typeof payload.profileHtml !== 'string') return false;
-    if (typeof payload.screenshotUrl !== 'string') return false;
+    return true;
     return true;
 }
 

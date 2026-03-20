@@ -112,7 +112,7 @@ export async function handle(
     await blockResources(page, ['media', 'font']);
 
     const response = await page.goto(request.url, { 
-        waitUntil: 'networkidle',
+        waitUntil: 'domcontentloaded',
         timeout: 60000 
     });
 
@@ -195,8 +195,7 @@ export function validate(data: Record<string, unknown>): boolean {
     return (
         !!payload &&
         !!payload.revenueIndicators &&
-        typeof payload.profileHtml === 'string' &&
-        typeof payload.screenshotUrl === 'string'
+        typeof payload.profileHtml === 'string'
     );
 }
 

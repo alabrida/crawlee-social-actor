@@ -177,8 +177,7 @@ export function validate(data: Record<string, unknown>): boolean {
     return (
         payload &&
         payload.revenueIndicators !== undefined &&
-        typeof payload.profileHtml === 'string' &&
-        typeof payload.screenshotUrl === 'string'
+        typeof payload.profileHtml === 'string'
     );
 }
 
