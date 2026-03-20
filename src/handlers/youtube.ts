@@ -5,24 +5,29 @@
  * @see PRD Section 5.2
  */
 
-import type { CheerioCrawlingContext } from 'crawlee';
-import type { CheerioHandler, HandlerContext, ScrapedItem } from '../types.js';
+import type { PlaywrightCrawlingContext } from 'crawlee';
+import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 
 /**
  * Handle a YouTube URL by regex-parsing embedded JSON from the HTML response.
- * @param context - Crawlee CheerioCrawlingContext with request/response/$.
+ * @param context - Crawlee PlaywrightCrawlingContext with request/page.
  * @param _handlerContext - Shared handler context with actor input.
  * @returns Array of scraped items in the normalized envelope.
  */
 async function handle(
-    context: CheerioCrawlingContext,
+    context: PlaywrightCrawlingContext,
     _handlerContext: HandlerContext,
 ): Promise<ScrapedItem[]> {
-    const { request, $, body, log } = context;
+    const { request, page, log } = context;
     const url = request.url;
     log.info(`[YouTube] Extracting data from: ${url}`);
 
-    const html = typeof body === 'string' ? body : body.toString('utf-8');
+    // Wait for the channel layout to stabilize
+    try { 
+        await page.waitForSelector('#subscriber-count, yt-formatted-string[aria-label*="subscribers"]', { timeout: 15000 });
+        await page.waitForTimeout(5000); // Allow CSR to populate values
+    } catch (e) { /* ignore */ }
+    const html = await page.content();
 
     let ytInitialData: any = null;
     const ytInitialDataMatch = html.match(/var ytInitialData = (\{.*?\});<\/script>/);
@@ -116,6 +121,20 @@ async function handle(
             log.debug(`[YouTube] Failed to parse structured channel data for ${url}`);
         }
 
+        // DOM Fallback for counts using ARIA labels or specific text patterns
+        try {
+            if (subscribersCount === null) {
+                const subText = await page.locator('#subscriber-count, yt-formatted-string[aria-label*="subscribers"]').first().innerText().catch(() => '');
+                if (subText) subscribersCount = parseCount(subText);
+            }
+            if (videosCount === null) {
+                const videoText = await page.locator('#videos-count, yt-formatted-string[aria-label*="videos"]').first().innerText().catch(() => '');
+                if (videoText) videosCount = parseCount(videoText);
+            }
+        } catch (e) {
+            log.debug(`[YouTube] DOM fallback failed for ${url}`);
+        }
+
         const headerLinksMatch = stringifiedData.match(/"urlEndpoint":\{"url":"([^"]+)"\}/g);
         if (headerLinksMatch) {
             for (const match of headerLinksMatch) {
@@ -152,7 +171,7 @@ async function handle(
     }
 
     // Attempt to find business email / booking keywords in description
-    const metaDescription = $('meta[name="description"]').attr('content') || '';
+    const metaDescription = await page.locator('meta[name="description"]').getAttribute('content').catch(() => '') || '';
     if (!description && metaDescription) description = metaDescription;
     if (metaDescription.toLowerCase().includes('shop')) conversionMarkers.push('Shop');
     if (metaDescription.toLowerCase().includes('book')) conversionMarkers.push('Booking');
@@ -160,12 +179,14 @@ async function handle(
 
     // Fallback: extract channel name from <title>
     if (!channelName) {
-        const titleTag = $('title').text();
+        const titleTag = await page.title().catch(() => '');
         if (titleTag) channelName = titleTag.replace(/- YouTube$/i, '').trim() || null;
     }
 
     // Extract profile HTML snippet (mostly what's in head and main container, YouTube's DOM is CSR heavy)
-    const profileHtml = $('title').prop('outerHTML') + ($('meta[name="description"]').prop('outerHTML') || '');
+    const titleHtml = await page.locator('title').evaluate(el => el.outerHTML).catch(() => '');
+    const metaHtml = await page.locator('meta[name="description"]').evaluate(el => el.outerHTML).catch(() => '');
+    const profileHtml = titleHtml + metaHtml;
 
     const scrapedItem: ScrapedItem = {
         platform: 'youtube',
@@ -188,7 +209,7 @@ async function handle(
             subscribersCount,
             videosCount,
             viewsCount,
-            verified: false, // Default to false, can be extracted from metadata if needed
+            verified: isVerified,
         } as any,
         errors: []
     };
@@ -224,9 +245,9 @@ function detectBlock(responseBody: string): boolean {
     return isConsent || isForbidden;
 }
 
-/** Assembled handler export satisfying the CheerioHandler interface. */
-const youtubeHandler: CheerioHandler = {
-    crawlerType: 'cheerio',
+/** Assembled handler export satisfying the PlaywrightHandler interface. */
+const youtubeHandler: PlaywrightHandler = {
+    crawlerType: 'playwright',
     handle,
     validate,
     detectBlock,

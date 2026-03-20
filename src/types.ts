@@ -33,7 +33,7 @@ export type CrawlerType = 'cheerio' | 'playwright';
  */
 export const PLATFORM_CRAWLER_MAP: Record<Platform, CrawlerType> = {
     tiktok: 'playwright',
-    youtube: 'cheerio',
+    youtube: 'playwright',
     reddit: 'cheerio',
     google_maps: 'playwright',
     pinterest: 'playwright',

@@ -12,6 +12,14 @@ export interface Forensics {
     hasNewsletter: boolean;
     hasPrivacyPolicy: boolean;
     hasCookieBanner: boolean;
+    hasBlog: boolean;
+    hasCaseStudies: boolean;
+    hasTestimonials: boolean;
+    hasLeadMagnet: boolean;
+    hasQuiz: boolean;
+    hasPricing: boolean;
+    hasIntentTracking: boolean;
+    hasInstantBooking: boolean;
 }
 
 /**
@@ -30,6 +38,14 @@ export function extractInitialForensics(url: string, content: string): Forensics
         hasNewsletter: false,
         hasPrivacyPolicy: false,
         hasCookieBanner: content.toLowerCase().includes('cookie') && (content.toLowerCase().includes('consent') || content.toLowerCase().includes('accept')),
+        hasBlog: content.includes('/blog') || content.includes('/news') || content.includes('/articles'),
+        hasCaseStudies: content.includes('/case-study') || content.includes('/success-story') || content.includes('/customers'),
+        hasTestimonials: content.includes('testimonial') || content.includes('reviews'),
+        hasLeadMagnet: content.includes('.pdf') || content.includes('download') || content.includes('ebook') || content.includes('whitepaper'),
+        hasQuiz: content.includes('quiz') || content.includes('assessment') || content.includes('calculator'),
+        hasPricing: content.includes('/pricing') || content.toLowerCase().includes('pricing'),
+        hasIntentTracking: content.includes('facebook.com/tr') || content.includes('hubspot') || content.includes('marketo') || content.includes('intercom'),
+        hasInstantBooking: content.includes('calendly') || content.includes('acuity') || content.includes('booking'),
     };
 }
 
@@ -79,8 +95,23 @@ export async function extractPageData(
             if (lowerText.includes(ind.term)) {
                 ctas.push(ind.label);
                 if (ind.term === 'newsletter' || ind.term === 'subscribe') forensics.hasNewsletter = true;
+                if (ind.term === 'pricing') forensics.hasPricing = true;
             }
         }
+
+        // Deep link analysis for high-fidelity signals
+        const links = await page.locator('a').evaluateAll(els => els.map(el => (el as HTMLAnchorElement).href));
+        for (const link of links) {
+            const lowLink = link.toLowerCase();
+            if (lowLink.includes('/blog') || lowLink.includes('/news')) forensics.hasBlog = true;
+            if (lowLink.includes('/case-study') || lowLink.includes('/success-story')) forensics.hasCaseStudies = true;
+            if (lowLink.includes('/testimonial')) forensics.hasTestimonials = true;
+            if (lowLink.includes('calendly.com/') || lowLink.includes('acuityscheduling.com')) forensics.hasInstantBooking = true;
+        }
+
+        // Form detection for "Capture Forms"
+        const formCount = await page.locator('form').count();
+        if (formCount > 0) conversionMarkers.push(`Signal: Forms Detected (${formCount})`);
 
         // Map forensics to markers for immediate visibility
         Object.entries(forensics).forEach(([key, val]) => {

@@ -207,6 +207,8 @@ export function getBlankAssessmentRow(): Record<string, any> {
         has_instant_booking: false,
         is_ai_ready: false,
         is_self_hosted: false,
+        consideration_has_case_studies: false,
+        consideration_has_testimonials: false,
         consideration_roi_calculator_detected: false,
         consideration_form_detected: false,
         decision_pricing_page_detected: false,

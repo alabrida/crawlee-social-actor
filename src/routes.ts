@@ -69,7 +69,6 @@ function getFailedDataset(): Promise<Dataset> {
  * Handlers are added here after passing the SHIP gate.
  */
 const CHEERIO_HANDLERS: Record<string, CheerioHandler> = {
-    youtube: youtubeHandler,
     reddit: redditHandler,
 };
 
@@ -78,6 +77,7 @@ const CHEERIO_HANDLERS: Record<string, CheerioHandler> = {
  * Handlers are added here after passing the SHIP gate.
  */
 const PLAYWRIGHT_HANDLERS: Record<string, PlaywrightHandler> = {
+    youtube: youtubeHandler,
     tiktok: tiktokHandler,
     google_maps: googleMapsHandler,
     'google-maps': googleMapsHandler,

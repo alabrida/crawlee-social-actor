@@ -280,6 +280,16 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
                 masterItem.has_newsletter_signup = f.hasNewsletter;
                 masterItem.has_privacy_policy = f.hasPrivacyPolicy;
                 masterItem.has_cookie_banner = f.hasCookieBanner || false;
+                
+                // Deep Signals
+                masterItem.consideration_has_case_studies = f.hasCaseStudies || false;
+                masterItem.consideration_has_testimonials = f.hasTestimonials || false;
+                masterItem.has_lead_magnet = f.hasLeadMagnet || false;
+                masterItem.has_quiz = f.hasQuiz || false;
+                masterItem.decision_pricing_page_detected = f.hasPricing || false;
+                masterItem.has_intent_tracking = f.hasIntentTracking || false;
+                masterItem.has_instant_booking = f.hasInstantBooking || false;
+                masterItem.is_ai_ready = f.isAiReady || false;
             }
             if (item.data?.metaDescription) masterItem.business_meta_description = item.data.metaDescription;
             if (item.data?.canonicalUrl) masterItem.business_canonical_url = item.data.canonicalUrl;

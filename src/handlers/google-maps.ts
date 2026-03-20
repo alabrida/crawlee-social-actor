@@ -126,7 +126,7 @@ export async function handle(
 
     // 4. Rating and Reviews Count (Retention Indicators)
     try {
-        const ratingLocator = page.locator('span.ceNzKf, span.MW4etd').first();
+        const ratingLocator = page.locator('span.ceNzKf, span.MW4etd, span[aria-label*="stars" i], div.F7nice > span:first-child').first();
         if (await ratingLocator.isVisible()) {
             const ratingText = await ratingLocator.getAttribute('aria-label') || await ratingLocator.innerText();
             if (ratingText) {
@@ -134,13 +134,26 @@ export async function handle(
                 conversionMarkers.push(`Rating: ${ratingValue}`);
             }
         }
-        
-        const reviewsLocator = page.locator('span.UY7F9, button[jsaction*="reviews"]').first();
+        const reviewsLocator = page.locator('span.UY7F9, button[jsaction*="reviews"], div.F7nice').first();
         if (await reviewsLocator.isVisible()) {
             const reviewsText = await reviewsLocator.innerText();
-            if (reviewsText) {
-                const reviewsValue = reviewsText.replace(/[()]/g, '').trim();
+            const ariaText = await reviewsLocator.getAttribute('aria-label') || '';
+            const combinedText = reviewsText + ' ' + ariaText;
+            
+            // Extract Reviews Count
+            const revMatch = combinedText.match(/\(([\d,]+)\)|([\d,]+)\s*reviews/i);
+            if (revMatch) {
+                const reviewsValue = (revMatch[1] || revMatch[2]).replace(/,/g, '').trim();
                 conversionMarkers.push(`Reviews: ${reviewsValue}`);
+            }
+            
+            // Extract Rating recursively if it missed
+            if (!conversionMarkers.some(m => m.startsWith('Rating:'))) {
+                 const ratingMatch = combinedText.match(/([\d\.]+)\s*stars|([\d\.]+)\s*\(/i) || combinedText.match(/^([\d\.]+)\n/);
+                 if (ratingMatch) {
+                     const ratingValue = (ratingMatch[1] || ratingMatch[2] || ratingMatch[3]).trim();
+                     conversionMarkers.push(`Rating: ${ratingValue}`);
+                 }
             }
         }
     } catch (e) { /* ignore */ }

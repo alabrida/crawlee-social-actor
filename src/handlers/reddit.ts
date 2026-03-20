@@ -148,8 +148,13 @@ async function handle(
             accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
         }
     } else {
-        // Subreddit: use display_name as "username"
+        // Subreddit: use display_name as "username", and subscribers as "karma" for authority metric
         username = data.display_name || null;
+        karma = data.subscribers ?? null;
+        if (data.created_utc) {
+            const createdDate = new Date(data.created_utc * 1000);
+            accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+        }
     }
 
     const scrapedItem: ScrapedItem = {
