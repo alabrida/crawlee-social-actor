@@ -1,4 +1,6 @@
 {
+  "businessUrl": "https://apify.com",
+  "brandName": "Apify",
   "platforms": ["tiktok", "youtube", "reddit", "google_maps", "linkedin", "pinterest", "facebook", "instagram", "twitter", "seo_serp", "general_hub"],
   "urls": [
     { "platform": "tiktok", "url": "https://www.tiktok.com/@bellapoarch" },

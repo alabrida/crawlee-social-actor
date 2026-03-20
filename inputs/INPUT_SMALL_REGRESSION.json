@@ -1,0 +1,26 @@
+{
+  "businessUrl": "https://www.eatpdq.com/",
+  "brandName": "PDQ Fresh Food",
+  "platforms": ["tiktok", "youtube", "reddit", "google_maps", "linkedin", "pinterest", "facebook", "instagram", "twitter", "general_hub"],
+  "urls": [
+    { "platform": "general_hub", "url": "https://www.eatpdq.com/" },
+    { "platform": "instagram", "url": "https://www.instagram.com/pdqfreshfood" },
+    { "platform": "tiktok", "url": "https://www.tiktok.com/@pdq_chicken" },
+    { "platform": "facebook", "url": "https://www.facebook.com/pdqchicken/" },
+    { "platform": "twitter", "url": "https://twitter.com/PdqChicken" },
+    { "platform": "youtube", "url": "https://www.youtube.com/@OshayDukeJackson" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/Damnthatsinteresting/" },
+    { "platform": "google_maps", "url": "https://maps.app.goo.gl/j993HmW5CgoXExQC7" },
+    { "platform": "linkedin", "url": "https://www.linkedin.com/company/jacksonville-daily-record/" },
+    { "platform": "pinterest", "url": "https://www.pinterest.com/alwaysdwell/" }
+  ],
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": ["RESIDENTIAL"],
+    "apifyProxyCountry": "US"
+  },
+  "maxConcurrency": 2,
+  "maxRequestRetries": 1,
+  "linkedinDailyLimit": 250,
+  "googleMapsGrid": { "enabled": false, "cellSizeKm": 5 }
+}

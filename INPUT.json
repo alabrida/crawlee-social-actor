@@ -1,43 +1,25 @@
 {
-  "platforms": [
-    "tiktok",
-    "instagram",
-    "twitter",
-    "youtube",
-    "facebook",
-    "google_maps",
-    "linkedin",
-    "reddit",
-    "pinterest",
-    "seo_serp",
-    "general_hub"
-  ],
-  "businessUrl": "https://eatatjacks.com/",
-  "brandName": "Jack's Family Restaurants",
-  "consultantEmail": "validation@alabrida.com",
+  "platforms": ["tiktok", "youtube", "reddit", "google_maps", "linkedin", "pinterest", "facebook", "instagram", "twitter", "seo_serp", "general_hub"],
   "urls": [
-    { "platform": "tiktok", "url": "https://www.tiktok.com/@jacksfamilyrestaurants" },
-    { "platform": "instagram", "url": "https://www.instagram.com/eatatjacks/" },
-    { "platform": "twitter", "url": "https://twitter.com/jacksfamilyrest" },
-    { "platform": "youtube", "url": "https://www.youtube.com/@DustysNewsNetwork" },
-    { "platform": "facebook", "url": "https://www.facebook.com/eatatjacks" },
-    { "platform": "google_maps", "url": "https://www.google.com/maps/place/Jack's/@33.5206608,-86.80249,15z/data=!4m2!3m1!1s0x0:0xbf2c8d20fe7f2025?sa=X" },
-    { "platform": "linkedin", "url": "https://www.linkedin.com/company/jacks-family-restaurants-inc/" },
-    { "platform": "reddit", "url": "https://www.reddit.com/subreddits/search.json?q=EatAtJacks" },
-    { "platform": "pinterest", "url": "https://www.pinterest.com/eatatjacks/" },
-    { "platform": "seo_serp", "url": "Jack's Family Restaurants" },
-    { "platform": "general_hub", "url": "https://eatatjacks.com/" }
+    { "platform": "tiktok", "url": "https://www.tiktok.com/@bellapoarch" },
+    { "platform": "youtube", "url": "https://www.youtube.com/@MrBeast" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/technology" },
+    { "platform": "google_maps", "url": "https://www.google.com/maps/search/Eiffel+Tower" },
+    { "platform": "linkedin", "url": "https://www.linkedin.com/company/google/" },
+    { "platform": "pinterest", "url": "https://www.pinterest.com/nike/" },
+    { "platform": "facebook", "url": "https://www.facebook.com/Nike/" },
+    { "platform": "instagram", "url": "https://www.instagram.com/nike/" },
+    { "platform": "twitter", "url": "https://x.com/elonmusk" },
+    { "platform": "seo_serp", "url": "https://www.google.com/search?q=Apify" },
+    { "platform": "general_hub", "url": "https://apify.com" }
   ],
   "proxy": {
     "useApifyProxy": true,
     "apifyProxyGroups": ["RESIDENTIAL"],
-    "apifyProxyCountry": "US"
+    "proxyUrls": []
   },
-  "maxConcurrency": 3,
+  "maxConcurrency": 2,
   "maxRequestRetries": 1,
   "linkedinDailyLimit": 250,
-  "googleMapsGrid": {
-    "enabled": false,
-    "cellSizeKm": 1
-  }
+  "googleMapsGrid": { "enabled": false, "cellSizeKm": 5 }
 }
