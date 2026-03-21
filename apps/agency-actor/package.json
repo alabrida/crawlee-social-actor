@@ -9,6 +9,6 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@alabrida/core-scraper": "workspace:*"
+    "@alabrida/core-scraper": "*"
   }
 }

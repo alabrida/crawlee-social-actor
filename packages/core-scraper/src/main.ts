@@ -604,7 +604,7 @@ export async function runCheerioCrawler(
  * enqueues URLs, and runs scrapers per crawler type.
  * @returns Promise that resolves when all URLs have been processed.
  */
-export async function main(): Promise<void> {
+export async function runActor(): Promise<void> {
     await Actor.init();
 
     const input = await Actor.getInput<ActorInput>();
@@ -632,9 +632,4 @@ export async function main(): Promise<void> {
     await aggregateAndUpsertData(input, finalUrls);
 
     await Actor.exit();
-}
-
-// Only run main if this file is the entry point (not imported in tests)
-if (import.meta.url === `file://${process.argv[1]}` || import.meta.url.endsWith('src/main.ts')) {
-    main();
 }
