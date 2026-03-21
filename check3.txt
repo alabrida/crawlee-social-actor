@@ -1,0 +1,15 @@
+Platform: instagram
+Success: undefined
+Followers: 23400
+HasLoginModal: Yes
+---
+Platform: facebook
+Success: undefined
+Followers: 80000
+HasLoginModal: No
+---
+Platform: twitter
+Success: undefined
+Followers: null
+HasLoginModal: No
+---

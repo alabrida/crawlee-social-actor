@@ -99,6 +99,11 @@ export async function handle(
                 const bioText = await bioLocator.textContent();
                 if (bioText) biography = bioText.trim();
             }
+            // Fallback bio
+            if (!biography) {
+                const metaDesc = await page.locator('meta[name="description"]').getAttribute('content').catch(() => null);
+                if (metaDesc) biography = metaDesc.replace(/“.*?”/, '').trim(); // Try to strip out the random quotes Twitter sometimes injects
+            }
 
             // 4. Verified Status
             const verifiedLocator = page.locator('[data-testid="UserProfileHeader_Items"] [aria-label*="Verified account"]').first();
@@ -108,24 +113,55 @@ export async function handle(
             }
 
             // 5. Numeric Metrics
+            // Tweets count (header)
+            const headerSubtitle = page.locator('[data-testid="primaryColumn"] h2 + div').first();
+            if (await headerSubtitle.count() > 0) {
+                const headerText = await headerSubtitle.textContent();
+                if (headerText && /posts?/i.test(headerText)) {
+                    tweetsCount = parseCount(headerText.replace(/posts?/i, ''));
+                }
+            }
+            // Fallback Tweets count (script tag)
+            if (!tweetsCount) {
+                 const scriptTags = await page.locator('script[type="application/ld+json"]').allInnerTexts();
+                 for (const jsonText of scriptTags) {
+                     try {
+                         const json = JSON.parse(jsonText);
+                         if (json && json.author && json.author.interactionStatistic) {
+                             const stats = Array.isArray(json.author.interactionStatistic) ? json.author.interactionStatistic : [json.author.interactionStatistic];
+                             const writeStat = stats.find((s: any) => s.interactionType === 'https://schema.org/WriteAction');
+                             if (writeStat && writeStat.userInteractionCount != null) {
+                                 tweetsCount = parseInt(writeStat.userInteractionCount, 10);
+                                 break;
+                             }
+                         }
+                     } catch (e) {}
+                 }
+            }
+
             const followerLocator = page.locator('a[href$="/verified_followers"] span, a[href$="/followers"] span').first();
             if (await followerLocator.count() > 0) {
-                const followerCountText = await followerLocator.textContent();
-                if (followerCountText) {
-                    const text = followerCountText.trim();
-                    conversionMarkers.push(`Followers Raw: ${text}`);
-                    followerCount = parseCount(text);
-                }
+                 // The span text is sometimes visually hidden. Try getting the text of the entire link minus 'Followers' text
+                 let followerCountText = await followerLocator.textContent() || await followerLocator.evaluate(el => el.parentElement?.textContent || '');
+                 if (followerCountText) {
+                     followerCountText = followerCountText.replace(/Followers?|Verified/gi, '').trim();
+                     if (followerCountText) {
+                         conversionMarkers.push(`Followers Raw: ${followerCountText}`);
+                         followerCount = parseCount(followerCountText);
+                     }
+                 }
             }
 
             const followingLocator = page.locator('a[href$="/following"] span').first();
             if (await followingLocator.count() > 0) {
-                const followingCountText = await followingLocator.textContent();
-                if (followingCountText) {
-                    const text = followingCountText.trim();
-                    conversionMarkers.push(`Following Raw: ${text}`);
-                    followingCount = parseCount(text);
-                }
+                 let followingCountText = await followingLocator.textContent() || await followingLocator.evaluate(el => el.parentElement?.textContent || '');
+                 if (followingCountText) {
+                     followingCountText = followingCountText.replace(/Following/gi, '').trim();
+                     if (followingCountText) {
+                         conversionMarkers.push(`Following Raw: ${followingCountText}`);
+                         followingCount = parseCount(followingCountText);
+                     }
+                 }
             }
 
             // 6. Latest Tweet Date

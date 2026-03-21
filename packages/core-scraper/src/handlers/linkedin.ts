@@ -114,6 +114,31 @@ async function handle(
             location = (await locationLocator.innerText()).trim();
         }
 
+        // 3.5 Company Name
+        const companyBtn = page.locator('button[aria-label*="Current company"], .pv-text-details__right-panel-item-link').first();
+        if (await companyBtn.isVisible()) {
+             let rawCompany = await companyBtn.getAttribute('aria-label') || await companyBtn.innerText();
+             companyName = rawCompany.replace(/Current company|:|opens in a new tab/gi, '').trim();
+             // Sometimes the inner text has nested visual hidden spans
+             if (companyName.length > 50) {
+                 const innerTextOnly = await companyBtn.locator('.pv-text-details__right-panel-item-text').first().innerText().catch(() => null);
+                 if (innerTextOnly) companyName = innerTextOnly.trim();
+             }
+        }
+        
+        // Fallback Company Name from first experience item
+        if (!companyName) {
+            const expCompany = page.locator('#experience ~ .pvs-list__outer-container .pvs-entity span[aria-hidden="true"]').nth(1);
+            if (await expCompany.count() > 0) {
+                const expText = await expCompany.innerText();
+                if (expText && expText.includes('·')) {
+                     companyName = expText.split('·')[0].trim();
+                } else if (expText) {
+                     companyName = expText.trim();
+                }
+            }
+        }
+
         // 4. Followers & Connections
         const followerLocator = page.locator('span:has-text("followers")').first();
         if (await followerLocator.isVisible()) {

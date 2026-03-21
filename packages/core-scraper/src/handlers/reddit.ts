@@ -142,6 +142,27 @@ async function handle(
         }
     }
 
+    // Auxiliary Fetch: Get the main feed JSON to extract latest activity date and post count
+    let postsCount: number | null = null;
+    let lastActivityDate: string | null = null;
+    try {
+        const feedUrl = url.replace('/about.json', '.json');
+        const feedResp = await context.sendRequest({ url: feedUrl });
+        const feedJson = JSON.parse(feedResp.body);
+        if (feedJson && feedJson.data && Array.isArray(feedJson.data.children)) {
+            const posts = feedJson.data.children;
+            postsCount = posts.length; // Might just be the page size, but gives us a baseline if active
+            if (posts.length > 0) {
+                const latestPost = posts[0].data;
+                if (latestPost && latestPost.created_utc) {
+                    lastActivityDate = new Date(latestPost.created_utc * 1000).toISOString();
+                }
+            }
+        }
+    } catch (e) {
+        log.warning(`[Reddit] Failed to fetch recent feed for ${url} to extract activity date.`);
+    }
+
     // Compute structured data fields
     let username: string | null = null;
     let karma: number | null = null;
@@ -189,7 +210,8 @@ async function handle(
             postKarma,
             commentKarma,
             accountAgeDays,
-            postsCount: null, // Not available from about.json endpoint
+            postsCount,
+            latestPostDate: lastActivityDate,
             crawlMetadata: {
                 title: isUser ? `Reddit: ${username}` : (data.title || ''),
                 h1: isUser ? (data.subreddit?.title || '') : (data.display_name_prefixed || ''),

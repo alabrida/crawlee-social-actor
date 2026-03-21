@@ -50,10 +50,17 @@ async function handle(
         const followersEl = document.querySelector('[data-e2e="followers-count"]');
         const followingEl = document.querySelector('[data-e2e="following-count"]');
         const likesEl = document.querySelector('[data-e2e="likes-count"]');
-        const videosCountEl = document.querySelector('[data-e2e="video-count"]');
+        let videosCountEl = document.querySelector('[data-e2e="video-count"]');
         const displayNameEl = document.querySelector('[data-e2e="user-subtitle"]') ||
                               document.querySelector('h1[data-e2e="user-title"]') ||
                               document.querySelector('h2[data-e2e="user-subtitle"]');
+                              
+        let videosCountText = videosCountEl?.textContent?.trim() || '';
+        if (!videosCountText) {
+             const subTitle = displayNameEl?.textContent || '';
+             const match = subTitle.match(/([\d,]+)\s*videos?/i);
+             if (match) videosCountText = match[1];
+        }
 
         return {
             bio: bioEl?.textContent?.trim() || '',
@@ -61,7 +68,7 @@ async function handle(
             followers: followersEl?.textContent?.trim() || '',
             following: followingEl?.textContent?.trim() || '',
             likes: likesEl?.textContent?.trim() || '',
-            videosCount: videosCountEl?.textContent?.trim() || '',
+            videosCount: videosCountText,
             displayName: displayNameEl?.textContent?.trim() || '',
             isVerified: !!document.querySelector('[data-e2e="verify-icon"]'),
             profileHtml: document.querySelector('div[data-e2e="user-profile-section"]')?.innerHTML || 
@@ -115,6 +122,24 @@ async function handle(
     if (await timeLocator.count() > 0) {
         latestVideoDate = await timeLocator.getAttribute('title') || await timeLocator.textContent();
         if (latestVideoDate) latestVideoDate = latestVideoDate.trim();
+    }
+    
+    // Fallback: Check the state data script for video item timestamps
+    if (!latestVideoDate) {
+        const scriptTags = await page.locator('script[id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]').allInnerTexts();
+        for (const tagText of scriptTags) {
+             try {
+                 const json = JSON.parse(tagText);
+                 // deeply search for createTime inside the massive json
+                 const stringified = JSON.stringify(json);
+                 const createTimeMatch = stringified.match(/"createTime":\s*(\d{10})/);
+                 if (createTimeMatch && createTimeMatch[1]) {
+                     const ts = parseInt(createTimeMatch[1], 10);
+                     latestVideoDate = new Date(ts * 1000).toISOString();
+                     break;
+                 }
+             } catch (e) {}
+        }
     }
 
     // Extract username from URL (e.g. https://www.tiktok.com/@publicserviceplumbers)

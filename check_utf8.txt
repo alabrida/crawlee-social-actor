@@ -1,0 +1,18 @@
+Platform: instagram
+URL: https://instagram.com/milosburgershop
+Success: undefined
+Followers: undefined
+Title: Milo's Original Burger Shop (@milosburgershop) • Instagram photos and videos
+---
+Platform: facebook
+URL: https://www.facebook.com/MilosOriginalBurgerShop
+Success: undefined
+Followers: undefined
+Title: Milo's Original Burger Shop | Vestavia Hills AL | Facebook
+---
+Platform: twitter
+URL: https://twitter.com/milosburgershop
+Success: undefined
+Followers: undefined
+Title: Profile / X
+---

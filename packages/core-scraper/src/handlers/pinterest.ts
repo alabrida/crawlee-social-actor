@@ -29,6 +29,12 @@ export async function handle(
     let title = '';
     let h1 = '';
     let metaDescription = '';
+    let followerCount: number | null = null;
+    let followingCount: number | null = null;
+    let pinsCount: number | null = null;
+    let boardsCount: number | null = null;
+    let monthlyViews: number | null = null;
+    let fullName: string | null = null;
 
     if (jsonText) {
         try {
@@ -53,9 +59,16 @@ export async function handle(
 
             title = await page.title();
             h1 = userData?.full_name || '';
+            fullName = userData?.full_name || null;
             metaDescription = userData?.about || '';
             const website = userData?.website_url || '';
-
+            
+            followerCount = userData?.follower_count ?? null;
+            followingCount = userData?.following_count ?? null;
+            pinsCount = userData?.pin_count ?? null;
+            boardsCount = userData?.board_count ?? null;
+            monthlyViews = userData?.impression_count ?? null;
+            
             // Spider Architecture: Enqueue pins if root profile
             if (!isSubPage && userData) {
                 log.info(`[Pinterest] Enqueueing pins for deep crawl from profile: ${request.url}`);
@@ -110,6 +123,12 @@ export async function handle(
             screenshotUrl: '',
             // Structured fields for direct Supabase mapping
             username: request.url.split('/').filter(Boolean).pop(),
+            fullName,
+            followerCount,
+            followingCount,
+            pinsCount,
+            boardsCount,
+            monthlyViews,
             // Deep Link Metadata for Crawl Report
             crawlMetadata: {
                 title,

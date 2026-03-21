@@ -14,7 +14,7 @@ export async function handle(
     _handlerContext: HandlerContext,
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
-    const platform = (request.userData?.platform as Platform) || 
+    const platform = (request.userData?.platform as Platform) ||
         (request.url.includes('facebook.com') || request.url.includes('fb.com') ? 'facebook' : 'instagram');
 
     log.info(`[Meta] Extracting ${platform}: ${request.url}`);
@@ -23,7 +23,7 @@ export async function handle(
     await blockResources(page, ['media', 'font'], ['image']);
 
     await page.goto(request.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    
+
     // Wait for hydration and dynamic content
     try {
         await page.waitForFunction(() => document.body.innerText.length > 1000, { timeout: 15000 });
@@ -50,14 +50,14 @@ export async function handle(
     } catch (e) {
         // Ignore errors if selectors aren't found
     }
-    
+
     // Final wait to ensure animations/splash screens clear and images settle
     await page.waitForTimeout(4000);
-    
+
     // Detect if we are still on the login wall
     const content = await page.content();
     const isBlocked = detectBlock(content);
-    
+
     if (isBlocked) {
         log.warning(`[Meta] Potential ${platform} block or login wall detected after navigation.`);
         await reportIssue({
@@ -130,16 +130,26 @@ export async function handle(
         if (platform === 'instagram') {
             try {
                 // External Link
-                const bioLinkLocator = page.locator('header section a[target="_blank"], header section a[role="link"]').filter({ hasNotText: 'followers' }).filter({ hasNotText: 'following' }).last();
+                const bioLinkLocator = page.locator('header section a[target="_blank"], header section a[role="link"], a.x1i10hfl[target="_blank"]').filter({ hasNotText: 'followers' }).filter({ hasNotText: 'following' }).last();
                 if (await bioLinkLocator.count() > 0) {
                     const bioLink = await bioLinkLocator.getAttribute('href');
                     if (bioLink && bioLink.startsWith('http')) {
-                        links.push(bioLink);
-                        externalUrl = bioLink;
+                        // Unpack l.instagram.com links if wrapped
+                        let unwrappedLink = bioLink;
+                        if (bioLink.includes('l.instagram.com/?u=')) {
+                            try {
+                                const urlObj = new URL(bioLink);
+                                const uParam = urlObj.searchParams.get('u');
+                                if (uParam) unwrappedLink = decodeURIComponent(uParam);
+                            } catch (e) { }
+                        }
+                        links.push(unwrappedLink);
+                        externalUrl = unwrappedLink;
                     }
                 }
-                
-                
+
+
+
                 const nameLocator = page.locator('header section h1, header section > div:first-child h2').first();
                 if (await nameLocator.count() > 0) {
                     const nameText = await nameLocator.textContent();
@@ -150,13 +160,24 @@ export async function handle(
                 }
 
                 // Biography
-                const bioLocator = page.locator('header section div.-vDIg span, header section > div > span').first();
+                const bioLocator = page.locator('header section div.-vDIg span, header section > div > span, header + div span, main header span').first();
                 if (await bioLocator.count() > 0) {
                     const bioText = await bioLocator.textContent();
                     if (bioText && bioText.trim().length > 2) {
                         biography = bioText.trim();
                     }
                 }
+
+                // Fallback biography to meta description if DOM fails
+                if (!biography) {
+                    const metaDesc = await page.locator('meta[name="description"], meta[property="og:description"]').first().getAttribute('content').catch(() => '');
+                    if (metaDesc) {
+                        // Remove "Followers, Following, Posts - See Instagram photos..." boilerplate
+                        const cleanDesc = metaDesc.replace(/[\d.,]+ Followers, [\d.,]+ Following, [\d.,]+ Posts - See Instagram photos and videos from .*? - /, '').trim();
+                        if (cleanDesc.length > 5) biography = cleanDesc;
+                    }
+                }
+
 
                 // Posts count (first metric in the stats row)
                 const postsText = await page.locator('header section ul li:nth-child(1) span').first().textContent().catch(() => null);
@@ -176,7 +197,7 @@ export async function handle(
                     const parsed = parseCount(trimmed);
                     if (parsed != null) followerCount = parsed;
                 }
-                
+
                 // Following count
                 const followingText = await page.locator('header section ul li:nth-child(3) span').first().textContent().catch(() => null);
                 if (followingText) {
@@ -212,11 +233,17 @@ export async function handle(
                         }
                     }
                 }
+
+                // Try finding time tag inside the first article if image alt didn't work
                 if (!latestPostDate) {
-                    const timeTag = page.locator('article a[href^="/p/"] time, article a[href^="/reel/"] time').first();
+                    // On Instagram, hovering or entering a post often reveals the time tag, but in grid view it's usually embedded in the image alt.
+                    // If we absolutely need it, we can fallback to the first 'time' element on the page
+                    const timeTag = page.locator('time').first();
                     if (await timeTag.count() > 0) {
                         const datetime = await timeTag.getAttribute('datetime');
-                        if (datetime) latestPostDate = new Date(datetime).toISOString();
+                        if (datetime) {
+                            latestPostDate = new Date(datetime).toISOString();
+                        }
                     }
                 }
 
@@ -226,7 +253,7 @@ export async function handle(
 
                 // Spider Architecture: Enqueue recent posts if root
                 if (!request.userData?.isSubPage) {
-                    const postUrls = await page.locator('article a[href^="/p/"], article a[href^="/reel/"]').evaluateAll(els => 
+                    const postUrls = await page.locator('article a[href^="/p/"], article a[href^="/reel/"]').evaluateAll(els =>
                         els.map(el => (el as HTMLAnchorElement).href).slice(0, 5)
                     );
                     if (postUrls.length > 0) {
@@ -264,11 +291,19 @@ export async function handle(
                     }
                 }
 
-                // Page name from title
+                // Page name from title/og:title
                 const title = await page.title();
                 if (title) {
                     pageName = title.split('|')[0].split('-')[0].trim();
                     fullName = pageName;
+                }
+                // Fallback Page name
+                if (!pageName || pageName === 'Facebook') {
+                    const ogTitle = await page.locator('meta[property="og:title"]').getAttribute('content').catch(() => null);
+                    if (ogTitle) {
+                        pageName = ogTitle.split('|')[0].split('-')[0].trim();
+                        fullName = pageName;
+                    }
                 }
 
                 // Category
@@ -279,6 +314,14 @@ export async function handle(
                         category = catText.trim().replace(/^·\s*/, '');
                     }
                 }
+                // Fallback Category from main intro block
+                if (!category) {
+                    const introBlock = await page.locator('[role="main"] span').filter({ hasText: /Page · / }).first().textContent().catch(() => null);
+                    if (introBlock) {
+                        category = introBlock.replace('Page · ', '').trim();
+                    }
+                }
+
 
                 // Followers count
                 const followersLink = page.locator('a[href*="followers"]').first();
@@ -316,7 +359,7 @@ export async function handle(
 
                 // Reviews detection & count
                 let facebookReviewsCount: number | null = null;
-                const reviewsLocator = page.locator('a[href*="reviews"]').first();
+                const reviewsLocator = page.locator('a[href*="reviews"], a[href*="rating"]').first();
                 if (await reviewsLocator.count() > 0) {
                     hasReviews = true;
                     const reviewsText = await reviewsLocator.textContent();
@@ -331,31 +374,33 @@ export async function handle(
                         }
                     }
                 }
-                if (facebookReviewsCount != null) {
-                    (scrapedItem.data as any).facebookReviewsCount = facebookReviewsCount;
-                }
 
                 // Overall Rating (e.g. "4.5 out of 5")
                 let facebookRating: number | null = null;
-                const ratingLocator = page.locator('[role="main"] span').filter({ hasText: /^\d\.\d$/ }).first();
+                const ratingLocator = page.locator('[role="main"] span').filter({ hasText: /^\d[\.,]\d$/ }).first();
                 if (await ratingLocator.count() > 0) {
                     const ratingText = await ratingLocator.textContent();
                     if (ratingText) {
-                        const parsed = parseFloat(ratingText.trim());
+                        const parsed = parseFloat(ratingText.trim().replace(',', '.'));
                         if (!isNaN(parsed) && parsed >= 1 && parsed <= 5) facebookRating = parsed;
                     }
                 }
                 if (!facebookRating) {
-                    // Fallback: look for "X.X out of 5" pattern in page text
+                    // Fallback: look for "X.X out of 5" or "Rating · X.X" pattern in page text
                     const mainText = await page.locator('[role="main"]').first().textContent() || '';
-                    const ratingMatch = mainText.match(/(\d\.\d)\s*(?:out of 5|\/\s*5)/i);
+                    const ratingMatch = mainText.match(/(\d[\.,]\d)\s*(?:out of 5|\/\s*5)|Rating[^\d]*(\d[\.,]\d)/i);
                     if (ratingMatch) {
-                        const parsed = parseFloat(ratingMatch[1]);
+                        const parsed = parseFloat((ratingMatch[1] || ratingMatch[2]).replace(',', '.'));
                         if (!isNaN(parsed) && parsed >= 1 && parsed <= 5) facebookRating = parsed;
                     }
                 }
+
                 if (facebookRating) {
                     (scrapedItem.data as any).facebookRating = facebookRating;
+                    hasReviews = true; // Implicitly has reviews if it has a rating
+                }
+                if (facebookReviewsCount != null) {
+                    (scrapedItem.data as any).facebookReviewsCount = facebookReviewsCount;
                 }
 
                 // Check-ins
@@ -379,11 +424,11 @@ export async function handle(
                 let postsCountFb: number | null = null;
                 const postsLocator = page.locator('span').filter({ hasText: /^\d[\d,]*\s+posts$/i }).first();
                 if (await postsLocator.isVisible()) {
-                   const pt = await postsLocator.textContent();
-                   if (pt) {
-                       const parsed = parseCount(pt.replace(/posts/i, '').trim());
-                       if (parsed != null) postsCountFb = parsed;
-                   }
+                    const pt = await postsLocator.textContent();
+                    if (pt) {
+                        const parsed = parseCount(pt.replace(/posts/i, '').trim());
+                        if (parsed != null) postsCountFb = parsed;
+                    }
                 }
 
                 // Latest post date
@@ -395,14 +440,14 @@ export async function handle(
                         latestPostDate = ariaLabel.trim();
                     }
                 }
-                
+
                 if (checkinsCount !== null) (scrapedItem.data as any).checkinsCount = checkinsCount;
                 if (postsCountFb !== null) (scrapedItem.data as any).postsCount = postsCountFb;
                 if (latestPostDate !== null) (scrapedItem.data as any).latestPostDate = latestPostDate;
 
                 // Spider Architecture: Enqueue recent posts if root
                 if (!request.userData?.isSubPage) {
-                    const postUrls = await page.locator('[role="feed"] a[href*="/posts/"], [role="feed"] a[href*="/videos/"]').evaluateAll(els => 
+                    const postUrls = await page.locator('[role="feed"] a[href*="/posts/"], [role="feed"] a[href*="/videos/"]').evaluateAll(els =>
                         els.map(el => (el as HTMLAnchorElement).href).filter(href => !href.includes('/groups/')).slice(0, 3)
                     );
                     if (postUrls.length > 0) {
@@ -451,7 +496,7 @@ export async function handle(
         const text = await page.innerText('body');
         // Clean up whitespace and grab the first 500 characters
         snippet = text.replace(/\s+/g, ' ').trim().substring(0, 500);
-    } catch (e) {}
+    } catch (e) { }
 
     data.crawlMetadata = {
         title: await page.title().catch(() => ''),
@@ -486,21 +531,21 @@ export function validate(data: Record<string, unknown>): boolean {
  */
 export function detectBlock(responseBody: string): boolean {
     const lower = responseBody.toLowerCase();
-    
+
     // CONTENT-FIRST: If we see clear profile indicators, it's NOT blocked.
-    const hasProfileIndicators = lower.includes('followers') || 
-                                lower.includes('following') || 
-                                lower.includes('posts') ||
-                                lower.includes('about') ||
-                                lower.includes('photos');
-    
+    const hasProfileIndicators = lower.includes('followers') ||
+        lower.includes('following') ||
+        lower.includes('posts') ||
+        lower.includes('about') ||
+        lower.includes('photos');
+
     if (hasProfileIndicators) return false;
 
     // Explicit login walls or anti-bot checkpoints
-    return lower.includes('login_form') || 
-           lower.includes('ident_login') ||
-           lower.includes('checkpoint') || 
-           (lower.includes('instagram.com/accounts/login') && !lower.includes('content-type="profile"'));
+    return lower.includes('login_form') ||
+        lower.includes('ident_login') ||
+        lower.includes('checkpoint') ||
+        (lower.includes('instagram.com/accounts/login') && !lower.includes('content-type="profile"'));
 }
 
 const metaHandler: PlaywrightHandler = {

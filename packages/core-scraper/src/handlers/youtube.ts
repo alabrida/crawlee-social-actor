@@ -30,7 +30,7 @@ async function handle(
     const html = await page.content();
 
     let ytInitialData: any = null;
-    const ytInitialDataMatch = html.match(/var ytInitialData = (\{.*?\});<\/script>/);
+    const ytInitialDataMatch = html.match(/var ytInitialData = (.*?);<\/script>/);
     if (ytInitialDataMatch && ytInitialDataMatch[1]) {
         try {
             ytInitialData = JSON.parse(ytInitialDataMatch[1]);
@@ -53,6 +53,7 @@ async function handle(
     let subscribersCount: number | null = null;
     let videosCount: number | null = null;
     let viewsCount: number | null = null;
+    let latestVideoDate: string | null = null;
     let isVerified = false;
 
     // Parse shorthand counts (e.g. "1.2K", "3M", "1,234")
@@ -133,6 +134,19 @@ async function handle(
             const microformat = ytInitialData?.microformat?.microformatDataRenderer;
             if (microformat?.tags) {
                 // tags can have video counts etc. - not always view counts
+            }
+            // Extract latest video date
+            // The stringified JSON often contains the date natively attached to the first video object.
+            const publishedTimeMatch = stringifiedData.match(/"publishedTimeText":\{"simpleText":"([^"]+)"\}/);
+            if (publishedTimeMatch && publishedTimeMatch[1]) {
+                latestVideoDate = publishedTimeMatch[1];
+            } else {
+                // Try grabbing it from the DOM directly if the user is on the /videos tab or home tab
+                const dateLocator = page.locator('ytd-grid-video-renderer #metadata-line span:nth-child(2), ytd-rich-grid-media #metadata-line span:nth-child(2)').first();
+                if (await dateLocator.count() > 0) {
+                     const dateText = await dateLocator.innerText();
+                     if (dateText && dateText.includes('ago')) latestVideoDate = dateText.trim();
+                }
             }
         } catch (e) {
             log.debug(`[YouTube] Failed to parse structured channel data for ${url}`);
@@ -257,6 +271,7 @@ async function handle(
             subscribersCount,
             videosCount,
             viewsCount,
+            latestVideoDate,
             verified: isVerified,
         } as any,
         errors: []

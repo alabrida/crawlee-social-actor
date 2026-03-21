@@ -247,6 +247,25 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.videosCount != null) masterItem.youtube_videos_count = item.data.videosCount;
             if (item.data?.viewsCount != null) masterItem.youtube_views_count = item.data.viewsCount;
             if (item.data?.verified) masterItem.youtube_verified = true;
+            if (item.data?.latestVideoDate) {
+                const str = String(item.data.latestVideoDate).toLowerCase();
+                let daysSince = null;
+                if (str.includes('h') || str.includes('m') && !str.includes('mo')) daysSince = 0;
+                else if (str.includes('d')) daysSince = parseInt(str);
+                else if (str.includes('w')) daysSince = parseInt(str) * 7;
+                else if (str.includes('mo')) daysSince = parseInt(str) * 30;
+                else if (str.includes('y')) daysSince = parseInt(str) * 365;
+                if (daysSince !== null && !isNaN(daysSince)) {
+                    masterItem.youtube_days_since_post = daysSince;
+                    masterItem.youtube_latest_video_date = new Date(Date.now() - daysSince * 24 * 3600 * 1000).toISOString();
+                } else {
+                    // Try to parse directly if it happens to be valid ISO
+                    const parsed = new Date(str);
+                    if (!isNaN(parsed.getTime())) {
+                        masterItem.youtube_latest_video_date = parsed.toISOString();
+                    }
+                }
+            }
         }
 
         // ─── Google Maps / GBP ────────────────────────────────────
@@ -344,6 +363,9 @@ export async function aggregateAndUpsertData(input: ActorInput, finalUrls: UrlEn
             if (item.data?.commentKarma != null) masterItem.reddit_comment_karma = item.data.commentKarma;
             if (item.data?.accountAgeDays != null) masterItem.reddit_account_age_days = item.data.accountAgeDays;
             if (item.data?.postsCount != null) masterItem.reddit_posts_count = item.data.postsCount;
+            if (item.data?.latestPostDate) {
+                masterItem.reddit_latest_activity_date = item.data.latestPostDate;
+            }
         }
 
         // ─── Pinterest ────────────────────────────────────────────
