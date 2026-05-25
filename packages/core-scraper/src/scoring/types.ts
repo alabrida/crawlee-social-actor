@@ -10,6 +10,15 @@ export type BusinessClass =
     | 'saas'
     | 'content_creator';
 
+export interface MechanismConfig {
+    name: string;
+    label: string;
+    stage: 'awareness' | 'consideration' | 'decision' | 'conversion' | 'retention';
+    weights: Record<BusinessClass, number>;
+    lowScoreInsight: string;
+    evaluate(platforms: Record<string, any>, hub: any, serp: any): { score: number; evidence: string | null };
+}
+
 export interface ScoredMechanism {
     name: string;
     label: string;
