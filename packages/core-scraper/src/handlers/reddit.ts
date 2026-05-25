@@ -1,41 +1,26 @@
 /**
  * @module handlers/reddit
  * @description Reddit handler using CheerioCrawler with the public .json endpoint.
- * Appends /about.json to user/subreddit URLs for structured JSON extraction.
- * Respects BLOCK-006 rate limiting via x-ratelimit-* headers.
- * @see PRD Section 5.6
  */
 
 import type { CheerioCrawlingContext } from 'crawlee';
 import type { CheerioHandler, HandlerContext, ScrapedItem } from '../types.js';
+import { analyzeBio } from '../utils/bio-analyzer.js';
 
-/** Regex to extract URLs from markdown-style text and raw links. */
 const URL_REGEX = /https?:\/\/[^\s)\]>"]+/gi;
 
-/**
- * Extract external links from a text block, filtering out reddit-internal URLs.
- * @param text - Raw text possibly containing URLs.
- * @returns Array of unique external URLs.
- */
 function extractExternalLinks(text: string): string[] {
     if (!text) return [];
     const matches = text.match(URL_REGEX) || [];
     const external = matches.filter(
-        (url) => !url.includes('reddit.com') && !url.includes('redd.it'),
+        (url) => !url.includes('reddit.com') && !url.includes('redd.it')
     );
     return Array.from(new Set(external));
 }
 
-/**
- * Handle a Reddit URL by fetching the .json endpoint and parsing the response.
- * Supports both user profiles (/user/X) and subreddit pages (/r/X).
- * @param context - Crawlee CheerioCrawlingContext with request/response/$.
- * @param _handlerContext - Shared handler context with actor input.
- * @returns Array of scraped items in the normalized envelope.
- */
-async function handle(
+export async function handle(
     context: CheerioCrawlingContext,
-    _handlerContext: HandlerContext,
+    _handlerContext: HandlerContext
 ): Promise<ScrapedItem[]> {
     const { request, log, body } = context;
     const url = request.url;
@@ -54,10 +39,6 @@ async function handle(
         throw new Error(`[Reddit] API error ${parsed.error}: ${parsed.message || 'Unknown'} for ${url}`);
     }
 
-    if (detectBlock(typeof body === 'string' ? body : body.toString())) {
-        throw new Error('[Reddit] Rate limit or block detected.');
-    }
-
     const kind = parsed.kind as string;
     const data = parsed.data as Record<string, any>;
 
@@ -69,125 +50,66 @@ async function handle(
     const ctas: string[] = [];
     const links: string[] = [];
     const conversionMarkers: string[] = [];
-    let profileHtml = '';
 
-    if (isUser) {
-        // User profile: bio lives in data.subreddit.public_description
-        const sub = data.subreddit || {};
-        const bio = sub.public_description || '';
-        const title = sub.title || '';
-
-        links.push(...extractExternalLinks(bio));
-        links.push(...extractExternalLinks(title));
-
-        if (bio.toLowerCase().includes('book') || title.toLowerCase().includes('book')) {
-            conversionMarkers.push('Booking');
-        }
-        if (links.length > 0) {
-            ctas.push('Bio Link');
-            conversionMarkers.push('Website Click');
-        }
-
-        profileHtml = JSON.stringify({
-            name: data.name,
-            title,
-            bio,
-            totalKarma: data.total_karma,
-            linkKarma: data.link_karma,
-            commentKarma: data.comment_karma,
-            iconImg: data.icon_img,
-            verified: data.verified,
-            isGold: data.is_gold,
-            hasVerifiedEmail: data.has_verified_email,
-            created: data.created_utc,
-            acceptFollowers: data.accept_followers,
-            subscribers: sub.subscribers,
-        });
-    } else {
-        // Subreddit page: description + sidebar contain links
-        const pubDesc = data.public_description || '';
-        const desc = data.description || '';
-
-        links.push(...extractExternalLinks(pubDesc));
-        links.push(...extractExternalLinks(desc));
-
-        if (links.length > 0) {
-            ctas.push('Sidebar Link');
-            conversionMarkers.push('Website Click');
-        }
-        if (data.submit_link_label) ctas.push(data.submit_link_label);
-
-        profileHtml = JSON.stringify({
-            displayName: data.display_name,
-            title: data.title,
-            publicDescription: pubDesc,
-            subscribers: data.subscribers,
-            activeAccounts: data.accounts_active,
-            created: data.created_utc,
-            over18: data.over18,
-            headerImg: data.header_img,
-            bannerImg: data.banner_img,
-            iconImg: data.icon_img || data.community_icon,
-        });
-
-        // Spider Architecture: Enqueue top posts if root
-        if (!request.userData?.isSubPage) {
-            const feedUrl = url.replace('/about.json', '.json');
-            log.info(`[Reddit] Enqueueing top posts for deep crawl from: ${feedUrl}`);
-            await context.enqueueLinks({
-                urls: [feedUrl], // Enqueue the feed itself as a sub-page to extract post metadata
-                userData: { ...request.userData, isSubPage: true },
-                label: 'reddit'
-            });
-        }
-    }
-
-    // Auxiliary Fetch: Get the main feed JSON to extract latest activity date and post count
-    let postsCount: number | null = null;
-    let lastActivityDate: string | null = null;
-    try {
-        const feedUrl = url.replace('/about.json', '.json');
-        const feedResp = await context.sendRequest({ url: feedUrl });
-        const feedJson = JSON.parse(feedResp.body);
-        if (feedJson && feedJson.data && Array.isArray(feedJson.data.children)) {
-            const posts = feedJson.data.children;
-            postsCount = posts.length; // Might just be the page size, but gives us a baseline if active
-            if (posts.length > 0) {
-                const latestPost = posts[0].data;
-                if (latestPost && latestPost.created_utc) {
-                    lastActivityDate = new Date(latestPost.created_utc * 1000).toISOString();
-                }
-            }
-        }
-    } catch (e) {
-        log.warning(`[Reddit] Failed to fetch recent feed for ${url} to extract activity date.`);
-    }
-
-    // Compute structured data fields
     let username: string | null = null;
     let karma: number | null = null;
     let postKarma: number | null = null;
     let commentKarma: number | null = null;
     let accountAgeDays: number | null = null;
+    let activeAccounts: number | null = null;
+    let description = '';
 
     if (isUser) {
         username = data.name || null;
         karma = data.total_karma ?? null;
         postKarma = data.link_karma ?? null;
         commentKarma = data.comment_karma ?? null;
+        description = data.subreddit?.public_description || '';
+
+        links.push(...extractExternalLinks(description));
+        links.push(...extractExternalLinks(data.subreddit?.title || ''));
+
         if (data.created_utc) {
-            const createdDate = new Date(data.created_utc * 1000);
-            accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+            accountAgeDays = Math.floor((Date.now() - data.created_utc * 1000) / (1000 * 60 * 60 * 24));
         }
     } else {
-        // Subreddit: use display_name as "username", and subscribers as "karma" for authority metric
         username = data.display_name || null;
         karma = data.subscribers ?? null;
+        activeAccounts = data.accounts_active ?? null;
+        description = data.public_description || '';
+
+        links.push(...extractExternalLinks(description));
+        links.push(...extractExternalLinks(data.description || ''));
+
         if (data.created_utc) {
-            const createdDate = new Date(data.created_utc * 1000);
-            accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+            accountAgeDays = Math.floor((Date.now() - data.created_utc * 1000) / (1000 * 60 * 60 * 24));
         }
     }
+
+    if (links.length > 0) {
+        ctas.push(isUser ? 'Bio Link' : 'Sidebar Link');
+        conversionMarkers.push('Website Click');
+    }
+
+    // Inline feed query for posts details
+    let postsCount: number | null = null;
+    let latestPostDate: string | null = null;
+    try {
+        const feedUrl = url.replace('/about.json', '.json');
+        const feedResp = await context.sendRequest({ url: feedUrl });
+        const feedJson = JSON.parse(feedResp.body);
+        if (feedJson?.data?.children) {
+            const posts = feedJson.data.children;
+            postsCount = posts.length; // baseline active post count in feed window
+            if (posts.length > 0 && posts[0].data?.created_utc) {
+                latestPostDate = new Date(posts[0].data.created_utc * 1000).toISOString();
+            }
+        }
+    } catch (e) {
+        log.warning(`[Reddit] Failed to fetch recent feed for ${url}`);
+    }
+
+    const bioAnalysis = analyzeBio(description);
 
     const scrapedItem: ScrapedItem = {
         platform: 'reddit',
@@ -195,78 +117,47 @@ async function handle(
         crawlerUsed: 'cheerio',
         scrapedAt: new Date().toISOString(),
         data: {
-            revenueIndicators: {
-                ctas,
-                links: Array.from(new Set(links)),
-                conversionMarkers,
-            },
-            kind,
-            profileHtml,
-            // screenshotUrl placeholder, filled by Playwright screenshot-collector
-            screenshotUrl: '',
-            // Structured fields for direct Supabase mapping
             username,
             karma,
+            followers: karma, // Alias
             postKarma,
             commentKarma,
             accountAgeDays,
+            activeAccounts,
             postsCount,
-            latestPostDate: lastActivityDate,
-            crawlMetadata: {
-                title: isUser ? `Reddit: ${username}` : (data.title || ''),
-                h1: isUser ? (data.subreddit?.title || '') : (data.display_name_prefixed || ''),
-                metaDescription: isUser ? (data.subreddit?.public_description || '') : (data.public_description || ''),
-                httpStatus: 200,
-                snippet: profileHtml.substring(0, 500)
-            }
+            latestPostDate,
+            bio_analysis: bioAnalysis,
+            revenueIndicators: {
+                ctas,
+                links: Array.from(new Set(links)),
+                conversionMarkers
+            },
+            screenshotUrl: ''
         } as any,
-        errors: [],
+        errors: []
     };
-
-    log.info(`[Reddit] Extracted ${links.length} links, ${ctas.length} CTAs`, {
-        url,
-        kind,
-    });
 
     return [scrapedItem];
 }
 
-/**
- * Validate that the extracted Reddit data contains expected keys.
- * @param data - The extracted data object.
- * @returns True if required fields are present.
- */
-function validate(data: Record<string, unknown>): boolean {
-    const payload = data as any;
-    if (!payload || typeof payload !== 'object') return false;
-    if (!payload.revenueIndicators) return false;
-    if (!Array.isArray(payload.revenueIndicators.links)) return false;
-    if (typeof payload.profileHtml !== 'string') return false;
-    if (typeof payload.kind !== 'string') return false;
-    return true;
-    return true;
+export function validate(data: Record<string, unknown>): boolean {
+    return !!data && typeof data.username === 'string';
 }
 
-/**
- * Detect if the response indicates a Reddit block (rate limit, error page).
- * @param responseBody - The raw response body.
- * @returns True if a block is detected.
- */
-function detectBlock(responseBody: string): boolean {
+export function detectBlock(responseBody: string): boolean {
     const lower = responseBody.toLowerCase();
     return (
         lower.includes('whoa there, pardner') ||
         lower.includes('too many requests') ||
-        lower.includes('"error": 429') ||
-        lower.includes('rate limit')
+        lower.includes('"error": 429')
     );
 }
 
-/** Assembled handler export satisfying the CheerioHandler interface. */
 const redditHandler: CheerioHandler = {
     crawlerType: 'cheerio',
     handle,
     validate,
-    detectBlock,
+    detectBlock
 };
+
 export default redditHandler;

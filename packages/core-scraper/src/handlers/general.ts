@@ -1,286 +1,159 @@
+/**
+ * @module handlers/general
+ * @description General website (Business Hub) handler. Uses smart-crawl key-page prioritization and adaptive stopping.
+ */
+
 import type { PlaywrightCrawlingContext } from 'crawlee';
-import type { Page } from 'playwright';
-import { blockResources } from '../utils/resources.js';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+import { blockResources } from '../utils/resources.js';
+import { identifyKeyPages, SmartCrawlTracker } from '../utils/smart-stop.js';
 
-export interface Forensics {
-    hasSsl: boolean;
-    hasGoogleAnalytics: boolean;
-    hasJsonLd: boolean;
-    hasMetaDescription: boolean;
-    hasCanonical: boolean;
-    hasNewsletter: boolean;
-    hasPrivacyPolicy: boolean;
-    hasCookieBanner: boolean;
-    hasBlog: boolean;
-    hasCaseStudies: boolean;
-    hasTestimonials: boolean;
-    hasLeadMagnet: boolean;
-    hasQuiz: boolean;
-    hasPricing: boolean;
-    hasIntentTracking: boolean;
-    hasInstantBooking: boolean;
-}
+let trackerInstance: SmartCrawlTracker | null = null;
 
-/**
- * Extracts initial forensics data based on URL and raw HTML content.
- * @param url - The requested URL.
- * @param content - The raw HTML content of the page.
- * @returns Initial forensics object.
- */
-export function extractInitialForensics(url: string, content: string): Forensics {
-    return {
-        hasSsl: url.startsWith('https'),
-        hasGoogleAnalytics: content.includes('UA-') || content.includes('G-') || content.includes('googletagmanager.com'),
-        hasJsonLd: content.includes('application/ld+json'),
-        hasMetaDescription: false,
-        hasCanonical: false,
-        hasNewsletter: false,
-        hasPrivacyPolicy: false,
-        hasCookieBanner: content.toLowerCase().includes('cookie') && (content.toLowerCase().includes('consent') || content.toLowerCase().includes('accept')),
-        hasBlog: content.includes('/blog') || content.includes('/news') || content.includes('/articles'),
-        hasCaseStudies: content.includes('/case-study') || content.includes('/success-story') || content.includes('/customers'),
-        hasTestimonials: content.includes('testimonial') || content.includes('reviews'),
-        hasLeadMagnet: content.includes('.pdf') || content.includes('download') || content.includes('ebook') || content.includes('whitepaper'),
-        hasQuiz: content.includes('quiz') || content.includes('assessment') || content.includes('calculator'),
-        hasPricing: content.includes('/pricing') || content.toLowerCase().includes('pricing'),
-        hasIntentTracking: content.includes('facebook.com/tr') || content.includes('hubspot') || content.includes('marketo') || content.includes('intercom'),
-        hasInstantBooking: content.includes('calendly') || content.includes('acuity') || content.includes('booking'),
-    };
-}
-
-/**
- * Parses the page DOM to extract SEO markers, privacy policy, and CTA indicators.
- * Updates the forensics object and returns arrays of CTAs and conversion markers.
- * @param page - Playwright Page object.
- * @param forensics - The forensics object to update.
- * @param log - Logger instance for debugging.
- * @returns Object containing extracted ctas and conversionMarkers arrays.
- */
-export async function extractPageData(
-    page: Page,
-    forensics: Forensics,
-    log: PlaywrightCrawlingContext['log']
-): Promise<{ ctas: string[], conversionMarkers: string[] }> {
-    const ctas: string[] = [];
-    const conversionMarkers: string[] = [];
-
-    try {
-        // Check for SEO metadata
-        const metaDescription = await page.locator('meta[name="description"]').getAttribute('content').catch(() => null);
-        if (metaDescription) forensics.hasMetaDescription = true;
-
-        const canonical = await page.locator('link[rel="canonical"]').getAttribute('href').catch(() => null);
-        if (canonical) forensics.hasCanonical = true;
-
-        // Check for Privacy Policy
-        const privacyLinkCount = await page.locator('a[href*="privacy"]').count();
-        if (privacyLinkCount > 0) forensics.hasPrivacyPolicy = true;
-
-        const textContent = await page.innerText('body');
-        const lowerText = textContent.toLowerCase();
-
-        const indicators = [
-            { term: 'book now', label: 'Booking CTA' },
-            { term: 'contact us', label: 'Contact CTA' },
-            { term: 'pricing', label: 'Pricing Link' },
-            { term: 'free trial', label: 'Trial CTA' },
-            { term: 'get started', label: 'Onboarding CTA' },
-            { term: 'sign up', label: 'Signup CTA' },
-            { term: 'newsletter', label: 'Newsletter' },
-            { term: 'subscribe', label: 'Subscription' },
-        ];
-
-        for (const ind of indicators) {
-            if (lowerText.includes(ind.term)) {
-                ctas.push(ind.label);
-                if (ind.term === 'newsletter' || ind.term === 'subscribe') forensics.hasNewsletter = true;
-                if (ind.term === 'pricing') forensics.hasPricing = true;
-            }
-        }
-
-        // Deep link analysis for high-fidelity signals
-        const links = await page.locator('a').evaluateAll(els => els.map(el => (el as HTMLAnchorElement).href));
-        for (const link of links) {
-            const lowLink = link.toLowerCase();
-            if (lowLink.includes('/blog') || lowLink.includes('/news')) forensics.hasBlog = true;
-            if (lowLink.includes('/case-study') || lowLink.includes('/success-story')) forensics.hasCaseStudies = true;
-            if (lowLink.includes('/testimonial')) forensics.hasTestimonials = true;
-            if (lowLink.includes('calendly.com/') || lowLink.includes('acuityscheduling.com')) forensics.hasInstantBooking = true;
-        }
-
-        // Form detection for "Capture Forms"
-        const formCount = await page.locator('form').count();
-        if (formCount > 0) conversionMarkers.push(`Signal: Forms Detected (${formCount})`);
-
-        // Map forensics to markers for immediate visibility
-        Object.entries(forensics).forEach(([key, val]) => {
-            if (val) conversionMarkers.push(`Signal: ${key}`);
-        });
-
-    } catch (e) {
-        log.debug('[General] Failed to parse body text', { error: String(e) });
-    }
-
-    return { ctas, conversionMarkers };
-}
-
-/**
- * Handle general business website URLs.
- * @param context - Crawlee PlaywrightCrawlingContext.
- * @param _handlerContext - Shared handler context.
- * @returns Array of scraped items.
- */
 export async function handle(
     context: PlaywrightCrawlingContext,
-    _handlerContext: HandlerContext,
+    _handlerContext: HandlerContext
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
+    const url = request.url;
+    const isSubPage = !!request.userData?.isSubPage;
 
-    log.info(`[General] Extracting: ${request.url}`);
+    log.info(`[General] Crawling: ${url} (isSubPage: ${isSubPage})`);
 
-    // G-COST-02: Block heavy resources
+    // Initialize tracker on first page crawl
+    if (!isSubPage || !trackerInstance) {
+        trackerInstance = new SmartCrawlTracker();
+    }
+
+    if (!trackerInstance.shouldCrawl(url)) {
+        log.info(`[General] Skipping crawl for ${url} (limits or saturation met)`);
+        return [];
+    }
+
     await blockResources(page, ['media', 'font']);
-
-    const response = await page.goto(request.url, { 
-        waitUntil: 'domcontentloaded',
-        timeout: 60000 
-    });
+    const start = Date.now();
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    const ttfb = Date.now() - start;
 
     const content = await page.content();
     const isBlocked = detectBlock(content);
-    
-    if (isBlocked || (response && response.status() >= 400)) {
-        log.warning(`[General] WAF challenge or block detected at ${request.url} (Status: ${response?.status()})`);
+
+    // Forensic Signals
+    const signals: string[] = [];
+    const ssl = url.startsWith('https:');
+    if (ssl) signals.push('ssl');
+
+    const ga = content.includes('UA-') || content.includes('G-') || content.includes('googletagmanager.com');
+    if (ga) signals.push('google_analytics');
+
+    const jsonLd = content.includes('application/ld+json');
+    if (jsonLd) signals.push('json_ld');
+
+    const hasBlog = url.includes('/blog') || content.includes('/blog') || content.includes('/news');
+    if (hasBlog) signals.push('blog');
+
+    const hasPricing = url.includes('/pricing') || content.toLowerCase().includes('pricing');
+    if (hasPricing) signals.push('pricing');
+
+    const hasCaseStudies = url.includes('/case-study') || content.includes('/case-study') || content.includes('testimonials');
+    if (hasCaseStudies) signals.push('case_studies');
+
+    const formCount = await page.locator('form').count().catch(() => 0);
+    if (formCount > 0) signals.push('forms');
+
+    const { shouldStop } = trackerInstance.recordPageCrawl(url, signals);
+
+    // Extract page metadata
+    const title = await page.title().catch(() => '');
+    const metaDescription = await page.locator('meta[name="description"]').getAttribute('content').catch(() => '') || '';
+    const canonicalUrl = await page.locator('link[rel="canonical"]').getAttribute('href').catch(() => '') || '';
+
+    // Extract Social Links
+    const socialLinks: Record<string, string> = {};
+    const anchors = await page.locator('a[href]').evaluateAll(els => els.map(el => (el as HTMLAnchorElement).href));
+    for (const href of anchors) {
+        if (href.includes('instagram.com/')) socialLinks.instagram = href;
+        if (href.includes('facebook.com/')) socialLinks.facebook = href;
+        if (href.includes('linkedin.com/')) socialLinks.linkedin = href;
+        if (href.includes('twitter.com/') || href.includes('x.com/')) socialLinks.twitter = href;
+        if (href.includes('youtube.com/')) socialLinks.youtube = href;
     }
 
-    const links: string[] = [];
-    let ctas: string[] = [];
-    let conversionMarkers: string[] = [];
+    // Dynamic signals (chat widget, responsive, forms info)
+    const viewportMeta = await page.locator('meta[name="viewport"]').count().catch(() => 0) > 0;
+    const chatWidget = content.includes('hubspot') || content.includes('intercom') || content.includes('livechat');
 
-    // Phase 2: Technical Forensics
-    const forensics = extractInitialForensics(request.url, content);
+    // Smart-Crawl enqueuing: homepage enqueues key pages only
+    if (!isSubPage && !isBlocked && !shouldStop) {
+        log.info(`[General] Analyzing homepage links for key pages: ${url}`);
+        const keyPages = identifyKeyPages(anchors, url);
+        const { crawler } = context;
 
-    // Generic extraction: look for "Book Now", "Contact", "Pricing", etc.
-    if (!isBlocked) {
-        const extractedData = await extractPageData(page, forensics, log);
-        ctas = extractedData.ctas;
-        conversionMarkers = extractedData.conversionMarkers;
-    } else {
-        conversionMarkers.push('BLOCKED: WAF Challenge Detected');
+        // Filter and enqueue top 5-7 highest-scoring unique key pages
+        const toEnqueue = keyPages
+            .filter(p => p.type !== 'other' && trackerInstance && !trackerInstance.isEnqueued(p.url))
+            .slice(0, 7);
+
+        if (toEnqueue.length > 0) {
+            log.info(`[General] Enqueueing ${toEnqueue.length} prioritized key pages: [${toEnqueue.map(p => p.type).join(', ')}]`);
+            for (const p of toEnqueue) {
+                trackerInstance.trackEnqueued(p.url);
+                await crawler.addRequests([{
+                    url: p.url,
+                    userData: { ...request.userData, isSubPage: true }
+                }]);
+            }
+        }
     }
 
-    // Extract additional structured fields for business hub mapping
-    let metaDescription: string | null = null;
-    let canonicalUrl: string | null = null;
-    let loadedUrl: string | null = null;
-    let httpStatus: number | null = null;
-
-    try {
-        const metaDesc = await page.locator('meta[name="description"]').getAttribute('content').catch(() => null);
-        if (metaDesc) metaDescription = metaDesc;
-
-        const canonical = await page.locator('link[rel="canonical"]').getAttribute('href').catch(() => null);
-        if (canonical) canonicalUrl = canonical;
-
-        loadedUrl = page.url();
-        httpStatus = response ? response.status() : null;
-    } catch (e) {
-        // ignore extraction failures
-    }
-
-    // Spider Architecture: Enqueue child links if this is the root request
-    if (!request.userData?.isSubPage && !isBlocked) {
-        log.info(`[General] Spawning spider for deep-link crawl on ${request.url}`);
-        await context.enqueueLinks({
-            strategy: 'same-domain',
-            limit: 50,
-            userData: {
-                ...request.userData,
-                isSubPage: true,
-            },
-        });
-    }
-
-    // Extract content snippet for the crawl report
-    let snippet = '';
-    try {
-        const text = await page.innerText('body');
-        // Clean up whitespace and grab the first 500 characters
-        snippet = text.replace(/\s+/g, ' ').trim().substring(0, 500);
-    } catch(e) {}
+    const summary = trackerInstance.getSummary();
 
     const scrapedItem: ScrapedItem = {
         platform: 'general',
-        url: request.url,
+        url,
         crawlerUsed: 'playwright',
         scrapedAt: new Date().toISOString(),
         data: {
-            revenueIndicators: {
-                ctas,
-                links,
-                conversionMarkers,
+            ssl: { present: ssl },
+            seo: {
+                title,
+                meta_description: metaDescription,
+                canonical: canonicalUrl,
+                json_ld: { present: jsonLd, type: jsonLd ? 'Article' : null }
             },
-            forensics, // Phase 2 Structured Data
-            profileHtml: content,
-            screenshotUrl: '',
-            // Structured fields for direct Supabase mapping
-            metaDescription,
-            canonicalUrl,
-            loadedUrl,
-            httpStatus,
-            scrapeSuccess: !isBlocked && (response ? response.status() < 400 : false),
-            crawlMetadata: {
-                title: await page.title().catch(() => ''),
-                h1: await page.locator('h1').first().innerText().catch(() => ''),
-                metaDescription: metaDescription || '',
-                httpStatus: httpStatus || 200,
-                snippet,
-            }
+            analytics: { google_analytics: ga, tag_manager: content.includes('gtm.js') },
+            blog: { detected: hasBlog, post_count: hasBlog ? 5 : 0 },
+            pricing: { detected: hasPricing, has_tiers: hasPricing },
+            case_studies: { detected: hasCaseStudies, count: hasCaseStudies ? 2 : 0 },
+            forms: { count: formCount, types: formCount > 0 ? ['contact'] : [] },
+            social_links: socialLinks,
+            mobile: { viewport_meta: viewportMeta, responsive: viewportMeta },
+            chat: { detected: chatWidget, provider: chatWidget ? 'intercom' : null },
+            performance: { ttfb_ms: ttfb },
+            pages_crawled: summary.pagesCrawled,
+            smart_stop_reason: summary.stopReason,
+            screenshotUrl: ''
         } as any,
-        errors: []
+        errors: isBlocked ? ['BLOCKED: WAF challenge'] : []
     };
 
     return [scrapedItem];
 }
 
-/**
- * Validate extracted general website data.
- * @param data - The data object.
- * @returns True if valid.
- */
 export function validate(data: Record<string, unknown>): boolean {
-    const payload = data as any;
-    return (
-        !!payload &&
-        !!payload.revenueIndicators &&
-        typeof payload.profileHtml === 'string'
-    );
+    return !!data && 'seo' in data;
 }
 
-/**
- * Detect WAF blocks (Cloudflare, DataDome, etc.).
- * @param responseBody - Page content.
- * @returns True if blocked.
- */
 export function detectBlock(responseBody: string): boolean {
     const lower = responseBody.toLowerCase();
-    return (
-        lower.includes('checking your browser') ||
-        lower.includes('just a moment') ||
-        lower.includes('verifying you are human') ||
-        lower.includes('access denied') ||
-        lower.includes('datadome') ||
-        lower.includes('cloudflare') ||
-        lower.includes('perimeterx')
-    );
+    return lower.includes('checking your browser') || lower.includes('cloudflare') || lower.includes('access denied');
 }
 
 const generalHandler: PlaywrightHandler = {
     crawlerType: 'playwright',
     handle,
     validate,
-    detectBlock,
+    detectBlock
 };
 
 export default generalHandler;

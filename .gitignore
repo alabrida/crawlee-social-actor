@@ -27,3 +27,6 @@ storage/
 
 # Docker
 .dockerignore
+
+# Antigravity CLI
+.antigravitycli/

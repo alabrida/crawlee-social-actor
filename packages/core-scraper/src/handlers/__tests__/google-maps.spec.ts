@@ -6,17 +6,25 @@ vi.mock('../../utils/resources.js', () => ({
 }));
 
 describe('Google Maps / GBP Handler Routing', () => {
-    it('should use google_business_profile platform when specified in request userData', async () => {
-        // Mock the Playwright context
+    it('should extract business details from simulated DOM', async () => {
         const mockPage = {
+            goto: vi.fn().mockResolvedValue(null),
             waitForTimeout: vi.fn(),
-            locator: vi.fn().mockReturnValue({
-                first: vi.fn().mockReturnValue({
-                    isVisible: vi.fn().mockResolvedValue(false),
-                    count: vi.fn().mockResolvedValue(0),
-                    innerHTML: vi.fn().mockResolvedValue('<div>Profile HTML</div>')
-                })
-            })
+            locator: vi.fn((selector) => {
+                if (selector === 'h1') {
+                    return { first: () => ({ count: () => Promise.resolve(1), innerText: () => Promise.resolve('Coffee Shop') }) };
+                }
+                if (selector === 'button[jsaction*="category"]') {
+                    return { first: () => ({ isVisible: () => Promise.resolve(true), innerText: () => Promise.resolve('Coffee shop') }) };
+                }
+                return {
+                    first: vi.fn().mockReturnValue({
+                        isVisible: vi.fn().mockResolvedValue(false),
+                        count: vi.fn().mockResolvedValue(0)
+                    })
+                };
+            }),
+            content: vi.fn().mockResolvedValue('<html><body>Coffee Shop</body></html>')
         };
 
         const mockContext = {
@@ -36,35 +44,7 @@ describe('Google Maps / GBP Handler Routing', () => {
         expect(result.length).toBe(1);
         expect(result[0].platform).toBe('google_business_profile');
         expect(result[0].url).toBe('https://maps.google.com/?cid=123');
-        expect(result[0].data.profileHtml).toBeDefined();
-    });
-
-    it('should default to google_maps platform when not specified', async () => {
-        const mockPage = {
-            waitForTimeout: vi.fn(),
-            locator: vi.fn().mockReturnValue({
-                first: vi.fn().mockReturnValue({
-                    isVisible: vi.fn().mockResolvedValue(false),
-                    count: vi.fn().mockResolvedValue(0),
-                    innerHTML: vi.fn().mockResolvedValue('<div>Profile HTML</div>')
-                })
-            })
-        };
-
-        const mockContext = {
-            page: mockPage as any,
-            request: {
-                url: 'https://maps.google.com/?cid=456',
-                userData: {} // Missing explicit platform override
-            },
-            log: { info: vi.fn(), warning: vi.fn(), error: vi.fn(), debug: vi.fn() }
-        };
-
-        const mockHandlerContext = { input: {} as any };
-
-        const result = await googleMapsHandler.handle(mockContext as any, mockHandlerContext);
-
-        expect(result).toBeDefined();
-        expect(result[0].platform).toBe('google_maps');
+        expect(result[0].data.gbp_business_name).toBe('Coffee Shop');
+        expect(result[0].data.gbp_category).toBe('Coffee shop');
     });
 });

@@ -1,32 +1,30 @@
-import type { PlaywrightCrawlingContext } from 'crawlee';
-import { blockResources } from '../utils/resources.js';
-import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
-
 /**
- * Handle a Pinterest URL by scrolling and intercepting XHR responses.
- * @param context - Crawlee PlaywrightCrawlingContext with page/request.
- * @param _handlerContext - Shared handler context with actor input.
- * @returns Array of scraped items in the normalized envelope.
+ * @module handlers/pinterest
+ * @description Pinterest profile handler. Uses __PWS_INITIAL_PROPS__ JSON parsing.
  */
+
+import type { PlaywrightCrawlingContext } from 'crawlee';
+import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+import { blockResources } from '../utils/resources.js';
+import { analyzeBio } from '../utils/bio-analyzer.js';
+
 export async function handle(
     context: PlaywrightCrawlingContext,
-    _handlerContext: HandlerContext,
+    _handlerContext: HandlerContext
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
-    const isSubPage = request.userData?.isSubPage || false;
+    const url = request.url;
 
-    // G-COST-02: Block heavy resources
+    log.info(`[Pinterest] Starting extraction for: ${url}`);
+
     await blockResources(page, ['image', 'media', 'font']);
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.waitForTimeout(2000);
 
-    log.info(`[Pinterest] Extracting: ${request.url} (isSubPage: ${isSubPage})`);
-
-    await page.goto(request.url, { waitUntil: 'domcontentloaded' });
-
-    // Extract the embedded JSON data from the script tag
     const scriptSelector = 'script[id="__PWS_INITIAL_PROPS__"]';
     const jsonText = await page.locator(scriptSelector).innerText().catch(() => '');
-    
-    let title = '';
+
+    let title = await page.title().catch(() => 'Pinterest Profile');
     let h1 = '';
     let metaDescription = '';
     let followerCount: number | null = null;
@@ -35,105 +33,85 @@ export async function handle(
     let boardsCount: number | null = null;
     let monthlyViews: number | null = null;
     let fullName: string | null = null;
+    let websiteUrl: string | null = null;
 
     if (jsonText) {
         try {
             const jsonData = JSON.parse(jsonText);
             const initialProps = jsonData?.initialReduxState;
-            
-            // Find the user data or pin data
             const users = initialProps?.users || {};
-            const pins = initialProps?.pins || {};
-            
-            const urlPath = new URL(request.url).pathname;
+
+            const urlPath = new URL(url).pathname;
             const slug = urlPath.split('/').filter(Boolean).pop()?.toLowerCase();
 
             const userKey = Object.keys(users).find(k => {
                 const u = users[k];
                 if (!u) return false;
-                if (slug && u.username?.toLowerCase() === slug) return true;
-                return false;
+                return slug && u.username?.toLowerCase() === slug;
             }) || Object.keys(users)[0];
 
             const userData = userKey ? users[userKey] : null;
 
-            title = await page.title();
-            h1 = userData?.full_name || '';
-            fullName = userData?.full_name || null;
-            metaDescription = userData?.about || '';
-            const website = userData?.website_url || '';
-            
-            followerCount = userData?.follower_count ?? null;
-            followingCount = userData?.following_count ?? null;
-            pinsCount = userData?.pin_count ?? null;
-            boardsCount = userData?.board_count ?? null;
-            monthlyViews = userData?.impression_count ?? null;
-            
-            // Spider Architecture: Enqueue pins if root profile
-            if (!isSubPage && userData) {
-                log.info(`[Pinterest] Enqueueing pins for deep crawl from profile: ${request.url}`);
-                const pinLinks: string[] = [];
-                Object.keys(pins).forEach((id, i) => {
-                    if (i < 5) {
-                        pinLinks.push(`https://www.pinterest.com/pin/${id}/`);
-                    }
-                });
-
-                if (pinLinks.length > 0) {
-                    const { crawler } = context;
-                    await crawler.addRequests(pinLinks.map(pUrl => ({
-                        url: pUrl,
-                        userData: { ...request.userData, isSubPage: true }
-                    })));
-                }
-
-                // Link-in-Bio Spidering: Enqueue website for general forensics
-                if (website) {
-                    log.info(`[Pinterest] Enqueueing website for deep forensics: ${website}`);
-                    const { crawler } = context;
-                    await crawler.addRequests([{
-                        url: website,
-                        userData: { ...request.userData, isSubPage: true, platform: 'general' },
-                        label: 'general'
-                    }]);
-                }
+            if (userData) {
+                h1 = userData.full_name || '';
+                fullName = userData.full_name || null;
+                metaDescription = userData.about || '';
+                websiteUrl = userData.website_url || null;
+                followerCount = userData.follower_count ?? null;
+                followingCount = userData.following_count ?? null;
+                pinsCount = userData.pin_count ?? null;
+                boardsCount = userData.board_count ?? null;
+                monthlyViews = userData.impression_count ?? null;
             }
         } catch (e) {
-            log.debug('[Pinterest] JSON parse failed, falling back to DOM extraction');
+            log.warning('[Pinterest] JSON initial props parsing failed.');
         }
     }
 
-    // Fallback DOM extraction
-    if (!title) title = await page.title().catch(() => '');
-    if (!h1) h1 = await page.locator('h1').first().innerText().catch(() => '');
-    if (!metaDescription) metaDescription = (await page.locator('meta[name="description"]').getAttribute('content').catch(() => '')) || '';
+    // DOM fallbacks
+    if (!fullName) {
+        h1 = await page.locator('h1').first().innerText().catch(() => '');
+        fullName = h1 || null;
+    }
+    if (!metaDescription) {
+        metaDescription = (await page.locator('meta[name="description"]').getAttribute('content').catch(() => '')) || '';
+    }
+
+    const ctas: string[] = [];
+    if (websiteUrl) ctas.push('Website');
+
+    const conversionMarkers: string[] = [];
+    if (followerCount) conversionMarkers.push(`Followers: ${followerCount}`);
+    if (monthlyViews) conversionMarkers.push(`Impression Count: ${monthlyViews}`);
+
+    const bioAnalysis = analyzeBio(metaDescription);
 
     const scrapedItem: ScrapedItem = {
         platform: 'pinterest',
-        url: request.url,
+        url,
         crawlerUsed: 'playwright',
         scrapedAt: new Date().toISOString(),
         data: {
-            revenueIndicators: {
-                ctas: [],
-                links: [],
-                conversionMarkers: [],
-            },
-            profileHtml: await page.content().catch(() => ''),
-            screenshotUrl: '',
-            // Structured fields for direct Supabase mapping
-            username: request.url.split('/').filter(Boolean).pop(),
+            username: url.split('/').filter(Boolean).pop(),
             fullName,
             followerCount,
+            followers: followerCount,
             followingCount,
             pinsCount,
             boardsCount,
             monthlyViews,
-            // Deep Link Metadata for Crawl Report
+            websiteUrl,
+            bio_analysis: bioAnalysis,
+            revenueIndicators: {
+                ctas,
+                links: websiteUrl ? [websiteUrl] : [],
+                conversionMarkers
+            },
+            screenshotUrl: '',
             crawlMetadata: {
                 title,
                 h1,
-                metaDescription: metaDescription || '',
+                metaDescription,
                 httpStatus: 200,
                 snippet: metaDescription || title
             }
@@ -144,38 +122,20 @@ export async function handle(
     return [scrapedItem];
 }
 
-/**
- * Validate that the extracted Pinterest data contains expected keys.
- * @param data - The extracted data object.
- * @returns True if required fields are present.
- */
 export function validate(data: Record<string, unknown>): boolean {
-    if (!data || typeof data !== 'object') return false;
-
-    return (
-        'revenueIndicators' in data &&
-        typeof data.profileHtml === 'string' &&
-        typeof data.screenshotUrl === 'string'
-    );
+    return !!data && typeof data.username === 'string';
 }
 
-/**
- * Detect if the response indicates a Pinterest block.
- * @param responseBody - The page content.
- * @returns True if a block is detected.
- */
 export function detectBlock(responseBody: string): boolean {
     const lower = responseBody.toLowerCase();
-    return lower.includes('unusual traffic') || 
-           lower.includes('captcha') || 
-           (lower.includes('log in') && responseBody.length < 50000);
+    return lower.includes('unusual traffic') || lower.includes('captcha');
 }
 
-/** Assembled handler export satisfying the PlaywrightHandler interface. */
 const pinterestHandler: PlaywrightHandler = {
     crawlerType: 'playwright',
     handle,
     validate,
-    detectBlock,
+    detectBlock
 };
+
 export default pinterestHandler;

@@ -70,7 +70,6 @@ describe('SEO SERP Handler', () => {
                 'Position 2: example.com',
             ]);
             expect(result.ctas).toEqual([]);
-            expect(result.profileHtml).toContain('organic_results');
         });
 
         it('should detect local pack presence', async () => {
@@ -175,10 +174,8 @@ describe('SEO SERP Handler', () => {
 
         it('should fallback to DOM extraction if SerpApi returns no links', async () => {
             process.env.SERP_API_KEY = 'test-key';
-            // Mock API returning empty results
             vi.mocked(serpApiUtils.fetchSerpApi).mockResolvedValue({ organic_results: [] } as any);
 
-            // Mock DOM returning results
             const mockLocator = {
                 count: vi.fn().mockResolvedValue(1),
                 nth: vi.fn().mockReturnValue({

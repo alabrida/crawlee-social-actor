@@ -1,383 +1,153 @@
 /**
  * @module handlers/google-maps
- * @description Google Business Profile (Maps) handler using PlaywrightCrawler.
- * Direct profile extraction targeting revenue indicators.
- * @see PRD Section 5.4
+ * @description Google Business Profile (Google Maps) handler. Places API primary with browser fallback.
  */
 
 import type { PlaywrightCrawlingContext } from 'crawlee';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+import { searchPlace } from '../api/google-places.js';
 import { blockResources } from '../utils/resources.js';
-import { reportIssue } from '../utils/issue-log.js';
+import { parseCount } from '../utils/parse-count.js';
 
-/**
- * Handles Google Maps profile extraction.
- * @param context The Playwright crawling context.
- * @param _handlerContext The shared handler context.
- * @returns An array of scraped items.
- */
 export async function handle(
     context: PlaywrightCrawlingContext,
-    _handlerContext: HandlerContext,
+    _handlerContext: HandlerContext
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
+    const url = request.url;
 
-    // G-COST-02: Block heavy resources (Excluding image for high-res screenshots)
-    await blockResources(page, ['media', 'font', 'stylesheet'], ['image']);
+    log.info(`[Google Maps] Initiating extraction for: ${url}`);
 
-    log.info(`[Google Maps] Extracting data from: ${request.url}`);
+    // Extract search query from URL (e.g. /place/Business+Name/...)
+    let query: string | null = null;
+    const placeMatch = url.match(/\/maps\/place\/([^/]+)/);
+    const searchMatch = url.match(/\/maps\/search\/([^/]+)/);
+    const rawQuery = placeMatch ? placeMatch[1] : (searchMatch ? searchMatch[1] : null);
 
-    // G-BOT-02: Randomized delay to mimic human behavior
-    await page.waitForTimeout(Math.floor(Math.random() * 3000) + 2000);
-
-    // Handle EU Consent Wall or Unusual Traffic
-    try {
-        const consentSelectors = [
-            'button:has-text("Accept all")',
-            'button:has-text("Reject all")',
-            'button:has-text("I agree")',
-            'button:has-text("Tout accepter")', // French
-            'button:has-text("Accetto")'         // Italian
-        ];
-        
-        const consentButton = page.locator(consentSelectors.join(', ')).first();
-        if (await consentButton.isVisible({ timeout: 5000 })) {
-            log.info(`[Google Maps] Consent screen detected, clicking`, { url: request.url });
-            await consentButton.click();
-            await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+    if (rawQuery) {
+        query = decodeURIComponent(rawQuery.replace(/\+/g, ' '));
+        // Strip coordinates if present in the matched query part
+        const coordIndex = query.indexOf('/@');
+        if (coordIndex !== -1) {
+            query = query.substring(0, coordIndex);
         }
-    } catch (e) {
-        // Ignore timeout if consent screen isn't there
     }
 
-    // Wait for the main place pane to load
-    // h1.DUwDvf is the standard for the side pane, but let's be more flexible
-    try {
-        await page.waitForSelector('h1', { timeout: 15000 });
-    } catch (e) {
-        log.warning(`[Google Maps] Main title (h1) did not load within timeout.`, { url: request.url });
+    let apiData = null;
+    if (query && process.env.GOOGLE_CLOUD_API_KEY) {
+        log.info(`[Google Maps] Querying Places API for: ${query}`);
+        apiData = await searchPlace(query);
     }
 
-    // Extract revenue indicators
-    const links: string[] = [];
-    const ctas: string[] = [];
-    const conversionMarkers: string[] = [];
+    let businessName: string | null = null;
+    let category: string | null = null;
+    let rating: number | null = null;
+    let reviewsCount: number | null = null;
+    let address: string | null = null;
+    let phone: string | null = null;
+    let website: string | null = null;
+    let photoCount = 0;
+    let claimedStatus = true; // API listings are generally claimed or verified
+    let isBlocked = false;
 
-    // Extract Title for context
-    let title = '';
-    try {
-        const titleLocator = page.locator('h1').first();
-        title = await titleLocator.innerText();
-        if (title) conversionMarkers.push(`Title: ${title.trim()}`);
-    } catch (e) { /* ignore */ }
+    if (apiData) {
+        businessName = apiData.displayName;
+        rating = apiData.rating;
+        reviewsCount = apiData.userRatingCount;
+        address = apiData.formattedAddress;
+        phone = apiData.nationalPhoneNumber;
+        website = apiData.websiteUri;
+        photoCount = apiData.photoCount;
+        category = apiData.types && apiData.types.length > 0 ? apiData.types[0] : null;
+        log.info('[Google Maps] Places API extraction successful.');
+    } else {
+        // Browser fallback
+        log.info('[Google Maps] Running Playwright browser fallback...');
+        await blockResources(page, ['media', 'font', 'stylesheet'], ['image']);
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.waitForTimeout(3000);
 
-    // 1. Business Category
-    try {
-        // Look for buttons that look like categories (often near the rating)
-        const categoryBtn = page.locator('button[jsaction*="category"], .fontBodyMedium[jsaction*="category"]').first();
-        if (await categoryBtn.isVisible()) {
-            const categoryText = await categoryBtn.innerText();
-            if (categoryText) conversionMarkers.push(`Category: ${categoryText.trim()}`);
-        }
-    } catch (e) { /* ignore */ }
+        const content = await page.content();
+        isBlocked = detectBlock(content);
 
-    // 2. Website Link
-    try {
-        const websiteLocator = page.locator('a[aria-label^="Website:" i], a[data-item-id="authority"], a[jsaction*="website"]');
-        const hrefs = await websiteLocator.evaluateAll(els =>
-            els.map(el => (el as HTMLAnchorElement).href).filter(href => !!href)
-        );
-        for (const href of hrefs) {
-            if (href && !links.includes(href)) links.push(href);
-        }
-    } catch (e) { /* ignore */ }
+        if (!isBlocked) {
+            try {
+                // Title
+                const titleEl = page.locator('h1').first();
+                if (await titleEl.count() > 0) businessName = await titleEl.innerText();
 
-    // 3. Phone Number
-    try {
-        const phoneLocator = page.locator('button[aria-label^="Phone:" i], button[data-tooltip*="phone" i], button[data-item-id^="phone" i]');
-        const phoneTexts = await phoneLocator.evaluateAll(els =>
-            els.map(el => el.getAttribute('aria-label') || (el as HTMLElement).innerText).filter(text => !!text)
-        );
-        for (let phoneText of phoneTexts) {
-            phoneText = phoneText.replace(/Phone:|/gi, '').trim();
-            if (phoneText && !conversionMarkers.some(m => m.includes(phoneText))) {
-                conversionMarkers.push(`Phone: ${phoneText}`);
-            }
-        }
-    } catch (e) { /* ignore */ }
+                // Category
+                const catEl = page.locator('button[jsaction*="category"]').first();
+                if (await catEl.isVisible()) category = await catEl.innerText();
 
-    // 3.1 Business Address (Phase 2 Enrichment)
-    try {
-        const addressLocator = page.locator('button[aria-label^="Address:" i], [data-item-id="address"]').first();
-        if (await addressLocator.isVisible()) {
-            let addressText = await addressLocator.getAttribute('aria-label') || await addressLocator.innerText();
-            addressText = addressText.replace(/Address:|/gi, '').trim();
-            if (addressText) conversionMarkers.push(`Address: ${addressText}`);
-        }
-    } catch (e) { /* ignore */ }
-
-    // 3.2 Photo Presence (Phase 2 Enrichment)
-    try {
-        const photosLocator = page.locator('button[aria-label*="photo" i], img[src*="ggpht"]').first();
-        if (await photosLocator.count() > 0) {
-            conversionMarkers.push('Signal: Has Photos');
-        }
-    } catch (e) { /* ignore */ }
-
-    // 4. Rating and Reviews Count (Retention Indicators)
-    try {
-        const ratingLocator = page.locator('span.ceNzKf, span.MW4etd, span[aria-label*="stars" i], div.F7nice > span:first-child').first();
-        if (await ratingLocator.isVisible()) {
-            const ratingText = await ratingLocator.getAttribute('aria-label') || await ratingLocator.innerText();
-            if (ratingText) {
-                const ratingValue = ratingText.replace(/stars| /gi, '').trim();
-                conversionMarkers.push(`Rating: ${ratingValue}`);
-            }
-        }
-        const reviewsLocator = page.locator('span.UY7F9, button[jsaction*="reviews"], div.F7nice').first();
-        if (await reviewsLocator.isVisible()) {
-            const reviewsText = await reviewsLocator.innerText();
-            const ariaText = await reviewsLocator.getAttribute('aria-label') || '';
-            const combinedText = reviewsText + ' ' + ariaText;
-            
-            // Extract Reviews Count
-            const revMatch = combinedText.match(/\(([\d,]+)\)|([\d,]+)\s*reviews/i);
-            if (revMatch) {
-                const reviewsValue = (revMatch[1] || revMatch[2]).replace(/,/g, '').trim();
-                conversionMarkers.push(`Reviews: ${reviewsValue}`);
-            }
-            
-            // Extract Rating recursively if it missed
-            if (!conversionMarkers.some(m => m.startsWith('Rating:'))) {
-                 const ratingMatch = combinedText.match(/([\d\.]+)\s*stars|([\d\.]+)\s*\(/i) || combinedText.match(/^([\d\.]+)\n/);
-                 if (ratingMatch) {
-                     const ratingValue = (ratingMatch[1] || ratingMatch[2] || ratingMatch[3]).trim();
-                     conversionMarkers.push(`Rating: ${ratingValue}`);
-                 }
-            }
-        }
-    } catch (e) { /* ignore */ }
-
-    // FALLBACK: If we are stuck in a "Limited View" search list and extraction failed
-    // Extract from the first search result card directly
-    try {
-        if (!conversionMarkers.some(m => m.startsWith('Title:'))) {
-            const firstResultCard = page.locator('div[role="article"]').first();
-            if (await firstResultCard.isVisible({ timeout: 2000 })) {
-                log.info(`[Google Maps] Falling back to limited-view search result card extraction`);
-                const cardText = await firstResultCard.innerText();
-                const lines = cardText.split('\n').filter(l => l.trim().length > 0);
-                if (lines.length > 0) conversionMarkers.push(`Title: ${lines[0].trim()}`);
-                
-                // Parse lines for rating, reviews, category, address, phone
-                const ratingLine = lines.find(l => /^[\d.]{3}.*\(\d+\)$/.test(l.replace(/,/g, '')));
-                if (ratingLine) {
-                    const parts = ratingLine.split(' ');
-                    conversionMarkers.push(`Rating: ${parts[0]}`);
-                    const revs = ratingLine.match(/\(([\d,]+)\)/);
-                    if (revs) conversionMarkers.push(`Reviews: ${revs[1].replace(',', '')}`);
+                // Rating & Reviews
+                const ratingEl = page.locator('div.F7nice span[aria-hidden="true"]').first();
+                if (await ratingEl.isVisible()) {
+                    const txt = await ratingEl.innerText();
+                    if (txt) rating = parseFloat(txt.trim());
                 }
-                
-                const phoneLine = lines.find(l => /^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(l));
-                if (phoneLine) conversionMarkers.push(`Phone: ${phoneLine}`);
-                
-                // Usually the address is on the line right under the category or rating
-                // Check if Website button exists within the card
-                const websiteBtn = firstResultCard.locator('a[href]').filter({ hasText: 'Website' });
-                if (await websiteBtn.count() > 0) {
-                    const href = await websiteBtn.getAttribute('href');
-                    if (href && !links.includes(href)) links.push(href);
+
+                const revsEl = page.locator('div.F7nice button[aria-label*="reviews"]').first();
+                if (await revsEl.isVisible()) {
+                    const txt = await revsEl.innerText();
+                    reviewsCount = parseCount(txt);
                 }
+
+                // Phone, Address, Website
+                const addrEl = page.locator('button[data-item-id^="address"]').first();
+                if (await addrEl.isVisible()) address = await addrEl.innerText();
+
+                const phoneEl = page.locator('button[data-item-id^="phone:tel:"]').first();
+                if (await phoneEl.isVisible()) phone = await phoneEl.innerText();
+
+                const webEl = page.locator('a[data-item-id="authority"]').first();
+                if (await webEl.isVisible()) website = await webEl.getAttribute('href');
+
+                // Claimed
+                claimedStatus = !(await page.locator('button:has-text("Claim this business")').isVisible());
+            } catch (e) {
+                log.warning('[Google Maps] Browser extraction encountered errors.');
             }
-        }
-    } catch (e) { /* ignore */ }
-
-    // 5. Booking/Order CTAs
-    const possibleCtas = ['Book', 'Order', 'Reserve', 'Tickets', 'Menu', 'Appointments', 'Reservations'];
-    for (const cta of possibleCtas) {
-        try {
-            const btn = page.locator(`button[aria-label*="${cta}" i], a[aria-label*="${cta}" i], button:has-text("${cta}"), a:has-text("${cta}")`).first();
-            if (await btn.isVisible()) {
-                ctas.push(cta);
-            }
-        } catch (e) { /* ignore */ }
-    }
-
-    // Extract profile HTML snapshot (prioritize the main info pane)
-    let profileHtml = '';
-    try {
-        const mainPane = page.locator('div[role="main"][aria-label]');
-        if (await mainPane.count() > 0) {
-            profileHtml = await mainPane.first().innerHTML();
-        } else {
-            // Fallback to the scrollable container
-            const fallBackPane = page.locator('div.m6QErb.DByne').first();
-            if (await fallBackPane.isVisible()) {
-                profileHtml = await fallBackPane.innerHTML();
-            } else {
-                profileHtml = await page.innerHTML('body');
-            }
-        }
-    } catch (e) {
-        log.warning(`[Google Maps] Failed to extract profile HTML fallback`, { url: request.url });
-    }
-
-    // Ensure the output platform label matches what was requested
-    // so that the enricher maps it to the correct DB columns.
-    const outputPlatform = request.userData?.platform === 'google_business_profile'
-        ? 'google_business_profile'
-        : 'google_maps';
-
-    // Parse structured GBP fields from conversionMarkers
-    let gbpBusinessName: string | null = null;
-    let gbpCategory: string | null = null;
-    let gbpRating: number | null = null;
-    let gbpReviewsCount: number | null = null;
-    let gbpPhone: string | null = null;
-    let gbpAddress: string | null = null;
-    let gbpHasPhotos = false;
-
-    for (const marker of conversionMarkers) {
-        if (marker.startsWith('Title:')) gbpBusinessName = marker.split('Title:')[1].trim();
-        if (marker.startsWith('Category:')) gbpCategory = marker.split('Category:')[1].trim();
-        if (marker.startsWith('Rating:')) {
-            const ratingVal = parseFloat(marker.split('Rating:')[1].trim());
-            if (!isNaN(ratingVal)) gbpRating = ratingVal;
-        }
-        if (marker.startsWith('Reviews:')) {
-            const reviewsVal = parseInt(marker.split('Reviews:')[1].replace(/[^\d]/g, ''), 10);
-            if (!isNaN(reviewsVal)) gbpReviewsCount = reviewsVal;
-        }
-        if (marker.startsWith('Phone:')) {
-            const phoneVal = marker.split('Phone:')[1].trim();
-            if (phoneVal && phoneVal !== 'Copy phone number') gbpPhone = phoneVal;
-        }
-        if (marker.startsWith('Address:')) gbpAddress = marker.split('Address:')[1].trim();
-        if (marker.includes('Signal: Has Photos')) gbpHasPhotos = true;
-    }
-
-    // Spider Architecture: Enqueue sub-pages (Reviews, Menu) if it's a root profile
-    const isSubPage = request.userData?.isSubPage || false;
-    
-    if (!isSubPage) {
-        log.info(`[Google Maps] Searching for sub-pages to enqueue from: ${request.url}`);
-        const subPageLinks: string[] = [];
-        
-        try {
-            // 1. Reviews Tab
-            const reviewsBtn = page.locator('button[jsaction*="pane.rating.moreReviews"], button[aria-label*="Reviews" i]').first();
-            if (await reviewsBtn.isVisible()) {
-                // Since clicking might not give a URL easily, we can sometimes guess or just stick to the root if not easily linkable.
-                // However, GBP often has a 'reviews' sub-path or we can just mark it as "Review View"
-                log.info(`[Google Maps] Reviews tab found. Deep-link capture enabled via root metadata.`);
-            }
-
-            // 2. Menu Link
-            const menuBtn = page.locator('a[aria-label*="Menu" i], button[aria-label*="Menu" i]').first();
-            if (await menuBtn.isVisible()) {
-                const menuHref = await menuBtn.getAttribute('href');
-                if (menuHref && !menuHref.startsWith('http')) {
-                    subPageLinks.push(`https://www.google.com${menuHref}`);
-                } else if (menuHref) {
-                    subPageLinks.push(menuHref);
-                }
-            }
-        } catch (e) { /* ignore */ }
-
-        if (subPageLinks.length > 0) {
-            const { crawler } = context;
-            await crawler.addRequests(subPageLinks.map(sUrl => ({
-                url: sUrl,
-                userData: { ...request.userData, isSubPage: true }
-            })));
         }
     }
 
     const scrapedItem: ScrapedItem = {
-        platform: outputPlatform,
-        url: request.url,
-        crawlerUsed: 'playwright',
+        platform: 'google_business_profile',
+        url,
+        crawlerUsed: apiData ? 'cheerio' : 'playwright',
         scrapedAt: new Date().toISOString(),
         data: {
-            revenueIndicators: {
-                ctas,
-                links,
-                conversionMarkers,
-            },
-            profileHtml: profileHtml,
-            screenshotUrl: '',
-            // Structured fields for direct Supabase mapping
-            gbpBusinessName,
-            gbpCategory,
-            gbpRating,
-            gbpReviewsCount,
-            gbpPhone,
-            gbpAddress,
-            gbpHasPhotos,
-            gbpWebsite: links.length > 0 ? links[0] : null,
-            // Deep Link Metadata for Crawl Report
-            crawlMetadata: {
-                title: title || gbpBusinessName || 'Google Maps Profile',
-                h1: title || gbpBusinessName || '',
-                metaDescription: gbpCategory || '',
-                httpStatus: 200,
-                snippet: gbpAddress || profileHtml.substring(0, 200)
-            }
+            gbp_business_name: businessName,
+            gbp_category: category,
+            gbp_rating: rating,
+            gbp_reviews_count: reviewsCount,
+            gbp_address: address,
+            gbp_phone: phone,
+            gbp_website: website,
+            claimed_status: claimedStatus,
+            photo_count: photoCount,
+            screenshotUrl: ''
         } as any,
-        errors: []
+        errors: isBlocked ? ['BLOCKED: Google Maps Consent / CAPTCHA'] : []
     };
-
-    if (links.length === 0 && ctas.length === 0 && conversionMarkers.length === 0 && !isSubPage) {
-        log.warning(`[Google Maps] Extracted zero revenue indicators. Check selectors for layout shifts.`, { url: request.url });
-        await reportIssue({
-            platform: 'google_maps',
-            url: request.url,
-            severity: 'WARNING',
-            message: 'Extracted zero revenue indicators. Potential selector shift or empty profile.',
-        });
-    }
 
     return [scrapedItem];
 }
 
-/**
- * Validate that the extracted Google Maps data contains expected keys.
- * @param data The data object to validate.
- * @returns True if valid.
- */
 export function validate(data: Record<string, unknown>): boolean {
-    const payload = data as any;
-    if (!payload || typeof payload !== 'object') return false;
-    if (!payload.revenueIndicators || !Array.isArray(payload.revenueIndicators.links)) return false;
-    if (typeof payload.profileHtml !== 'string') return false;
-    return true;
-    return true;
+    return !!data && typeof data.gbp_business_name === 'string';
 }
 
-/**
- * Detect if the response indicates a Google Maps block.
- * @param responseBody The response body text.
- * @returns True if a block is detected.
- */
 export function detectBlock(responseBody: string): boolean {
-    const lowerBody = responseBody.toLowerCase();
-    const isCaptcha = lowerBody.includes('unusual traffic') || 
-                      lowerBody.includes('captcha') || 
-                      lowerBody.includes('our systems have detected');
-    
-    // consent.google.com is usually bypassed by Playwright if we wait for it, 
-    // but if we are hard redirected here and fail to bypass, it's a block.
-    const isConsentBlock = lowerBody.includes('before you continue to google') || 
-                           lowerBody.includes('consent.google.com');
-
-    return isCaptcha || isConsentBlock;
+    const lower = responseBody.toLowerCase();
+    return lower.includes('google.com/recaptcha') || lower.includes('unusual traffic');
 }
 
-/** Assembled handler export satisfying the PlaywrightHandler interface. */
 const googleMapsHandler: PlaywrightHandler = {
     crawlerType: 'playwright',
     handle,
     validate,
-    detectBlock,
+    detectBlock
 };
+
 export default googleMapsHandler;

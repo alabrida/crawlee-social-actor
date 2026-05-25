@@ -71,9 +71,9 @@ describe('main.js refactored functions', () => {
 
             const result = prepareUrls(mockInput);
 
-            // reddit and youtube use cheerio crawler based on PLATFORM_CRAWLER_MAP
-            expect(result.cheerioUrls.length).toBe(2);
-            expect(result.playwrightUrls.length).toBe(0);
+            // reddit uses cheerio, youtube uses playwright based on PLATFORM_CRAWLER_MAP
+            expect(result.cheerioUrls.length).toBe(1);
+            expect(result.playwrightUrls.length).toBe(1);
             expect(result.finalUrls.length).toBe(2);
         });
     });

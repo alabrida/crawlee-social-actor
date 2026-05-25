@@ -1,52 +1,34 @@
-import type { PlaywrightCrawlingContext } from 'crawlee';
-import { blockResources } from '../utils/resources.js';
-import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
-import { reportIssue } from '../utils/issue-log.js';
-
 /**
- * Handle Twitter/X profile URLs.
- * @param context - Crawlee PlaywrightCrawlingContext.
- * @param _handlerContext - Shared handler context.
- * @returns Array of scraped items.
+ * @module handlers/twitter
+ * @description X (Twitter) profile handler. API-first (v2) with browser fallback.
  */
+
+import type { PlaywrightCrawlingContext } from 'crawlee';
+import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
+import { fetchTwitterUser } from '../api/twitter.js';
+import { blockResources } from '../utils/resources.js';
+import { parseCount } from '../utils/parse-count.js';
+import { analyzeBio } from '../utils/bio-analyzer.js';
+
 export async function handle(
     context: PlaywrightCrawlingContext,
-    _handlerContext: HandlerContext,
+    _handlerContext: HandlerContext
 ): Promise<ScrapedItem[]> {
     const { page, request, log } = context;
     const url = request.url;
-    const isSubPage = request.userData?.isSubPage || false;
 
-    log.info(`[Twitter] Extracting profile: ${url} (isSubPage: ${isSubPage})`);
+    log.info(`[Twitter] Initiating extraction for: ${url}`);
 
-    // G-COST-02: Block heavy resources (Excluding image for high-res screenshots)
-    await blockResources(page, ['media', 'font'], ['image']);
-
-    // Faster load using domcontentloaded
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-
-    // Wait for hydration and dynamic content (bypassing splash screen)
-    try {
-        await page.waitForFunction(() => document.body.innerText.length > 500, { timeout: 15000 });
-    } catch (e) {
-        log.debug(`[Twitter] Hydration wait timed out for ${url}`);
-    }
-
-    // Final wait for reliable rendering
-    await page.waitForTimeout(3000);
-
-    const content = await page.content();
-    const isBlocked = detectBlock(content);
-    
-    const links: string[] = [];
-    const ctas: string[] = [];
-    const conversionMarkers: string[] = [];
-
-    // Extract username from URL
+    // Parse username from URL
     const usernameMatch = url.match(/(?:twitter\.com|x\.com)\/([^/?#]+)/);
     const username = usernameMatch && !['home', 'search', 'explore', 'notifications'].includes(usernameMatch[1]) ? usernameMatch[1] : null;
 
-    // Initialize structured data fields
+    let apiData = null;
+    if (username && (process.env.X_BEARER_TOKEN || process.env.TWITTER_BEARER_TOKEN)) {
+        log.info(`[Twitter] Querying X API v2 for: ${username}`);
+        apiData = await fetchTwitterUser(username);
+    }
+
     let fullName: string | null = null;
     let biography: string | null = null;
     let verified = false;
@@ -54,245 +36,135 @@ export async function handle(
     let followingCount: number | null = null;
     let tweetsCount: number | null = null;
     let latestTweetDate: string | null = null;
+    let location: string | null = null;
+    let externalUrl: string | null = null;
+    let isBlocked = false;
 
-    // Parse shorthand counts (e.g. "1.2K", "3M")
-    const parseCount = (raw: string): number | null => {
-        if (!raw) return null;
-        const cleaned = raw.replace(/,/g, '').trim();
-        if (cleaned === '') return null;
-        let num = parseFloat(cleaned);
-        if (isNaN(num)) return null;
-        if (cleaned.toLowerCase().endsWith('k')) num *= 1000;
-        if (cleaned.toLowerCase().endsWith('m')) num *= 1000000;
-        return Math.floor(num);
-    };
-
-    if (isBlocked) {
-        log.warning(`[Twitter] Login wall detected at ${url}`);
-        conversionMarkers.push('BLOCKED: Login Wall / Anti-Bot');
-        await reportIssue({
-            platform: 'twitter',
-            url,
-            severity: 'CRITICAL',
-            message: 'Twitter login wall detected.',
-        });
+    if (apiData) {
+        fullName = apiData.name;
+        biography = apiData.description;
+        verified = apiData.verified;
+        followerCount = apiData.followersCount;
+        followingCount = apiData.followingCount;
+        tweetsCount = apiData.tweetCount;
+        location = apiData.location;
+        log.info('[Twitter] X API extraction successful.');
     } else {
-        // Basic extraction selectors (Targeting standard profile layout)
-        try {
-            // 1. Bio Link
-            const bioLinkLocator = page.locator('[data-testid="UserProfileHeader_Items"] a[target="_blank"]').first();
-            if (await bioLinkLocator.count() > 0) {
-                const bioLink = await bioLinkLocator.getAttribute('href');
-                if (bioLink) links.push(bioLink);
-            }
+        // Browser fallback
+        log.info('[Twitter] Running Playwright browser fallback...');
+        await blockResources(page, ['media', 'font'], ['image']);
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.waitForTimeout(3000);
 
-            // 2. Full Name
-            const nameLocator = page.locator('[data-testid="UserName"] div span').first();
-            if (await nameLocator.count() > 0) {
-                const nameText = await nameLocator.textContent();
-                if (nameText) fullName = nameText.trim();
-            }
+        const content = await page.content();
+        isBlocked = detectBlock(content);
 
-            // 3. Biography
-            const bioLocator = page.locator('[data-testid="UserDescription"]').first();
-            if (await bioLocator.count() > 0) {
-                const bioText = await bioLocator.textContent();
-                if (bioText) biography = bioText.trim();
-            }
-            // Fallback bio
-            if (!biography) {
-                const metaDesc = await page.locator('meta[name="description"]').getAttribute('content').catch(() => null);
-                if (metaDesc) biography = metaDesc.replace(/“.*?”/, '').trim(); // Try to strip out the random quotes Twitter sometimes injects
-            }
-
-            // 4. Verified Status
-            const verifiedLocator = page.locator('[data-testid="UserProfileHeader_Items"] [aria-label*="Verified account"]').first();
-            if (await verifiedLocator.count() > 0) {
-                conversionMarkers.push('Status: Verified');
-                verified = true;
-            }
-
-            // 5. Numeric Metrics
-            // Tweets count (header)
-            const headerSubtitle = page.locator('[data-testid="primaryColumn"] h2 + div').first();
-            if (await headerSubtitle.count() > 0) {
-                const headerText = await headerSubtitle.textContent();
-                if (headerText && /posts?/i.test(headerText)) {
-                    tweetsCount = parseCount(headerText.replace(/posts?/i, ''));
-                }
-            }
-            // Fallback Tweets count (script tag)
-            if (!tweetsCount) {
-                 const scriptTags = await page.locator('script[type="application/ld+json"]').allInnerTexts();
-                 for (const jsonText of scriptTags) {
-                     try {
-                         const json = JSON.parse(jsonText);
-                         if (json && json.author && json.author.interactionStatistic) {
-                             const stats = Array.isArray(json.author.interactionStatistic) ? json.author.interactionStatistic : [json.author.interactionStatistic];
-                             const writeStat = stats.find((s: any) => s.interactionType === 'https://schema.org/WriteAction');
-                             if (writeStat && writeStat.userInteractionCount != null) {
-                                 tweetsCount = parseInt(writeStat.userInteractionCount, 10);
-                                 break;
-                             }
-                         }
-                     } catch (e) {}
-                 }
-            }
-
-            const followerLocator = page.locator('a[href$="/verified_followers"] span, a[href$="/followers"] span').first();
-            if (await followerLocator.count() > 0) {
-                 // The span text is sometimes visually hidden. Try getting the text of the entire link minus 'Followers' text
-                 let followerCountText = await followerLocator.textContent() || await followerLocator.evaluate(el => el.parentElement?.textContent || '');
-                 if (followerCountText) {
-                     followerCountText = followerCountText.replace(/Followers?|Verified/gi, '').trim();
-                     if (followerCountText) {
-                         conversionMarkers.push(`Followers Raw: ${followerCountText}`);
-                         followerCount = parseCount(followerCountText);
-                     }
-                 }
-            }
-
-            const followingLocator = page.locator('a[href$="/following"] span').first();
-            if (await followingLocator.count() > 0) {
-                 let followingCountText = await followingLocator.textContent() || await followingLocator.evaluate(el => el.parentElement?.textContent || '');
-                 if (followingCountText) {
-                     followingCountText = followingCountText.replace(/Following/gi, '').trim();
-                     if (followingCountText) {
-                         conversionMarkers.push(`Following Raw: ${followingCountText}`);
-                         followingCount = parseCount(followingCountText);
-                     }
-                 }
-            }
-
-            // 6. Latest Tweet Date
-            const firstTweetTime = page.locator('[data-testid="tweet"] time').first();
-            if (await firstTweetTime.count() > 0) {
-                const datetime = await firstTweetTime.getAttribute('datetime');
-                if (datetime) latestTweetDate = new Date(datetime).toISOString();
-            }
-
-            // Spider Architecture: Enqueue recent tweets if root profile
-            if (!isSubPage) {
-                log.info(`[Twitter] Enqueueing recent tweets for deep crawl from profile: ${url}`);
-                const tweetLinks = await page.evaluate(() => {
-                    const tLinks: string[] = [];
-                    const anchors = document.querySelectorAll('article[data-testid="tweet"] a[href*="/status/"]');
-                    anchors.forEach((a) => {
-                        const href = (a as HTMLAnchorElement).href;
-                        if (href && !tLinks.includes(href) && tLinks.length < 5) {
-                            tLinks.push(href);
+        if (!isBlocked) {
+            try {
+                // Try JSON-LD parsing first
+                const ldJsonElement = page.locator('script[type="application/ld+json"]').first();
+                if (await ldJsonElement.count() > 0) {
+                    const text = await ldJsonElement.textContent();
+                    if (text) {
+                        const parsed = JSON.parse(text);
+                        const mainEntity = parsed.mainEntity || {};
+                        fullName = mainEntity.name || null;
+                        biography = mainEntity.description || null;
+                        
+                        // Extract statistics from interactionStatistic
+                        const stats = mainEntity.interactionStatistic || [];
+                        for (const stat of stats) {
+                            const type = stat.interactionType || '';
+                            const countVal = stat.userInteractionCount;
+                            if (type.includes('FollowAction')) followerCount = countVal;
+                            if (type.includes('SubscribeAction')) followingCount = countVal;
+                            if (type.includes('WriteAction')) tweetsCount = countVal;
                         }
-                    });
-                    return tLinks;
-                });
-
-                if (tweetLinks.length > 0) {
-                    const { crawler } = context;
-                    await crawler.addRequests(tweetLinks.map(tUrl => ({
-                        url: tUrl,
-                        userData: { ...request.userData, isSubPage: true }
-                    })));
+                    }
                 }
 
-                // Link-in-Bio Spidering: Enqueue external URL for general forensics
-                const bioLink = links[0]; // First link from extraction is typically the bio link
-                if (bioLink && !bioLink.includes('twitter.com') && !bioLink.includes('x.com')) {
-                    log.info(`[Twitter] Enqueueing link in bio for deep forensics: ${bioLink}`);
-                    const { crawler } = context;
-                    await crawler.addRequests([{
-                        url: bioLink,
-                        userData: { ...request.userData, isSubPage: true, platform: 'general' },
-                        label: 'general'
-                    }]);
+                // Selector fallbacks
+                if (!fullName) {
+                    const nameLoc = page.locator('[data-testid="UserName"] div span').first();
+                    if (await nameLoc.count() > 0) fullName = await nameLoc.textContent();
                 }
+                if (!biography) {
+                    const bioLoc = page.locator('[data-testid="UserDescription"]').first();
+                    if (await bioLoc.count() > 0) biography = await bioLoc.textContent();
+                }
+
+                // Verified
+                verified = await page.locator('[data-testid="UserName"] svg[aria-label="Verified account"]').first().isVisible();
+
+                // External Link
+                const linkLoc = page.locator('[data-testid="UserProfileHeader_Items"] a[target="_blank"]').first();
+                if (await linkLoc.count() > 0) externalUrl = await linkLoc.getAttribute('href');
+
+                // Location
+                const locLoc = page.locator('[data-testid="UserProfileHeader_Items"] [data-testid="UserLocation"]').first();
+                if (await locLoc.count() > 0) location = await locLoc.textContent();
+
+                // Followers (Selector fallback)
+                if (followerCount === null) {
+                    const fLoc = page.locator('a[href$="/followers"] span span').first();
+                    if (await fLoc.count() > 0) followerCount = parseCount(await fLoc.textContent());
+                }
+
+                // Following (Selector fallback)
+                if (followingCount === null) {
+                    const flLoc = page.locator('a[href$="/following"] span span').first();
+                    if (await flLoc.count() > 0) followingCount = parseCount(await flLoc.textContent());
+                }
+            } catch (e) {
+                log.warning('[Twitter] Browser extraction encountered errors.');
             }
-
-        } catch (e) {
-            log.debug('[Twitter] Extraction encountered missing elements', { url, error: String(e) });
+        } else {
+            log.warning('[Twitter] Blocked by login wall / anti-bot.');
         }
     }
 
+    const bioAnalysis = analyzeBio(biography);
+
     const scrapedItem: ScrapedItem = {
         platform: 'twitter',
-        url: request.url,
-        crawlerUsed: 'playwright',
+        url,
+        crawlerUsed: apiData ? 'cheerio' : 'playwright',
         scrapedAt: new Date().toISOString(),
         data: {
-            revenueIndicators: {
-                ctas,
-                links,
-                conversionMarkers,
-            },
-            profileHtml: content,
-            screenshotUrl: '', // Populated by main.ts
             username,
             fullName,
             biography,
             verified,
             followerCount,
+            followers: followerCount, // Aliasing for scoring consistency
             followingCount,
             tweetsCount,
             latestTweetDate,
-            // Deep Link Metadata for Crawl Report
-            crawlMetadata: {
-                title: await page.title().catch(() => 'Twitter / X'),
-                h1: fullName || username || '',
-                metaDescription: biography || '',
-                httpStatus: 200,
-                snippet: biography || content.substring(0, 200)
-            }
+            location,
+            externalUrl,
+            bio_analysis: bioAnalysis,
+            screenshotUrl: ''
         } as any,
-        errors: []
+        errors: isBlocked ? ['BLOCKED: Twitter Login Wall'] : []
     };
 
     return [scrapedItem];
 }
 
-/**
- * Validate extracted Twitter data.
- * @param data - The data object.
- * @returns True if valid.
- */
 export function validate(data: Record<string, unknown>): boolean {
-    const payload = data as any;
-    return (
-        payload &&
-        payload.revenueIndicators &&
-        typeof payload.profileHtml === 'string' &&
-        typeof payload.screenshotUrl === 'string'
-    );
+    return !!data && typeof data.username === 'string';
 }
 
-/**
- * Detect Twitter blocks (login walls).
- * @param responseBody - Page content.
- * @returns True if blocked.
- */
 export function detectBlock(responseBody: string): boolean {
     const lower = responseBody.toLowerCase();
-    
-    // CONTENT-FIRST: If we see clear profile indicators, it's NOT blocked.
-    const hasProfileIndicators = lower.includes('joined') || 
-                                lower.includes('followers') || 
-                                lower.includes('following') ||
-                                lower.includes('data-testid="userprofileheader"');
-    
-    if (hasProfileIndicators) return false;
-
-    // Explicit login or anti-bot walls
-    return lower.includes('redirecting you to the log in page') || 
-           lower.includes('verify you are human') || 
-           lower.includes('log in to x') ||
-           lower.includes('something went wrong') || 
-           lower.includes("something's not right") ||
-           (lower.includes('ident_login') && lower.includes('twitter'));
+    return lower.includes('sign in to x') || lower.includes('something went wrong') || lower.includes('redirect_to=%2flogin');
 }
 
 const twitterHandler: PlaywrightHandler = {
     crawlerType: 'playwright',
     handle,
     validate,
-    detectBlock,
+    detectBlock
 };
 
 export default twitterHandler;

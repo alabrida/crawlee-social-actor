@@ -32,7 +32,8 @@ import pinterestHandler from './handlers/pinterest.js';
 // Sprint 4:
 import linkedinHandler from './handlers/linkedin.js';
 // Sprint 5:
-import metaHandler from './handlers/meta.js';
+import facebookHandler from './handlers/facebook.js';
+import instagramHandler from './handlers/instagram.js';
 import twitterHandler from './handlers/twitter.js';
 import seoSerpHandler from './handlers/seo-serp.js';
 // Sprint 6:
@@ -84,8 +85,8 @@ const PLAYWRIGHT_HANDLERS: Record<string, PlaywrightHandler> = {
     google_business_profile: googleMapsHandler,
     pinterest: pinterestHandler,
     linkedin: linkedinHandler,
-    facebook: metaHandler,
-    instagram: metaHandler,
+    facebook: facebookHandler,
+    instagram: instagramHandler,
     twitter: twitterHandler,
     seo_serp: seoSerpHandler,
     general: generalHandler,
