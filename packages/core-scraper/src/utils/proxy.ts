@@ -25,11 +25,25 @@ const BANDWIDTH_WARNING_THRESHOLD = 500 * 1024 * 1024;
  */
 export async function createProxyConfig(
     config: ProxyConfig,
+    type: 'datacenter' | 'residential' | 'auto' = 'auto',
 ): Promise<ProxyConfiguration | undefined> {
     if (config.useApifyProxy) {
-        log.info('Using Apify proxy', { groups: config.apifyProxyGroups });
+        let groups: string[] | undefined = config.apifyProxyGroups;
+        if (type === 'datacenter') {
+            groups = groups ? groups.filter(g => g !== 'RESIDENTIAL') : undefined;
+            if (groups && groups.length === 0) {
+                groups = undefined;
+            }
+            log.info('Using Apify Datacenter proxy configuration');
+        } else if (type === 'residential') {
+            groups = ['RESIDENTIAL'];
+            log.info('Using Apify Residential proxy configuration');
+        } else {
+            log.info('Using Apify proxy', { groups });
+        }
+
         return await Actor.createProxyConfiguration({
-            groups: config.apifyProxyGroups,
+            groups,
             countryCode: config.apifyProxyCountry as any,
         });
     }

@@ -10,6 +10,7 @@ import { log } from './utils/logger.js';
 import { getRandomUserAgent } from './utils/ua-rotation.js';
 import { buildCheerioRouter, buildPlaywrightRouter } from './routes.js';
 import { injectCookies } from './utils/auth.js';
+import { createProxyConfig } from './utils/proxy.js';
 import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
 
 /**
@@ -76,48 +77,19 @@ export async function handleScreenshotCollection({ page, request, log: pwLog }: 
  * Runs the Playwright crawler for browser-required platforms and for capturing
  * screenshots of Cheerio-extracted platforms.
  */
-export async function runPlaywrightCrawler(
-    input: ActorInput,
-    handlerContext: HandlerContext,
-    proxyConfiguration: any,
-    playwrightUrls: UrlEntry[],
-    cheerioUrls: UrlEntry[]
-): Promise<void> {
-    log.info(`Running PlaywrightCrawler for screenshots and browser platforms`);
-
-    const playwrightRouter = buildPlaywrightRouter(handlerContext);
-    playwrightRouter.addHandler('screenshot-collector', handleScreenshotCollection);
-
-    const playwrightQueue = await Actor.openRequestQueue();
-    
-    const pwRequests = playwrightUrls.map(entry => {
-        let targetUrl = entry.url;
-        if (!targetUrl.startsWith('http')) {
-            if (entry.platform === 'google_maps' || entry.platform === 'google_business_profile') {
-                targetUrl = `https://www.google.com/maps/search/${encodeURIComponent(targetUrl)}`;
-            } else {
-                targetUrl = `https://www.google.com/search?q=${encodeURIComponent(targetUrl)}`;
-            }
-        }
-        return {
-            url: targetUrl,
-            label: entry.platform,
-            userData: { platform: entry.platform },
-        };
-    });
-
-    const screenshotRequests = cheerioUrls.map(entry => ({
-        url: entry.url.startsWith('http') ? entry.url : `https://www.google.com/search?q=${encodeURIComponent(entry.url)}`,
-        label: 'screenshot-collector',
-        userData: { platform: entry.platform, originalUrl: entry.url },
-    }));
-
-    await playwrightQueue.addRequests([...pwRequests, ...screenshotRequests]);
-
-    const playwrightCrawler = new PlaywrightCrawler({
-        requestQueue: playwrightQueue,
+/**
+ * Helper to build a PlaywrightCrawler with standard configurations.
+ */
+function createPlaywrightCrawler(
+    requestQueue: any,
+    playwrightRouter: any,
+    proxyConfig: any,
+    input: ActorInput
+): PlaywrightCrawler {
+    return new PlaywrightCrawler({
+        requestQueue,
         requestHandler: playwrightRouter,
-        proxyConfiguration: proxyConfiguration as any,
+        proxyConfiguration: proxyConfig as any,
         useSessionPool: true,
         sessionPoolOptions: {
             maxPoolSize: 100,
@@ -146,8 +118,83 @@ export async function runPlaywrightCrawler(
             },
         ],
     });
+}
 
-    await playwrightCrawler.run();
+/**
+ * Runs the Playwright crawler for browser-required platforms and for capturing
+ * screenshots of Cheerio-extracted platforms.
+ */
+export async function runPlaywrightCrawler(
+    input: ActorInput,
+    handlerContext: HandlerContext,
+    proxyConfiguration: any,
+    playwrightUrls: UrlEntry[],
+    cheerioUrls: UrlEntry[]
+): Promise<void> {
+    log.info(`Running PlaywrightCrawler for screenshots and browser platforms`);
+
+    const playwrightRouter = buildPlaywrightRouter(handlerContext);
+    playwrightRouter.addHandler('screenshot-collector', handleScreenshotCollection);
+
+    const residentialPlatforms = new Set(['linkedin', 'instagram', 'tiktok', 'twitter', 'facebook']);
+    const residentialUrls = playwrightUrls.filter(entry => residentialPlatforms.has(entry.platform));
+    const datacenterUrls = playwrightUrls.filter(entry => !residentialPlatforms.has(entry.platform));
+
+    const dcRequests = datacenterUrls.map(entry => {
+        let targetUrl = entry.url;
+        if (!targetUrl.startsWith('http')) {
+            if (entry.platform === 'google_maps' || entry.platform === 'google_business_profile') {
+                targetUrl = `https://www.google.com/maps/search/${encodeURIComponent(targetUrl)}`;
+            } else {
+                targetUrl = `https://www.google.com/search?q=${encodeURIComponent(targetUrl)}`;
+            }
+        }
+        return {
+            url: targetUrl,
+            label: entry.platform,
+            userData: { platform: entry.platform },
+        };
+    });
+
+    const screenshotRequests = cheerioUrls.map(entry => ({
+        url: entry.url.startsWith('http') ? entry.url : `https://www.google.com/search?q=${encodeURIComponent(entry.url)}`,
+        label: 'screenshot-collector',
+        userData: { platform: entry.platform, originalUrl: entry.url },
+    }));
+
+    const resRequests = residentialUrls.map(entry => {
+        let targetUrl = entry.url;
+        if (!targetUrl.startsWith('http')) {
+            targetUrl = `https://www.google.com/search?q=${encodeURIComponent(targetUrl)}`;
+        }
+        return {
+            url: targetUrl,
+            label: entry.platform,
+            userData: { platform: entry.platform },
+        };
+    });
+
+    // 1. Run Datacenter crawler if there are DC or screenshot requests
+    if (dcRequests.length > 0 || screenshotRequests.length > 0) {
+        log.info(`Running Playwright Datacenter Crawler for ${dcRequests.length} pages and ${screenshotRequests.length} screenshots`);
+        const dcQueue = await Actor.openRequestQueue('playwright-datacenter');
+        await dcQueue.addRequests([...dcRequests, ...screenshotRequests]);
+
+        const dcProxy = input.proxy ? await createProxyConfig(input.proxy, 'datacenter') : proxyConfiguration;
+        const dcCrawler = createPlaywrightCrawler(dcQueue, playwrightRouter, dcProxy, input);
+        await dcCrawler.run();
+    }
+
+    // 2. Run Residential crawler if there are residential requests
+    if (resRequests.length > 0) {
+        log.info(`Running Playwright Residential Crawler for ${resRequests.length} pages`);
+        const resQueue = await Actor.openRequestQueue('playwright-residential');
+        await resQueue.addRequests(resRequests);
+
+        const resProxy = input.proxy ? await createProxyConfig(input.proxy, 'residential') : proxyConfiguration;
+        const resCrawler = createPlaywrightCrawler(resQueue, playwrightRouter, resProxy, input);
+        await resCrawler.run();
+    }
 }
 
 /**
@@ -180,11 +227,12 @@ export async function runCheerioCrawler(
     }
 
     const cheerioRouter = buildCheerioRouter(handlerContext);
+    const dcProxy = input.proxy ? await createProxyConfig(input.proxy, 'datacenter') : proxyConfiguration;
 
     const cheerioCrawler = new CheerioCrawler({
         requestQueue: cheerioQueue,
         requestHandler: cheerioRouter,
-        proxyConfiguration: proxyConfiguration as any,
+        proxyConfiguration: dcProxy as any,
         useSessionPool: true,
         sessionPoolOptions: {
             maxPoolSize: 100,
