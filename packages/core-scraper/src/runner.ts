@@ -227,12 +227,12 @@ export async function runCheerioCrawler(
     }
 
     const cheerioRouter = buildCheerioRouter(handlerContext);
-    const dcProxy = input.proxy ? await createProxyConfig(input.proxy, 'datacenter') : proxyConfiguration;
+    const cheerioProxy = input.proxy ? await createProxyConfig(input.proxy, 'residential') : proxyConfiguration;
 
     const cheerioCrawler = new CheerioCrawler({
         requestQueue: cheerioQueue,
         requestHandler: cheerioRouter,
-        proxyConfiguration: dcProxy as any,
+        proxyConfiguration: cheerioProxy as any,
         useSessionPool: true,
         sessionPoolOptions: {
             maxPoolSize: 100,
