@@ -79,12 +79,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (closeBtn) closeBtn.style.display = 'none';
         if (sidebarBackdrop) sidebarBackdrop.style.display = 'none';
         
-        // Hide URL input section & Keyword section
-        // Note: we fetch these dynamically when window loads
+        // Adjust URL input section & hide Keyword section
         window.addEventListener('load', () => {
             const sections = settingsSidebar.querySelectorAll('.settings-section');
-            if (sections[0]) sections[0].style.display = 'none';
-            if (sections[2]) sections[2].style.display = 'none';
+            if (sections[0]) {
+                const label = sections[0].querySelector('.field-label');
+                if (label) label.textContent = 'Your Business Website URL';
+                
+                const preflightBtn = sections[0].querySelector('#preflight-btn');
+                if (preflightBtn) preflightBtn.style.display = 'none';
+                
+                const statusInfo = sections[0].querySelector('#preflight-status');
+                if (statusInfo) statusInfo.style.display = 'none';
+                
+                const successInfo = sections[0].querySelector('#preflight-success-info');
+                if (successInfo) successInfo.style.display = 'none';
+                
+                const input = sections[0].querySelector('#target-url');
+                if (input) input.style.width = '100%';
+            }
+            if (sections[2]) {
+                sections[2].style.display = 'none';
+            }
         });
         
         // Change headers
@@ -251,6 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const statusEl = item.querySelector('.oauth-status');
         const platform = btn.getAttribute('data-platform');
         
+        // Connect button (OAuth login)
         btn.addEventListener('click', () => {
             const isConnected = statusEl.getAttribute('data-connected') === 'true';
             
@@ -269,6 +286,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 oauthPopup.classList.add('show');
             }
         });
+
+        // Direct URL toggle button
+        const btnToggleLink = item.querySelector('.btn-toggle-link');
+        const urlContainer = item.querySelector('.direct-url-container');
+        const urlInput = item.querySelector('.platform-direct-url');
+        
+        if (btnToggleLink && urlContainer && urlInput) {
+            btnToggleLink.addEventListener('click', () => {
+                const isInputVisible = !urlContainer.classList.contains('hidden');
+                
+                if (isInputVisible) {
+                    // Hide input field and restore OAuth buttons
+                    urlContainer.classList.add('hidden');
+                    btnToggleLink.classList.remove('active-link');
+                    if (btn) btn.classList.remove('hidden');
+                    
+                    const isConnected = statusEl.getAttribute('data-connected') === 'true';
+                    if (isConnected) {
+                        statusEl.textContent = `Connected: @milos_${platform}`;
+                        statusEl.className = 'oauth-status text-success';
+                    } else {
+                        statusEl.textContent = 'Not Connected';
+                        statusEl.className = 'oauth-status';
+                    }
+                } else {
+                    // Show input field and hide OAuth button
+                    urlContainer.classList.remove('hidden');
+                    btnToggleLink.classList.add('active-link');
+                    if (btn) btn.classList.add('hidden');
+                    
+                    const val = urlInput.value.trim();
+                    if (val) {
+                        statusEl.textContent = 'URL Configured';
+                        statusEl.className = 'oauth-status text-success';
+                    } else {
+                        statusEl.textContent = 'Direct URL Configuration';
+                        statusEl.className = 'oauth-status text-highlight';
+                    }
+                    urlInput.focus();
+                }
+            });
+            
+            // Sync status feedback text to user typing in direct URL field
+            urlInput.addEventListener('input', () => {
+                const val = urlInput.value.trim();
+                if (val) {
+                    statusEl.textContent = 'URL Configured';
+                    statusEl.className = 'oauth-status text-success';
+                } else {
+                    statusEl.textContent = 'Direct URL Configuration';
+                    statusEl.className = 'oauth-status text-highlight';
+                }
+            });
+        }
     });
 
     function getPlatformName(platform) {
@@ -276,8 +347,12 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'google': return 'Google Business Profile';
             case 'linkedin': return 'LinkedIn';
             case 'facebook': return 'Facebook';
+            case 'instagram': return 'Instagram';
             case 'youtube': return 'YouTube';
             case 'tiktok': return 'TikTok';
+            case 'twitter': return 'Twitter / X';
+            case 'pinterest': return 'Pinterest';
+            case 'reddit': return 'Reddit';
             default: return platform;
         }
     }

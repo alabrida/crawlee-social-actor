@@ -250,70 +250,190 @@
                         </div>
                     </div>
 
-                    <!-- Section 2: Platform OAuth Connections -->
+                    <!-- Section 2: Platform Connections (OAuth or Direct Link) -->
                     <div class="settings-section">
-                        <h3 class="section-title">Platform OAuth Connections</h3>
-                        <p class="section-desc">Connect accounts to extract private analytics or authorize secure public crawling.</p>
+                        <h3 class="section-title">Platform Connections</h3>
+                        <p class="section-desc">Connect accounts securely via OAuth OR toggle the link icon to paste direct profile URLs.</p>
                         
                         <div class="oauth-list">
                             <!-- Google Business Profile -->
                             <div class="oauth-item" id="oauth-google">
                                 <div class="oauth-platform-info">
                                     <div class="platform-icon-circle bg-google">G</div>
-                                    <div>
+                                    <div class="platform-details-box">
                                         <div class="platform-name">Google Business Profile</div>
                                         <div class="oauth-status" data-connected="true">Connected: @milosburgershop</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="Google Maps Share Link...">
+                                        </div>
                                     </div>
                                 </div>
-                                <button class="btn btn-outline btn-sm oauth-toggle-btn" data-platform="google">Disconnect</button>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn" data-platform="google">Disconnect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- LinkedIn -->
                             <div class="oauth-item" id="oauth-linkedin">
                                 <div class="oauth-platform-info">
                                     <div class="platform-icon-circle bg-linkedin">in</div>
-                                    <div>
-                                        <div class="platform-name">LinkedIn Profile</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">LinkedIn Profile / Page</div>
                                         <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://linkedin.com/company/...">
+                                        </div>
                                     </div>
                                 </div>
-                                <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="linkedin">Connect</button>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="linkedin">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Facebook -->
                             <div class="oauth-item" id="oauth-facebook">
                                 <div class="oauth-platform-info">
                                     <div class="platform-icon-circle bg-facebook">f</div>
-                                    <div>
+                                    <div class="platform-details-box">
                                         <div class="platform-name">Facebook Pages</div>
                                         <div class="oauth-status" data-connected="true">Connected: /MilosOriginal...</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://facebook.com/...">
+                                        </div>
                                     </div>
                                 </div>
-                                <button class="btn btn-outline btn-sm oauth-toggle-btn" data-platform="facebook">Disconnect</button>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn" data-platform="facebook">Disconnect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Instagram -->
+                            <div class="oauth-item" id="oauth-instagram">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-youtube" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;">📸</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Instagram Profile</div>
+                                        <div class="oauth-status" data-connected="true">Connected: @milosburgershop</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://instagram.com/...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn" data-platform="instagram">Disconnect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- YouTube -->
                             <div class="oauth-item" id="oauth-youtube">
                                 <div class="oauth-platform-info">
                                     <div class="platform-icon-circle bg-youtube">YT</div>
-                                    <div>
+                                    <div class="platform-details-box">
                                         <div class="platform-name">YouTube Channel</div>
                                         <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://youtube.com/@...">
+                                        </div>
                                     </div>
                                 </div>
-                                <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="youtube">Connect</button>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="youtube">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- TikTok -->
                             <div class="oauth-item" id="oauth-tiktok">
                                 <div class="oauth-platform-info">
                                     <div class="platform-icon-circle bg-tiktok">🎵</div>
-                                    <div>
-                                        <div class="platform-name">TikTok Creator Portal</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">TikTok Profile</div>
                                         <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://tiktok.com/@...">
+                                        </div>
                                     </div>
                                 </div>
-                                <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="tiktok">Connect</button>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="tiktok">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Twitter / X -->
+                            <div class="oauth-item" id="oauth-twitter">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-tiktok">𝕏</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Twitter / X</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://x.com/...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="twitter">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Pinterest -->
+                            <div class="oauth-item" id="oauth-pinterest">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-google" style="background-color: #bd081c !important;">P</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Pinterest</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://pinterest.com/...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="pinterest">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Reddit -->
+                            <div class="oauth-item" id="oauth-reddit">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-google" style="background-color: #ff4500 !important;">R</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Reddit</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://reddit.com/user/...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="reddit">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -742,16 +742,73 @@ input[type="url"]:focus, input[type="text"]:focus {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    padding: 0.85rem 1rem;
+    padding: 1rem;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 1rem;
     transition: var(--transition-smooth);
 }
 
 .oauth-item:hover {
     background: rgba(255, 255, 255, 0.04);
 }
+
+.platform-details-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.direct-url-container {
+    margin-top: 0.6rem;
+    width: 100%;
+}
+
+.platform-direct-url {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    padding: 0.45rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    width: 100%;
+}
+
+.oauth-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    align-self: flex-start;
+}
+
+.btn-toggle-link {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-bounce);
+}
+
+.btn-toggle-link:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: scale(1.05);
+}
+
+.btn-toggle-link.active-link {
+    background: rgba(6, 182, 212, 0.15);
+    color: var(--accent-secondary);
+    border-color: rgba(6, 182, 212, 0.4);
+}
+
 
 .oauth-platform-info {
     display: flex;
