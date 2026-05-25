@@ -28,7 +28,7 @@ export async function upsertAssessment(data: any, url: string, key: string) {
         const { error } = await supabase
             .from('revenue_journey_assessments')
             .upsert(cleanedData, {
-                onConflict: 'dedupe_key' // Assumes dedupe_key or primary key
+                onConflict: 'assessment_id'
             });
 
         if (error) {
