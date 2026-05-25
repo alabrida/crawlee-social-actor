@@ -58,6 +58,75 @@ document.addEventListener('DOMContentLoaded', () => {
         "Hamburgers in Alabama"
     ];
 
+    // Check URL parameters for Client Intake Mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const isIntakeMode = urlParams.get('mode') === 'intake';
+
+    if (isIntakeMode) {
+        // Configure UI for Client Intake Mode
+        document.body.classList.add('intake-mode-active');
+        
+        // Hide dashboard
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) mainContent.style.display = 'none';
+        if (mobileTriggerBtn) mobileTriggerBtn.style.display = 'none';
+        
+        // Force sidebar open and full screen style
+        settingsSidebar.classList.add('open');
+        settingsSidebar.classList.add('intake-full-screen');
+        
+        // Hide close button and backdrop
+        if (closeBtn) closeBtn.style.display = 'none';
+        if (sidebarBackdrop) sidebarBackdrop.style.display = 'none';
+        
+        // Hide URL input section & Keyword section
+        // Note: we fetch these dynamically when window loads
+        window.addEventListener('load', () => {
+            const sections = settingsSidebar.querySelectorAll('.settings-section');
+            if (sections[0]) sections[0].style.display = 'none';
+            if (sections[2]) sections[2].style.display = 'none';
+        });
+        
+        // Change headers
+        const headerTitle = settingsSidebar.querySelector('.sidebar-header h2');
+        if (headerTitle) headerTitle.textContent = 'Connect Social Channels';
+        const headerSubtitle = settingsSidebar.querySelector('.sidebar-subtitle');
+        if (headerSubtitle) headerSubtitle.textContent = 'Authorize read-only access for your Revenue Assessment';
+        
+        // Change CTA button text
+        const ctaBtnText = startAuditBtn.querySelector('.btn-text');
+        if (ctaBtnText) ctaBtnText.textContent = 'Submit Authorized Channels';
+        
+        // Intercept audit trigger to perform submit callback instead
+        startAuditBtn.addEventListener('click', (e) => {
+            e.stopImmediatePropagation();
+            
+            startAuditBtn.disabled = true;
+            auditSpinner.classList.remove('hidden');
+            
+            setTimeout(() => {
+                auditSpinner.classList.add('hidden');
+                showToast('Platform connections successfully submitted!');
+                
+                // Show completion screen
+                const scrollArea = settingsSidebar.querySelector('.sidebar-scroll-area');
+                if (scrollArea) {
+                    scrollArea.innerHTML = `
+                        <div class="text-center" style="padding: 4rem 1rem; animation: scaleIn 0.4s ease;">
+                            <div class="platform-icon-circle bg-google" style="width: 72px; height: 72px; font-size: 2.5rem; margin: 0 auto 2rem; background: var(--accent-success); box-shadow: 0 0 20px rgba(16,185,129,0.3); display: flex; align-items: center; justify-content: center;">✓</div>
+                            <h2 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary);">All Channels Linked!</h2>
+                            <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;">
+                                Your secure tokens have been encrypted and saved. You can close this window now. Your consultant will initiate the audit.
+                            </p>
+                        </div>
+                    `;
+                }
+                const footer = settingsSidebar.querySelector('.sidebar-footer');
+                if (footer) footer.style.display = 'none';
+            }, 1800);
+        }, { capture: true });
+    }
+
     // ==========================================
     // Sidebar Toggle Logic
     // ==========================================

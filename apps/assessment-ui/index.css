@@ -1152,3 +1152,47 @@ input[type="url"]:focus, input[type="text"]:focus {
 .hidden {
     display: none !important;
 }
+
+/* Intake Mode Centered Screen Styles */
+body.intake-mode-active {
+    background: #06060a;
+    background-image: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+}
+
+body.intake-mode-active .app-container {
+    width: 100%;
+    max-width: 520px;
+    display: block;
+    min-height: auto;
+}
+
+.sidebar-panel.intake-full-screen {
+    position: relative !important;
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    min-height: 580px;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: flex;
+    z-index: 100;
+}
+
+.sidebar-panel.intake-full-screen .sidebar-content {
+    transform: none !important;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    background: rgba(15, 15, 24, 0.7);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(99, 102, 241, 0.15);
+    overflow: hidden;
+}
+
+.sidebar-panel.intake-full-screen .sidebar-scroll-area {
+    padding: 1.5rem 2rem;
+}
+
