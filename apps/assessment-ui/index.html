@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Journey Assessment Control Panel</title>
+    <!-- Google Fonts: Inter and Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <!-- Sidebar Toggle Trigger Button for Mobile -->
+        <button id="mobile-sidebar-btn" class="floating-btn" aria-label="Open settings">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+        </button>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="logo-area">
+                    <div class="logo-glow"></div>
+                    <span class="logo-text">REVENUE JOURNEY <span class="accent-text">ARCHITECT</span></span>
+                </div>
+                <div class="header-actions">
+                    <button id="trigger-assessment-btn" class="btn btn-primary btn-glow">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Configure Audit Run
+                    </button>
+                </div>
+            </header>
+
+            <section class="dashboard-grid">
+                <!-- Row 1: Core Stats -->
+                <div class="dashboard-card stat-card main-score-card">
+                    <div class="card-glow"></div>
+                    <h3>Overall Score</h3>
+                    <div class="score-display">
+                        <span id="overall-score-val" class="score-val">3.3</span>
+                        <span class="score-max">/ 10</span>
+                    </div>
+                    <p class="stat-meta">Based on 7 evaluated channels</p>
+                    <div class="badge badge-warning">Needs Optimization</div>
+                </div>
+
+                <div class="dashboard-card stat-card">
+                    <h3>Classification</h3>
+                    <div class="value-display" id="business-class-display">Content Creator</div>
+                    <p class="stat-meta">Auto-detected via website metadata</p>
+                    <div class="confidence-bar-container">
+                        <div class="confidence-label">Confidence: <span id="class-confidence-val">87%</span></div>
+                        <div class="confidence-track">
+                            <div id="class-confidence-fill" class="confidence-fill" style="width: 87%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card stat-card">
+                    <h3>Weakest Stage</h3>
+                    <div class="value-display text-error" id="weakest-stage-display">Conversion</div>
+                    <p class="stat-meta">Highest priority gap identified</p>
+                    <p class="card-desc" id="weakest-stage-desc">Direct monetization channels (shop/booking) are missing or poorly connected.</p>
+                </div>
+
+                <!-- Row 2: Journey Stage Details -->
+                <div class="dashboard-card grid-col-span-3 journey-card">
+                    <div class="card-header">
+                        <h3>5-Stage Revenue Journey Analytics</h3>
+                        <span class="card-header-badge">Rubric v5.2</span>
+                    </div>
+                    <div class="stages-container">
+                        <!-- Stage 1 -->
+                        <div class="stage-item" data-stage="awareness">
+                            <div class="stage-metric">
+                                <span class="stage-name">Awareness</span>
+                                <span id="score-awareness" class="stage-score">5.2 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-awareness" class="progress-bar-fill fill-awareness" style="width: 52%;"></div>
+                            </div>
+                            <p class="stage-desc">Traffic generation, brand discovery & reach.</p>
+                        </div>
+                        <!-- Stage 2 -->
+                        <div class="stage-item" data-stage="consideration">
+                            <div class="stage-metric">
+                                <span class="stage-name">Consideration</span>
+                                <span id="score-consideration" class="stage-score">4.0 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-consideration" class="progress-bar-fill fill-consideration" style="width: 40%;"></div>
+                            </div>
+                            <p class="stage-desc">Target audience engagement & social signals.</p>
+                        </div>
+                        <!-- Stage 3 -->
+                        <div class="stage-item" data-stage="decision">
+                            <div class="stage-metric">
+                                <span class="stage-name">Decision</span>
+                                <span id="score-decision" class="stage-score">3.5 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-decision" class="progress-bar-fill fill-decision" style="width: 35%;"></div>
+                            </div>
+                            <p class="stage-desc">Reviews, trust signals, and brand credibility.</p>
+                        </div>
+                        <!-- Stage 4 -->
+                        <div class="stage-item" data-stage="conversion">
+                            <div class="stage-metric">
+                                <span class="stage-name">Conversion</span>
+                                <span id="score-conversion" class="stage-score">2.0 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-conversion" class="progress-bar-fill fill-conversion" style="width: 20%;"></div>
+                            </div>
+                            <p class="stage-desc">Ease of direct checkout, booking, or leads.</p>
+                        </div>
+                        <!-- Stage 5 -->
+                        <div class="stage-item" data-stage="retention">
+                            <div class="stage-metric">
+                                <span class="stage-name">Retention</span>
+                                <span id="score-retention" class="stage-score">1.8 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-retention" class="progress-bar-fill fill-retention" style="width: 18%;"></div>
+                            </div>
+                            <p class="stage-desc">Sub subscriptions, newsletter, community hooks.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Scraped Channels -->
+                <div class="dashboard-card grid-col-span-3">
+                    <div class="card-header">
+                        <h3>Scraped Channel Matrix</h3>
+                        <span id="scraped-url-indicator" class="target-url-label">Target: https://miloshamburgers.com/</span>
+                    </div>
+                    <div class="channels-grid">
+                        <div class="channel-card active-channel">
+                            <div class="channel-header">
+                                <span class="channel-icon">🌐</span>
+                                <span class="channel-title">Website</span>
+                                <span class="channel-status badge-success">OK</span>
+                            </div>
+                            <div class="channel-body">
+                                <div class="detail-row"><span>SSL:</span> <span class="text-success">Active</span></div>
+                                <div class="detail-row"><span>Schema.org:</span> <span class="text-success">JSON-LD</span></div>
+                                <div class="detail-row"><span>Hero H1:</span> <span class="text-meta">"Original Burgers since 1952"</span></div>
+                            </div>
+                        </div>
+
+                        <div class="channel-card active-channel">
+                            <div class="channel-header">
+                                <span class="channel-icon">📸</span>
+                                <span class="channel-title">Instagram</span>
+                                <span class="channel-status badge-success">OK</span>
+                            </div>
+                            <div class="channel-body">
+                                <div class="detail-row"><span>Followers:</span> <span class="text-highlight">12.5K</span></div>
+                                <div class="detail-row"><span>Bio link:</span> <span class="text-meta">Linktree</span></div>
+                                <div class="detail-row"><span>Account:</span> <span class="text-meta">Business Page</span></div>
+                            </div>
+                        </div>
+
+                        <div class="channel-card active-channel">
+                            <div class="channel-header">
+                                <span class="channel-icon">👥</span>
+                                <span class="channel-title">Facebook</span>
+                                <span class="channel-status badge-success">OK</span>
+                            </div>
+                            <div class="channel-body">
+                                <div class="detail-row"><span>Likes:</span> <span class="text-highlight">48K</span></div>
+                                <div class="detail-row"><span>Class:</span> <span class="text-meta">Business Page</span></div>
+                                <div class="detail-row"><span>Messenger:</span> <span class="text-success">Active</span></div>
+                            </div>
+                        </div>
+
+                        <div class="channel-card active-channel">
+                            <div class="channel-header">
+                                <span class="channel-icon">▶️</span>
+                                <span class="channel-title">YouTube</span>
+                                <span class="channel-status badge-success">OK</span>
+                            </div>
+                            <div class="channel-body">
+                                <div class="detail-row"><span>Subscribers:</span> <span class="text-highlight">1.2K</span></div>
+                                <div class="detail-row"><span>Store Tab:</span> <span class="text-error">Missing</span></div>
+                                <div class="detail-row"><span>Recency:</span> <span class="text-meta">14 days ago</span></div>
+                            </div>
+                        </div>
+
+                        <div class="channel-card active-channel">
+                            <div class="channel-header">
+                                <span class="channel-icon">🎵</span>
+                                <span class="channel-title">TikTok</span>
+                                <span class="channel-status badge-success">OK</span>
+                            </div>
+                            <div class="channel-body">
+                                <div class="detail-row"><span>Followers:</span> <span class="text-highlight">5.8K</span></div>
+                                <div class="detail-row"><span>Shop Tab:</span> <span class="text-error">Missing</span></div>
+                                <div class="detail-row"><span>Bio Link:</span> <span class="text-meta">linktr.ee/milos</span></div>
+                            </div>
+                        </div>
+
+                        <div class="channel-card inactive-channel">
+                            <div class="channel-header">
+                                <span class="channel-icon">💼</span>
+                                <span class="channel-title">LinkedIn</span>
+                                <span class="channel-status badge-inactive">Disconnected</span>
+                            </div>
+                            <div class="channel-body">
+                                <p class="card-desc">No profile was scraped or linked during execution. Authenticate in settings to retry.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- GLOWING SIDEBAR COMPONENT -->
+        <aside id="settings-sidebar" class="sidebar-panel">
+            <div class="sidebar-backdrop"></div>
+            <div class="sidebar-content">
+                <header class="sidebar-header">
+                    <div>
+                        <h2>Run Assessment</h2>
+                        <p class="sidebar-subtitle">Verify credentials & search parameters</p>
+                    </div>
+                    <button id="close-sidebar-btn" class="close-btn" aria-label="Close settings">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </header>
+
+                <div class="sidebar-scroll-area">
+                    <!-- Section 1: URL and Pre-flight -->
+                    <div class="settings-section">
+                        <label for="target-url" class="field-label">Target Website URL</label>
+                        <div class="input-with-action">
+                            <input type="url" id="target-url" placeholder="https://example.com" value="https://miloshamburgers.com/">
+                            <button id="preflight-btn" class="btn btn-secondary">Analyze</button>
+                        </div>
+                        <div id="preflight-status" class="preflight-info hidden">
+                            <div class="spinner-small"></div>
+                            <span>Inspecting hero headings and JSON-LD schema...</span>
+                        </div>
+                        <div id="preflight-success-info" class="preflight-success-block hidden">
+                            <div class="metadata-badge-grid">
+                                <div><span class="lbl">Class:</span> <span id="preflight-detected-class" class="val text-highlight">Local Business</span></div>
+                                <div><span class="lbl">JSON-LD:</span> <span id="preflight-jsonld-status" class="val text-success">Found</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Platform OAuth Connections -->
+                    <div class="settings-section">
+                        <h3 class="section-title">Platform OAuth Connections</h3>
+                        <p class="section-desc">Connect accounts to extract private analytics or authorize secure public crawling.</p>
+                        
+                        <div class="oauth-list">
+                            <!-- Google Business Profile -->
+                            <div class="oauth-item" id="oauth-google">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-google">G</div>
+                                    <div>
+                                        <div class="platform-name">Google Business Profile</div>
+                                        <div class="oauth-status" data-connected="true">Connected: @milosburgershop</div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline btn-sm oauth-toggle-btn" data-platform="google">Disconnect</button>
+                            </div>
+
+                            <!-- LinkedIn -->
+                            <div class="oauth-item" id="oauth-linkedin">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-linkedin">in</div>
+                                    <div>
+                                        <div class="platform-name">LinkedIn Profile</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="linkedin">Connect</button>
+                            </div>
+
+                            <!-- Facebook -->
+                            <div class="oauth-item" id="oauth-facebook">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-facebook">f</div>
+                                    <div>
+                                        <div class="platform-name">Facebook Pages</div>
+                                        <div class="oauth-status" data-connected="true">Connected: /MilosOriginal...</div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline btn-sm oauth-toggle-btn" data-platform="facebook">Disconnect</button>
+                            </div>
+
+                            <!-- YouTube -->
+                            <div class="oauth-item" id="oauth-youtube">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-youtube">YT</div>
+                                    <div>
+                                        <div class="platform-name">YouTube Channel</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="youtube">Connect</button>
+                            </div>
+
+                            <!-- TikTok -->
+                            <div class="oauth-item" id="oauth-tiktok">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-tiktok">🎵</div>
+                                    <div>
+                                        <div class="platform-name">TikTok Creator Portal</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="tiktok">Connect</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Keyword Generator Intake -->
+                    <div class="settings-section">
+                        <h3 class="section-title">SERP Keyword Target Intake</h3>
+                        <p class="section-desc">Edit search terms derived from hero headings. These drive organic SEO ranking checks.</p>
+                        
+                        <div class="keyword-manager">
+                            <div class="tags-container" id="keyword-tags-container">
+                                <span class="keyword-tag" data-val="Milo's Original Burger Shop">
+                                    Milo's Original Burger Shop
+                                    <button class="remove-tag-btn" aria-label="Remove tag">&times;</button>
+                                </span>
+                                <span class="keyword-tag" data-val="Birmingham Burgers">
+                                    Birmingham Burgers
+                                    <button class="remove-tag-btn" aria-label="Remove tag">&times;</button>
+                                </span>
+                                <span class="keyword-tag" data-val="Hamburgers in Alabama">
+                                    Hamburgers in Alabama
+                                    <button class="remove-tag-btn" aria-label="Remove tag">&times;</button>
+                                </span>
+                            </div>
+                            <div class="input-with-action add-keyword-container">
+                                <input type="text" id="new-keyword-input" placeholder="+ Add custom search term...">
+                                <button id="add-keyword-btn" class="btn btn-secondary">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Console Output and Execution CTAs -->
+                <footer class="sidebar-footer">
+                    <!-- Console Log Display during execution -->
+                    <div id="execution-console" class="console-log-box hidden">
+                        <div class="console-header">
+                            <span>Apify Scraper Engine Logs</span>
+                            <span class="pulse-dot"></span>
+                        </div>
+                        <div class="console-lines" id="console-lines-container">
+                            <!-- Filled dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <div class="sidebar-action-bar">
+                        <button id="start-audit-btn" class="btn btn-primary btn-block btn-large btn-glow">
+                            <span class="btn-text">Start Audit Run</span>
+                            <div class="spinner-small hidden" id="audit-spinner"></div>
+                        </button>
+                    </div>
+                </footer>
+            </div>
+        </aside>
+
+        <!-- OAUTH POPUP SIMULATOR -->
+        <div id="oauth-popup" class="modal-overlay hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <span id="modal-platform-title">Connect Platform</span>
+                    <button id="close-modal-btn" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="spinner"></div>
+                    <p class="modal-instruction">Redirecting to platform secure login...</p>
+                    <p class="modal-detail">Authorizing Revenue Journey Assessment Engine to access read-only metrics.</p>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-auth-btn" class="btn btn-secondary">Cancel</button>
+                    <button id="simulate-auth-success" class="btn btn-primary">Simulate Login Success</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION TOAST -->
+        <div id="toast-notification" class="toast hidden">
+            <div class="toast-content">
+                <span class="toast-icon">✓</span>
+                <span id="toast-message">Crawl Completed successfully!</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>
