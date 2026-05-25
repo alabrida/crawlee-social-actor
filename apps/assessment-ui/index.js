@@ -99,7 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (input) input.style.width = '100%';
             }
             if (sections[2]) {
-                sections[2].style.display = 'none';
+                const kwTitle = sections[2].querySelector('.section-title');
+                if (kwTitle) kwTitle.textContent = 'Target Search Keywords';
+                
+                const kwDesc = sections[2].querySelector('.section-desc');
+                if (kwDesc) kwDesc.textContent = 'Specify the search phrases you target to evaluate your organic ranking visibility.';
             }
         });
         
