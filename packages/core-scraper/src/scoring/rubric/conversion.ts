@@ -5,7 +5,7 @@ export const CONVERSION_MECHANISMS: MechanismConfig[] = [
         name: 'forms_lead_capture',
         label: 'Forms & Lead Capture',
         stage: 'conversion',
-        weights: { local: 2, professional_services: 3, ecommerce: 2, saas: 3, content_creator: 2 },
+        weights: { local: 2, professional_services: 3, ecommerce: 2, saas: 3, content_creator: 2, influencer: 1 },
         lowScoreInsight: 'No forms detected. You cannot capture lead information without a structured capture form.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -28,7 +28,7 @@ export const CONVERSION_MECHANISMS: MechanismConfig[] = [
         name: 'ecommerce_checkout',
         label: 'E-Commerce Checkout',
         stage: 'conversion',
-        weights: { local: 1, professional_services: 1, ecommerce: 3, saas: 2, content_creator: 2 },
+        weights: { local: 1, professional_services: 1, ecommerce: 3, saas: 2, content_creator: 2, influencer: 1 },
         lowScoreInsight: 'No checkout infrastructure detected. E-Commerce brands must have a fully functional checkout stack.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -49,7 +49,7 @@ export const CONVERSION_MECHANISMS: MechanismConfig[] = [
         name: 'mobile_optimization',
         label: 'Mobile Optimization',
         stage: 'conversion',
-        weights: { local: 3, professional_services: 2, ecommerce: 3, saas: 3, content_creator: 3 },
+        weights: { local: 3, professional_services: 2, ecommerce: 3, saas: 3, content_creator: 3, influencer: 2 },
         lowScoreInsight: 'More than half of web traffic is mobile. Your site lacks optimization or loads too slowly on mobile devices.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -73,7 +73,7 @@ export const CONVERSION_MECHANISMS: MechanismConfig[] = [
         name: 'email_newsletter_capture',
         label: 'Email & Newsletter Capture',
         stage: 'conversion',
-        weights: { local: 1, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 3 },
+        weights: { local: 1, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 3, influencer: 2 },
         lowScoreInsight: 'No email or newsletter capture. Build your mailing list to capture leads before they leave.',
         evaluate(platforms, hub) {
             let hasNewsletter = false;
@@ -104,7 +104,7 @@ export const CONVERSION_MECHANISMS: MechanismConfig[] = [
         name: 'chat_realtime',
         label: 'Chat & Real-Time Engagement',
         stage: 'conversion',
-        weights: { local: 2, professional_services: 2, ecommerce: 2, saas: 3, content_creator: 1 },
+        weights: { local: 2, professional_services: 2, ecommerce: 2, saas: 3, content_creator: 1, influencer: 1 },
         lowScoreInsight: 'No chat widget detected. Instant messaging options raise conversion rates by answering questions in real-time.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No chat widget detected' };

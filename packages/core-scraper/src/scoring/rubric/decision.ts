@@ -5,7 +5,7 @@ export const DECISION_MECHANISMS: MechanismConfig[] = [
         name: 'pricing_transparency',
         label: 'Pricing Transparency',
         stage: 'decision',
-        weights: { local: 1, professional_services: 2, ecommerce: 3, saas: 3, content_creator: 2 },
+        weights: { local: 1, professional_services: 2, ecommerce: 3, saas: 3, content_creator: 2, influencer: 1 },
         lowScoreInsight: 'No visible pricing means prospects must contact you just to find out what you cost. Most will not bother.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -26,7 +26,7 @@ export const DECISION_MECHANISMS: MechanismConfig[] = [
         name: 'booking_cta',
         label: 'Booking / Demo / Consultation CTA',
         stage: 'decision',
-        weights: { local: 3, professional_services: 3, ecommerce: 1, saas: 3, content_creator: 2 },
+        weights: { local: 3, professional_services: 3, ecommerce: 1, saas: 3, content_creator: 2, influencer: 2 },
         lowScoreInsight: 'A prospect just decided they want to work with you, but there is no booking mechanism on your site. They will book with whoever makes it easiest.',
         evaluate(platforms, hub) {
             let hasBooking = false;
@@ -57,7 +57,7 @@ export const DECISION_MECHANISMS: MechanismConfig[] = [
         name: 'contact_accessibility',
         label: 'Contact Accessibility',
         stage: 'decision',
-        weights: { local: 3, professional_services: 3, ecommerce: 2, saas: 2, content_creator: 1 },
+        weights: { local: 3, professional_services: 3, ecommerce: 2, saas: 2, content_creator: 1, influencer: 2 },
         lowScoreInsight: 'It is too hard for customers to contact you. Ensure email, phone, and address are prominently displayed.',
         evaluate(platforms, hub) {
             let hasPhone = false;
@@ -93,7 +93,7 @@ export const DECISION_MECHANISMS: MechanismConfig[] = [
         name: 'privacy_compliance',
         label: 'Privacy & Compliance',
         stage: 'decision',
-        weights: { local: 1, professional_services: 2, ecommerce: 3, saas: 3, content_creator: 1 },
+        weights: { local: 1, professional_services: 2, ecommerce: 3, saas: 3, content_creator: 1, influencer: 1 },
         lowScoreInsight: 'You collect user data without a visible privacy policy. This is a GDPR/CCPA risk and immediate trust killer.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -116,7 +116,7 @@ export const DECISION_MECHANISMS: MechanismConfig[] = [
         name: 'platform_decision_signals',
         label: 'Platform-Specific Decision Signals',
         stage: 'decision',
-        weights: { local: 2, professional_services: 2, ecommerce: 3, saas: 2, content_creator: 3 },
+        weights: { local: 2, professional_services: 2, ecommerce: 3, saas: 2, content_creator: 3, influencer: 3 },
         lowScoreInsight: 'You are not utilizing platform-specific transaction features like shops or call-to-action buttons.',
         evaluate(platforms) {
             let count = 0;

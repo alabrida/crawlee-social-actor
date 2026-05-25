@@ -38,26 +38,29 @@ export function classifyBusiness(
         professional_services: 0,
         ecommerce: 0,
         saas: 0,
-        content_creator: 0
+        content_creator: 0,
+        influencer: 0
     };
 
     // ------------------------------------------
     // 1. Analyze JSON-LD Type (Strong Signal)
     // ------------------------------------------
-    const jsonLdType = hubForensics?.seo?.json_ld?.type || '';
+    const jsonLdSchema = hubForensics?.seo?.json_ld_schema || {};
+    const jsonLdType = jsonLdSchema.type || hubForensics?.seo?.json_ld?.type || '';
     if (jsonLdType) {
         signals.push(`JSON-LD Type: ${jsonLdType}`);
         const lowType = jsonLdType.toLowerCase();
 
-        if (lowType.includes('localbusiness') || lowType.includes('store') || lowType.includes('restaurant') || lowType.includes('hotel') || lowType.includes('medicalbusiness')) {
-            scores.local += 5;
+        if (lowType.includes('localbusiness') || lowType.includes('store') || lowType.includes('restaurant') || lowType.includes('hotel') || lowType.includes('medicalbusiness') || lowType.includes('dentist')) {
+            scores.local += 6;
             if (lowType.includes('store')) scores.ecommerce += 3;
         } else if (lowType.includes('professionalservice') || lowType.includes('attorney') || lowType.includes('accounting') || lowType.includes('consulting')) {
-            scores.professional_services += 5;
+            scores.professional_services += 6;
         } else if (lowType.includes('softwareapplication') || lowType.includes('webapplication')) {
             scores.saas += 6;
         } else if (lowType.includes('person') || lowType.includes('blogposting')) {
             scores.content_creator += 3;
+            scores.influencer += 3;
         }
     }
 
@@ -102,41 +105,97 @@ export function classifyBusiness(
     }
 
     // ------------------------------------------
-    // 5. Analyze Creator signals
+    // 5. Hero Section Headings (H1/H2 Hints)
     // ------------------------------------------
-    let hasAggregator = false;
+    const heroHeadings = hubForensics?.seo?.hero_headings || [];
+    if (heroHeadings.length > 0) {
+        heroHeadings.forEach((heading: string) => {
+            const lowText = heading.toLowerCase();
+            if (/\b(dentist|plumbing|plumber|restaurant|burger|pizza|salon|clinic|roofing|hvac|construction|cleaning|lawyer|attorney|clinic|booking|book a call)\b/i.test(lowText)) {
+                scores.local += 2;
+            }
+            if (/\b(consulting|consultant|agency|firm|advisory|solutions|partner|strategic|b2b)\b/i.test(lowText)) {
+                scores.professional_services += 2;
+            }
+            if (/\b(saas|software|platform|api|app|automate|integrations|analytics|dashboard|pricing plan)\b/i.test(lowText)) {
+                scores.saas += 3;
+            }
+            if (/\b(shop|store|collection|apparel|free shipping|cart|products|checkout|buy now|sale)\b/i.test(lowText)) {
+                scores.ecommerce += 2;
+            }
+            if (/\b(course|academy|class|masterclass|coaching|mentorship|training|newsletter|substack|patreon|community|skool)\b/i.test(lowText)) {
+                scores.content_creator += 2;
+            }
+            if (/\b(watch|podcast|vlog|creator|my channels|youtube|tiktok|instagram|socials|follow)\b/i.test(lowText)) {
+                scores.influencer += 1;
+            }
+        });
+    }
+
+    // ------------------------------------------
+    // 6. Analyze Creator vs. Influencer signals
+    // ------------------------------------------
+    let isInfluencerSignal = false;
+    let isCreatorSignal = false;
     let totalFollowers = 0;
     let platformCount = 0;
 
     Object.values(platforms).forEach((p: any) => {
         if (p && p.url) {
             platformCount++;
-            if (p.link_in_bio?.type === 'link_aggregator') {
-                hasAggregator = true;
+            
+            // Check link-in-bio tool
+            if (p.link_in_bio) {
+                const tool = (p.link_in_bio.tool || '').toLowerCase();
+                const linkUrl = (p.link_in_bio.url || '').toLowerCase();
+                
+                if (tool === 'linktree' || linkUrl.includes('linktr.ee') || linkUrl.includes('ltk.app') || linkUrl.includes('amazon.com/shop')) {
+                    scores.influencer += 3;
+                    isInfluencerSignal = true;
+                } else if (tool === 'stan' || tool === 'beacons' || linkUrl.includes('stan.store') || linkUrl.includes('beacons.ai') || linkUrl.includes('patreon.com') || linkUrl.includes('substack.com')) {
+                    scores.content_creator += 3;
+                    isCreatorSignal = true;
+                }
             }
+
+            // Check bio text
+            if (p.bio_analysis) {
+                const bioText = (p.bio_analysis.bioText || '').toLowerCase();
+                if (/\b(collab|sponsorship|sponsor|brand deal|pr|representation|management|media kit|inquiries|talent|mgmt)\b/i.test(bioText)) {
+                    scores.influencer += 3;
+                    isInfluencerSignal = true;
+                }
+                if (/\b(course|template|ebook|membership|skool|patreon|substack|newsletter|digital product|coaching|stan\.store|beacons\.ai)\b/i.test(bioText)) {
+                    scores.content_creator += 3;
+                    isCreatorSignal = true;
+                }
+            }
+
             if (typeof p.followers === 'number') totalFollowers += p.followers;
             else if (typeof p.subscribers === 'number') totalFollowers += p.subscribers;
         }
     });
 
-    if (hasAggregator) {
-        scores.content_creator += 5;
-        signals.push('Link aggregator (Linktree/Stan/Beacons) detected in bios');
-    }
-    if (totalFollowers > 10000) {
-        scores.content_creator += 3;
-        scores.saas += 1;
-        scores.ecommerce += 1;
+    if (totalFollowers > 50000) {
+        scores.influencer += 4;
+        signals.push(`Very high reach (${totalFollowers} aggregate followers), favoring influencer`);
+    } else if (totalFollowers > 10000) {
+        scores.influencer += 2;
+        scores.content_creator += 2;
         signals.push(`High follower reach: ${totalFollowers} aggregate followers`);
     }
+
     if (platformCount >= 3 && !hubForensics?.scrapeSuccess) {
-        // Active social but no core corporate site
-        scores.content_creator += 4;
+        if (isInfluencerSignal) {
+            scores.influencer += 4;
+        } else {
+            scores.content_creator += 4;
+        }
         signals.push('Multiple social profiles active but no business website detected');
     }
 
     // ------------------------------------------
-    // 6. Keywords in Description/Meta (Fallback)
+    // 7. Keywords in Description/Meta (Fallback)
     // ------------------------------------------
     const metaDesc = (hubForensics?.seo?.meta_description || '').toLowerCase();
     const title = (hubForensics?.seo?.title || '').toLowerCase();
@@ -154,8 +213,11 @@ export function classifyBusiness(
     if (combinedText.includes('local') || combinedText.includes('near me') || combinedText.includes('serving')) {
         scores.local += 1;
     }
-    if (combinedText.includes('creator') || combinedText.includes('influencer') || combinedText.includes('blogger') || combinedText.includes('vlog')) {
+    if (combinedText.includes('creator') || combinedText.includes('blogger') || combinedText.includes('vlog')) {
         scores.content_creator += 2;
+    }
+    if (combinedText.includes('influencer') || combinedText.includes('sponsor') || combinedText.includes('collab')) {
+        scores.influencer += 2;
     }
 
     // ------------------------------------------

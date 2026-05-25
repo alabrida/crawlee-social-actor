@@ -40,6 +40,49 @@ describe('Business Classifier', () => {
         expect(result.detected_class).toBe('saas');
         expect(result.confidence).toBe(1.0);
     });
+
+    it('should detect influencer based on high follower count and collab bio keywords', () => {
+        const platforms = {
+            instagram: {
+                url: 'https://instagram.com/influencer',
+                followers: 60000,
+                bio_analysis: {
+                    bioText: 'For business inquiries and brand sponsorships contact management',
+                    hasConversionCta: false,
+                    hasAuthorityProof: false,
+                    hasClearRevenueModel: false
+                },
+                link_in_bio: { tool: 'linktree', url: 'https://linktr.ee/influencer' }
+            }
+        };
+        const hubForensics = { scrapeSuccess: false }; // no website
+        const result = classifyBusiness(platforms, hubForensics);
+        expect(result.detected_class).toBe('influencer');
+    });
+
+    it('should detect content creator based on monetization link-in-bio tool and creator headings', () => {
+        const platforms = {
+            instagram: {
+                url: 'https://instagram.com/creator',
+                followers: 12000,
+                bio_analysis: {
+                    bioText: 'Join my new course and newsletter',
+                    hasConversionCta: true,
+                    hasAuthorityProof: false,
+                    hasClearRevenueModel: true
+                },
+                link_in_bio: { tool: 'stan', url: 'https://stan.store/creator' }
+            }
+        };
+        const hubForensics = {
+            scrapeSuccess: true,
+            seo: {
+                hero_headings: ['My Masterclass & Training Program', 'Get the digital templates']
+            }
+        };
+        const result = classifyBusiness(platforms, hubForensics);
+        expect(result.detected_class).toBe('content_creator');
+    });
 });
 
 describe('Scoring Engine', () => {

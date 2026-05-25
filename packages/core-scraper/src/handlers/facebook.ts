@@ -44,6 +44,7 @@ export async function handle(
     let hasReviews = false;
     let ctaButtonType: string | null = null;
     let isBlocked = false;
+    let isPersonalProfile = false;
 
     if (apiData) {
         fullName = apiData.name;
@@ -66,6 +67,7 @@ export async function handle(
         isBlocked = detectBlock(content);
 
         if (!isBlocked) {
+            isPersonalProfile = url.includes('/profile.php') || url.includes('/people/') || content.toLowerCase().includes('add friend') || content.toLowerCase().includes('mutual friends');
             try {
                 // Page Name
                 const title = await page.title().catch(() => '');
@@ -139,6 +141,7 @@ export async function handle(
         scrapedAt: new Date().toISOString(),
         data: {
             username,
+            isPersonalProfile,
             fullName,
             biography,
             category,

@@ -68,6 +68,59 @@ export async function handle(
     const metaDescription = await page.locator('meta[name="description"]').getAttribute('content').catch(() => '') || '';
     const canonicalUrl = await page.locator('link[rel="canonical"]').getAttribute('href').catch(() => '') || '';
 
+    // Extract Hero Headings (first 5 unique H1 and H2 elements)
+    const heroHeadings = await page.evaluate(() => {
+        const headings: string[] = [];
+        const elements = document.querySelectorAll('h1, h2');
+        for (const el of Array.from(elements)) {
+            const text = el.textContent?.trim();
+            if (text && text.length > 3 && text.length < 100) {
+                if (!headings.includes(text)) {
+                    headings.push(text);
+                }
+            }
+            if (headings.length >= 5) break;
+        }
+        return headings;
+    }).catch(() => [] as string[]);
+
+    // Extract and validate Schema.org JSON-LD
+    const jsonLdSchema = await page.evaluate(() => {
+        const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+        const schemas = scripts.map(s => {
+            try {
+                const parsed = JSON.parse(s.textContent || '');
+                if (parsed && typeof parsed === 'object') {
+                    return {
+                        context: parsed['@context'] || null,
+                        type: parsed['@type'] || null,
+                        name: parsed.name || null,
+                        description: parsed.description || null,
+                        address: parsed.address || null,
+                        telephone: parsed.telephone || null,
+                        priceRange: parsed.priceRange || null,
+                        sameAs: Array.isArray(parsed.sameAs) ? parsed.sameAs : (parsed.sameAs ? [parsed.sameAs] : [])
+                    };
+                }
+            } catch {}
+            return null;
+        }).filter(Boolean);
+        return schemas.length > 0 ? schemas[0] : null;
+    }).catch(() => null);
+
+    // Generate suggested keywords for SERP intake query
+    const suggestedKeywords: string[] = [];
+    if (title) {
+        const cleanTitle = title.split(/[|:-]/)[0].trim();
+        suggestedKeywords.push(cleanTitle);
+        heroHeadings.slice(0, 3).forEach((h: string) => {
+            const cleanH = h.replace(/[^\w\s]/g, '').trim();
+            if (cleanH && cleanH.split(' ').length <= 4) {
+                suggestedKeywords.push(`${cleanTitle} ${cleanH}`);
+            }
+        });
+    }
+
     // Extract Social Links
     const socialLinks: Record<string, string> = {};
     const anchors = await page.locator('a[href]').evaluateAll(els => els.map(el => (el as HTMLAnchorElement).href));
@@ -119,7 +172,10 @@ export async function handle(
                 title,
                 meta_description: metaDescription,
                 canonical: canonicalUrl,
-                json_ld: { present: jsonLd, type: jsonLd ? 'Article' : null }
+                json_ld: { present: jsonLd, type: jsonLdSchema ? (jsonLdSchema.type as string) : null },
+                json_ld_schema: jsonLdSchema,
+                hero_headings: heroHeadings,
+                suggested_keywords: suggestedKeywords
             },
             analytics: { google_analytics: ga, tag_manager: content.includes('gtm.js') },
             blog: { detected: hasBlog, post_count: hasBlog ? 5 : 0 },

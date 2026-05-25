@@ -41,6 +41,20 @@ describe('General Platform Handler v2', () => {
                 goto: vi.fn().mockResolvedValue({ status: () => 200 }),
                 content: vi.fn().mockResolvedValue('<html>UA-123456</html>'),
                 title: vi.fn().mockResolvedValue('Test Title'),
+                evaluate: vi.fn().mockImplementation(async (fn) => {
+                    const fnStr = fn.toString();
+                    if (fnStr.includes('h1, h2')) {
+                        return ['Hero Heading 1', 'Hero Heading 2'];
+                    }
+                    if (fnStr.includes('application/ld+json')) {
+                        return {
+                            context: 'https://schema.org',
+                            type: 'LocalBusiness',
+                            name: 'Test Business'
+                        };
+                    }
+                    return null;
+                }),
                 locator: vi.fn((selector) => {
                     if (selector === 'meta[name="description"]') {
                         return { getAttribute: vi.fn().mockResolvedValue('Test desc') };

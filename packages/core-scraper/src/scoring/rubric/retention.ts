@@ -5,7 +5,7 @@ export const RETENTION_MECHANISMS: MechanismConfig[] = [
         name: 'content_consistency',
         label: 'Content Consistency',
         stage: 'retention',
-        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 3 },
+        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 3, influencer: 3 },
         lowScoreInsight: 'You post infrequently. Retention and community growth depend on a steady content calendar.',
         evaluate(platforms) {
             let activePlatforms = 0;
@@ -40,7 +40,7 @@ export const RETENTION_MECHANISMS: MechanismConfig[] = [
         name: 'cross_platform_connectivity',
         label: 'Cross-Platform Connectivity',
         stage: 'retention',
-        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 3 },
+        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 3, influencer: 3 },
         lowScoreInsight: 'Your social profiles and website do not link to each other. Users cannot follow you across the web.',
         evaluate(platforms, hub) {
             let socialLinksCount = 0;
@@ -75,7 +75,7 @@ export const RETENTION_MECHANISMS: MechanismConfig[] = [
         name: 'community_presence',
         label: 'Community Presence',
         stage: 'retention',
-        weights: { local: 1, professional_services: 2, ecommerce: 2, saas: 3, content_creator: 3 },
+        weights: { local: 1, professional_services: 2, ecommerce: 2, saas: 3, content_creator: 3, influencer: 2 },
         lowScoreInsight: 'No community channels detected. Build customer stickiness by hosting interactive communities.',
         evaluate(platforms, hub) {
             let communityCount = 0;
@@ -116,7 +116,7 @@ export const RETENTION_MECHANISMS: MechanismConfig[] = [
         name: 'gbp_review_engagement',
         label: 'GBP Review Engagement',
         stage: 'retention',
-        weights: { local: 3, professional_services: 2, ecommerce: 2, saas: 1, content_creator: 1 },
+        weights: { local: 3, professional_services: 2, ecommerce: 2, saas: 1, content_creator: 1, influencer: 1 },
         lowScoreInsight: 'Reviews exist but you respond to few or none. Responding build client retention and search ranking authority.',
         evaluate(platforms) {
             const gbp = platforms.google_business_profile || platforms.google_maps;
@@ -142,7 +142,7 @@ export const RETENTION_MECHANISMS: MechanismConfig[] = [
         name: 'content_organization',
         label: 'Content Organization',
         stage: 'retention',
-        weights: { local: 1, professional_services: 2, ecommerce: 2, saas: 2, content_creator: 3 },
+        weights: { local: 1, professional_services: 2, ecommerce: 2, saas: 2, content_creator: 3, influencer: 3 },
         lowScoreInsight: 'Your social content is disorganized. Curation helps direct viewers through the marketing funnel.',
         evaluate(platforms) {
             let count = 0;

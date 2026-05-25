@@ -5,7 +5,7 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
         name: 'reviews_ratings',
         label: 'Reviews & Ratings',
         stage: 'consideration',
-        weights: { local: 3, professional_services: 2, ecommerce: 3, saas: 2, content_creator: 1 },
+        weights: { local: 3, professional_services: 2, ecommerce: 3, saas: 2, content_creator: 1, influencer: 2 },
         lowScoreInsight: 'You have few reviews or low average ratings. Prospects will choose competitors with richer social proof.',
         evaluate(platforms) {
             let totalReviews = 0;
@@ -43,7 +43,7 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
         name: 'case_studies',
         label: 'Case Studies & Portfolio',
         stage: 'consideration',
-        weights: { local: 1, professional_services: 3, ecommerce: 1, saas: 3, content_creator: 2 },
+        weights: { local: 1, professional_services: 3, ecommerce: 1, saas: 3, content_creator: 2, influencer: 1 },
         lowScoreInsight: 'You have no proof your services work. A prospect comparing you to a competitor with detailed case studies will choose them every time.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -64,7 +64,7 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
         name: 'testimonials',
         label: 'Testimonials',
         stage: 'consideration',
-        weights: { local: 2, professional_services: 3, ecommerce: 2, saas: 3, content_creator: 2 },
+        weights: { local: 2, professional_services: 3, ecommerce: 2, saas: 3, content_creator: 2, influencer: 2 },
         lowScoreInsight: 'You are asking prospects to trust you based on your own claims. Client testimonials are 12x more persuasive.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -85,7 +85,7 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
         name: 'content_recency',
         label: 'Content Recency (Cross-Platform)',
         stage: 'consideration',
-        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 3 },
+        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 3, influencer: 3 },
         lowScoreInsight: 'Your social channels have not posted recently. An inactive online presence signals an inactive business.',
         evaluate(platforms) {
             let minDaysAgo: number | null = null;
@@ -116,7 +116,7 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
         name: 'authority_signals',
         label: 'Authority Signals (Verified)',
         stage: 'consideration',
-        weights: { local: 1, professional_services: 3, ecommerce: 2, saas: 2, content_creator: 3 },
+        weights: { local: 1, professional_services: 3, ecommerce: 2, saas: 2, content_creator: 3, influencer: 2 },
         lowScoreInsight: 'You have no verified credentials or authority proof visible in bios. Prospects must take a leap of faith to trust you.',
         evaluate(platforms) {
             let verifiedCount = 0;
@@ -143,7 +143,7 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
         name: 'external_link_quality',
         label: 'External Link Quality',
         stage: 'consideration',
-        weights: { local: 2, professional_services: 2, ecommerce: 3, saas: 2, content_creator: 3 },
+        weights: { local: 2, professional_services: 2, ecommerce: 3, saas: 2, content_creator: 3, influencer: 3 },
         lowScoreInsight: 'Your social profile links are broken or point to non-hub pages. Every profile visit is a missed funnel opportunity.',
         evaluate(platforms) {
             let workingLinks = 0;
@@ -178,24 +178,37 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
         name: 'linkedin_presence',
         label: 'LinkedIn Professional Presence',
         stage: 'consideration',
-        weights: { local: 1, professional_services: 3, ecommerce: 1, saas: 2, content_creator: 2 },
+        weights: { local: 1, professional_services: 3, ecommerce: 1, saas: 2, content_creator: 2, influencer: 1 },
         lowScoreInsight: 'LinkedIn is your sales catalog for B2B. An incomplete or dormant profile loses deals before the first meeting is scheduled.',
         evaluate(platforms) {
             const li = platforms.linkedin;
             if (!li || !li.url) {
-                return { score: 0, evidence: 'No LinkedIn profile found' };
+                return { score: 0, evidence: 'No LinkedIn presence found' };
             }
-            const hasAbout = li.about_length && li.about_length > 0;
-            const hasConnections = li.connections && li.connections >= 100;
-            const hasFeatured = li.featured_section;
+            if (li.isPersonalProfile === false) {
+                const hasFollowers = li.followerCount && li.followerCount > 0;
+                const hasWebsite = li.websiteUrl;
+                const hasDescription = li.about_length && li.about_length > 0;
+                if (!hasWebsite && !hasDescription) {
+                    return { score: 1, evidence: 'LinkedIn Company Page exists but lacks website link and description' };
+                }
+                if (hasWebsite && !hasDescription) {
+                    return { score: 2, evidence: 'LinkedIn Company Page has website link but lacks detailed description' };
+                }
+                return { score: 3, evidence: `LinkedIn Company Page optimized: description present, website linked (${li.websiteUrl}), follower count: ${li.followerCount || 0}` };
+            } else {
+                const hasAbout = li.about_length && li.about_length > 0;
+                const hasConnections = (li.connectionsCount || li.connections) && (li.connectionsCount || li.connections) >= 100;
+                const hasFeatured = li.featured_section;
 
-            if (!hasAbout && !hasConnections) {
-                return { score: 1, evidence: 'LinkedIn profile exists but is minimal/incomplete' };
+                if (!hasAbout && !hasConnections) {
+                    return { score: 1, evidence: 'LinkedIn profile exists but is minimal/incomplete' };
+                }
+                if (hasAbout && hasConnections && !hasFeatured) {
+                    return { score: 2, evidence: 'LinkedIn profile complete with About section and 100+ connections' };
+                }
+                return { score: 3, evidence: 'LinkedIn optimized: Headline, About, connections, and Featured content active' };
             }
-            if (hasAbout && hasConnections && !hasFeatured) {
-                return { score: 2, evidence: 'LinkedIn profile complete with About section and 100+ connections' };
-            }
-            return { score: 3, evidence: 'LinkedIn optimized: Headline, About, 500+ connections, and Featured content active' };
         }
     }
 ];

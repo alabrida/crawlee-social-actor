@@ -8,7 +8,8 @@ export type BusinessClass =
     | 'professional_services'
     | 'ecommerce'
     | 'saas'
-    | 'content_creator';
+    | 'content_creator'
+    | 'influencer';
 
 export interface MechanismConfig {
     name: string;

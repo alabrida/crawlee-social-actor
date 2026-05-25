@@ -46,6 +46,13 @@ export const STAGE_WEIGHTS: Record<BusinessClass, Record<string, number>> = {
         decision: 0.15,
         conversion: 0.25,
         retention: 0.15
+    },
+    influencer: {
+        awareness: 0.35,
+        consideration: 0.25,
+        decision: 0.15,
+        conversion: 0.15,
+        retention: 0.10
     }
 };
 

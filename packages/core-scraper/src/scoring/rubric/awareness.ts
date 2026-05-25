@@ -5,7 +5,7 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
         name: 'website_ssl',
         label: 'Website exists & SSL',
         stage: 'awareness',
-        weights: { local: 3, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 2 },
+        weights: { local: 3, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 2, influencer: 1 },
         lowScoreInsight: 'You have no home base on the web or it lacks encryption. Every other platform you are on links to nowhere or warns visitors about security risks.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) {
@@ -26,7 +26,7 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
         name: 'seo_foundations',
         label: 'SEO Foundations',
         stage: 'awareness',
-        weights: { local: 3, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 1 },
+        weights: { local: 3, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 1, influencer: 1 },
         lowScoreInsight: 'Search engines cannot understand what your business does. You are invisible to intent-based search.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -50,7 +50,7 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
         name: 'analytics_tracking',
         label: 'Analytics & Tracking',
         stage: 'awareness',
-        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 2 },
+        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 2, influencer: 1 },
         lowScoreInsight: 'You cannot optimize what you do not measure. No analytics means you are flying blind on every marketing dollar.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
@@ -74,7 +74,7 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
         name: 'serp_discoverability',
         label: 'SERP Discoverability',
         stage: 'awareness',
-        weights: { local: 3, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 1 },
+        weights: { local: 3, professional_services: 3, ecommerce: 3, saas: 3, content_creator: 1, influencer: 2 },
         lowScoreInsight: 'When someone Googles your brand name, they do not find you. That is immediate lost revenue from word-of-mouth referrals.',
         evaluate(platforms, hub, serp) {
             if (!serp || serp.serpRankingPosition === undefined || serp.serpRankingPosition === null) {
@@ -94,7 +94,7 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
         name: 'gbp_presence',
         label: 'Google Business Profile Presence',
         stage: 'awareness',
-        weights: { local: 3, professional_services: 2, ecommerce: 1, saas: 1, content_creator: 1 },
+        weights: { local: 3, professional_services: 2, ecommerce: 1, saas: 1, content_creator: 1, influencer: 1 },
         lowScoreInsight: 'Your Google Maps listing is your digital storefront. 46% of searches have local intent — you are missing nearly half of them.',
         evaluate(platforms) {
             const gbp = platforms.google_business_profile || platforms.google_maps;
@@ -114,7 +114,7 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
         name: 'social_presence',
         label: 'Social Platform Presence',
         stage: 'awareness',
-        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 2, content_creator: 3 },
+        weights: { local: 2, professional_services: 3, ecommerce: 3, saas: 2, content_creator: 3, influencer: 3 },
         lowScoreInsight: 'You have very few active social profiles. Your competitors have multiple touchpoints where prospects can discover them.',
         evaluate(platforms) {
             const activePlatforms = Object.keys(platforms).filter(key => platforms[key] && platforms[key].url);
@@ -135,7 +135,7 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
         name: 'follower_reach',
         label: 'Aggregate Follower Reach',
         stage: 'awareness',
-        weights: { local: 2, professional_services: 2, ecommerce: 3, saas: 2, content_creator: 3 },
+        weights: { local: 2, professional_services: 2, ecommerce: 3, saas: 2, content_creator: 3, influencer: 3 },
         lowScoreInsight: 'Your total online audience is extremely small. Every piece of content you create reaches very few people.',
         evaluate(platforms) {
             let total = 0;
@@ -160,7 +160,7 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
         name: 'content_marketing',
         label: 'Content Marketing (Blog)',
         stage: 'awareness',
-        weights: { local: 1, professional_services: 3, ecommerce: 2, saas: 3, content_creator: 2 },
+        weights: { local: 1, professional_services: 3, ecommerce: 2, saas: 3, content_creator: 2, influencer: 1 },
         lowScoreInsight: 'No active blog/articles. Content marketing compounds — every month you do not publish is a month competitors build SEO authority.',
         evaluate(platforms, hub) {
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
