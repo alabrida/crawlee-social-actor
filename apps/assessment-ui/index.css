@@ -1,27 +1,27 @@
-/* Reset & Core Design Tokens */
+/* Reset & Core Design Tokens matching richardnorwood.com */
 :root {
-    --bg-app: #09090e;
-    --bg-surface: rgba(22, 22, 34, 0.45);
-    --bg-surface-solid: #151522;
-    --border-color: rgba(255, 255, 255, 0.08);
-    --border-glow: rgba(99, 102, 241, 0.15);
+    --bg-app: #060b16;
+    --bg-surface: rgba(15, 26, 46, 0.7);
+    --bg-surface-solid: #0f1a2e;
+    --border-color: rgba(136, 153, 180, 0.15);
+    --border-glow: rgba(240, 180, 41, 0.15);
     
-    /* Harmonic Color Palettes (HSL tailored) */
-    --accent-primary: #6366f1; /* Indigo */
-    --accent-primary-hover: #4f46e5;
-    --accent-secondary: #06b6d4; /* Cyan */
+    /* Harmonic Color Palettes (Gold + Mint) */
+    --accent-primary: #f0b429; /* Gold */
+    --accent-primary-hover: #d49a1a;
+    --accent-secondary: #20c997; /* Mint / Teal */
     --accent-success: #10b981; /* Emerald */
     --accent-warning: #f59e0b; /* Amber */
     --accent-error: #ef4444; /* Rose/Red */
     
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-meta: #64748b;
+    --text-primary: #e8edf5;
+    --text-secondary: #8899b4;
+    --text-meta: #74839e;
     --font-heading: 'Outfit', 'Inter', sans-serif;
     --font-body: 'Inter', sans-serif;
     
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --transition-smooth: all 0.25s cubic-bezier(.16, 1, .3, 1);
+    --transition-bounce: all 0.4s cubic-bezier(.34, 1.56, .64, 1);
     --sidebar-width: 440px;
 }
 
@@ -48,7 +48,7 @@ body::before {
     left: -10%;
     width: 60%;
     height: 60%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(240, 180, 41, 0.08) 0%, transparent 70%);
     z-index: -1;
     pointer-events: none;
 }
@@ -60,7 +60,7 @@ body::after {
     right: -10%;
     width: 50%;
     height: 50%;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(32, 201, 151, 0.06) 0%, transparent 70%);
     z-index: -1;
     pointer-events: none;
 }
@@ -145,7 +145,7 @@ body::after {
 
 .dashboard-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(99, 102, 241, 0.25);
+    border-color: rgba(240, 180, 41, 0.25);
     box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.5), 0 0 15px var(--border-glow);
 }
 
@@ -155,7 +155,7 @@ body::after {
     right: 0;
     width: 120px;
     height: 120px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(240, 180, 41, 0.1) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -178,8 +178,8 @@ body::after {
 }
 
 .main-score-card {
-    background: linear-gradient(135deg, rgba(22, 22, 34, 0.6) 0%, rgba(99, 102, 241, 0.1) 100%);
-    border-color: rgba(99, 102, 241, 0.2);
+    background: linear-gradient(135deg, rgba(15, 26, 46, 0.6) 0%, rgba(240, 180, 41, 0.1) 100%);
+    border-color: rgba(240, 180, 41, 0.2);
 }
 
 .score-display {
@@ -193,7 +193,7 @@ body::after {
     font-weight: 800;
     font-size: 4rem;
     line-height: 1;
-    background: linear-gradient(135deg, #ffffff, #a5b4fc);
+    background: linear-gradient(135deg, #ffffff, #f7d070);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -420,7 +420,7 @@ body::after {
 
 .btn-primary:hover {
     transform: scale(1.03);
-    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 8px 20px rgba(240, 180, 41, 0.3);
 }
 
 .btn-glow {
@@ -466,12 +466,12 @@ body::after {
 }
 
 .btn-highlight {
-    border-color: rgba(99, 102, 241, 0.4);
-    color: #a5b4fc;
+    border-color: rgba(240, 180, 41, 0.4);
+    color: #f7d070;
 }
 
 .btn-highlight:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(240, 180, 41, 0.1);
     border-color: var(--accent-primary);
 }
 
@@ -536,7 +536,7 @@ body::after {
 /* Text helpers */
 .text-success { color: var(--accent-success); }
 .text-error { color: var(--accent-error); }
-.text-highlight { color: #a5b4fc; }
+.text-highlight { color: #f7d070; }
 .text-meta { color: var(--text-meta); }
 
 /* SIDEBAR: GLOWING GLASSMORPHIC DRAWER */
@@ -580,7 +580,7 @@ body::after {
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
     border-left: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8), -1px 0 0 rgba(99, 102, 241, 0.15);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8), -1px 0 0 rgba(240, 180, 41, 0.15);
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
@@ -682,8 +682,8 @@ input[type="url"], input[type="text"] {
 input[type="url"]:focus, input[type="text"]:focus {
     outline: none;
     border-color: var(--accent-primary);
-    background: rgba(99, 102, 241, 0.05);
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+    background: rgba(240, 180, 41, 0.05);
+    box-shadow: 0 0 10px rgba(240, 180, 41, 0.2);
 }
 
 .input-with-action {
@@ -700,12 +700,12 @@ input[type="url"]:focus, input[type="text"]:focus {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: rgba(99, 102, 241, 0.05);
-    border: 1px solid rgba(99, 102, 241, 0.15);
+    background: rgba(240, 180, 41, 0.05);
+    border: 1px solid rgba(240, 180, 41, 0.15);
     padding: 0.75rem 1rem;
     border-radius: 8px;
     font-size: 0.8rem;
-    color: #a5b4fc;
+    color: #f7d070;
 }
 
 .preflight-success-block {
@@ -797,9 +797,9 @@ input[type="url"]:focus, input[type="text"]:focus {
 }
 
 .btn-toggle-link:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: #a5b4fc;
-    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(240, 180, 41, 0.1);
+    color: #f7d070;
+    border-color: rgba(240, 180, 41, 0.4);
     transform: scale(1.05);
 }
 
@@ -868,9 +868,9 @@ input[type="url"]:focus, input[type="text"]:focus {
 }
 
 .keyword-tag {
-    background: rgba(99, 102, 241, 0.1);
-    color: #a5b4fc;
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: rgba(240, 180, 41, 0.1);
+    color: #f7d070;
+    border: 1px solid rgba(240, 180, 41, 0.2);
     border-radius: 6px;
     padding: 0.35rem 0.6rem 0.35rem 0.75rem;
     font-size: 0.8rem;
@@ -882,8 +882,8 @@ input[type="url"]:focus, input[type="text"]:focus {
 }
 
 .keyword-tag:hover {
-    background: rgba(99, 102, 241, 0.18);
-    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(240, 180, 41, 0.18);
+    border-color: rgba(240, 180, 41, 0.4);
 }
 
 .remove-tag-btn {
@@ -978,7 +978,7 @@ input[type="url"]:focus, input[type="text"]:focus {
 .spinner {
     width: 48px;
     height: 48px;
-    border: 3px solid rgba(99, 102, 241, 0.1);
+    border: 3px solid rgba(240, 180, 41, 0.1);
     border-top: 3px solid var(--accent-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -1045,7 +1045,7 @@ input[type="url"]:focus, input[type="text"]:focus {
 .modal-card {
     background: #0f0f18;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.05);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(240, 180, 41, 0.05);
     border-radius: 16px;
     max-width: 460px;
     width: 100%;
@@ -1153,7 +1153,7 @@ input[type="url"]:focus, input[type="text"]:focus {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: #ffffff;
     border: none;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 8px 24px rgba(240, 180, 41, 0.4);
     cursor: pointer;
     display: none;
     align-items: center;
@@ -1213,7 +1213,7 @@ input[type="url"]:focus, input[type="text"]:focus {
 /* Intake Mode Centered Screen Styles */
 body.intake-mode-active {
     background: #06060a;
-    background-image: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
+    background-image: radial-gradient(circle at 50% 50%, rgba(240, 180, 41, 0.08) 0%, transparent 60%);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1245,7 +1245,7 @@ body.intake-mode-active .app-container {
     border: 1px solid var(--border-color);
     border-radius: 16px;
     background: rgba(15, 15, 24, 0.7);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(240, 180, 41, 0.15);
     overflow: hidden;
 }
 
