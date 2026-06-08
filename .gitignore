@@ -30,3 +30,7 @@ storage/
 
 # Antigravity CLI
 .antigravitycli/
+
+# Model/Agent files
+[Gg]emini.md
+
