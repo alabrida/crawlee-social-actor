@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body class="dark-mode">
+    <canvas id="starfield-canvas" class="starfield-canvas" aria-hidden="true"></canvas>
     <div class="app-container">
         <!-- Sidebar Toggle Trigger Button for Mobile -->
         <button id="mobile-sidebar-btn" class="floating-btn" aria-label="Open settings">
@@ -42,7 +43,15 @@
                         <span class="score-max">/ 10</span>
                     </div>
                     <p class="stat-meta">Based on 7 evaluated channels</p>
-                    <div class="badge badge-warning">Needs Optimization</div>
+                    <div class="badge badge-warning" id="overall-badge-display">Needs Optimization</div>
+                    
+                    <!-- Dynamic Overall Score Breakdown -->
+                    <div class="overall-score-breakdown" id="overall-breakdown-container">
+                        <div class="breakdown-title">Score Contribution Factors</div>
+                        <div class="factor-list" id="overall-factor-list">
+                            <!-- Filled dynamically by JS -->
+                        </div>
+                    </div>
                 </div>
 
                 <div class="dashboard-card stat-card">
@@ -55,6 +64,43 @@
                             <div id="class-confidence-fill" class="confidence-fill" style="width: 87%;"></div>
                         </div>
                     </div>
+                    
+                    <!-- Dynamic Classification Breakdown -->
+                    <div class="classification-breakdown" id="class-breakdown-container">
+                        <div class="breakdown-title">Diagnostic Sub-segmentation</div>
+                        <div class="breakdown-bars">
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span class="breakdown-label" id="breakdown-label-1">Organic Media (Culinary Content)</span>
+                                    <span class="breakdown-percent" id="breakdown-val-1">50%</span>
+                                </div>
+                                <div class="breakdown-track">
+                                    <div class="breakdown-fill" id="breakdown-fill-1" style="width: 50%;"></div>
+                                </div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span class="breakdown-label" id="breakdown-label-2">Local Footprint (Maps & GBP)</span>
+                                    <span class="breakdown-percent" id="breakdown-val-2">30%</span>
+                                </div>
+                                <div class="breakdown-track">
+                                    <div class="breakdown-fill" id="breakdown-fill-2" style="width: 30%;"></div>
+                                </div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span class="breakdown-label" id="breakdown-label-3">Transactional Engine (Direct Booking)</span>
+                                    <span class="breakdown-percent" id="breakdown-val-3">20%</span>
+                                </div>
+                                <div class="breakdown-track">
+                                    <div class="breakdown-fill" id="breakdown-fill-3" style="width: 20%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="breakdown-note" id="breakdown-explanation">
+                            Restaurateurs act as digital creators to capture organic local attention and funnel social followers into physical dining tables.
+                        </p>
+                    </div>
                 </div>
 
                 <div class="dashboard-card stat-card">
@@ -62,6 +108,14 @@
                     <div class="value-display text-error" id="weakest-stage-display">Conversion</div>
                     <p class="stat-meta">Highest priority gap identified</p>
                     <p class="card-desc" id="weakest-stage-desc">Direct monetization channels (shop/booking) are missing or poorly connected.</p>
+                    
+                    <!-- Dynamic Weakest Stage Breakdown -->
+                    <div class="weakest-stage-breakdown" id="weakest-breakdown-container">
+                        <div class="breakdown-title">Primary Gaps Identified</div>
+                        <div class="gap-list" id="weakest-gap-list">
+                            <!-- Filled dynamically by JS -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Row 2: Journey Stage Details -->
@@ -284,7 +338,14 @@
                                         <div class="platform-name">LinkedIn Profile / Page</div>
                                         <div class="oauth-status" data-connected="false">Not Connected</div>
                                         <div class="direct-url-container hidden">
-                                            <input type="url" class="platform-direct-url" placeholder="https://linkedin.com/company/...">
+                                            <div class="input-sub-group">
+                                                <span class="sub-label">Personal Profile URL</span>
+                                                <input type="url" class="platform-direct-url" placeholder="https://linkedin.com/in/username">
+                                            </div>
+                                            <div class="input-sub-group">
+                                                <span class="sub-label">Company/Business Page URL</span>
+                                                <input type="url" class="platform-direct-url" placeholder="https://linkedin.com/company/name">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -304,7 +365,14 @@
                                         <div class="platform-name">Facebook Pages</div>
                                         <div class="oauth-status" data-connected="true">Connected: /MilosOriginal...</div>
                                         <div class="direct-url-container hidden">
-                                            <input type="url" class="platform-direct-url" placeholder="https://facebook.com/...">
+                                            <div class="input-sub-group">
+                                                <span class="sub-label">Personal Profile URL</span>
+                                                <input type="url" class="platform-direct-url" placeholder="https://facebook.com/username">
+                                            </div>
+                                            <div class="input-sub-group">
+                                                <span class="sub-label">Business Page/Group URL</span>
+                                                <input type="url" class="platform-direct-url" placeholder="https://facebook.com/pages/name">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

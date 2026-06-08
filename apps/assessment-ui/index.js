@@ -38,7 +38,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const classConfidenceFill = document.getElementById('class-confidence-fill');
     const weakestStageDisplay = document.getElementById('weakest-stage-display');
     const weakestStageDesc = document.getElementById('weakest-stage-desc');
+    const weakestGapList = document.getElementById('weakest-gap-list');
     const scrapedUrlIndicator = document.getElementById('scraped-url-indicator');
+    
+    // Overall score breakdown selectors
+    const overallBadgeDisplay = document.getElementById('overall-badge-display');
+    const overallFactorList = document.getElementById('overall-factor-list');
+    
+    // Classification breakdown selectors
+    const breakdownLabel1 = document.getElementById('breakdown-label-1');
+    const breakdownVal1 = document.getElementById('breakdown-val-1');
+    const breakdownFill1 = document.getElementById('breakdown-fill-1');
+    const breakdownLabel2 = document.getElementById('breakdown-label-2');
+    const breakdownVal2 = document.getElementById('breakdown-val-2');
+    const breakdownFill2 = document.getElementById('breakdown-fill-2');
+    const breakdownLabel3 = document.getElementById('breakdown-label-3');
+    const breakdownVal3 = document.getElementById('breakdown-val-3');
+    const breakdownFill3 = document.getElementById('breakdown-fill-3');
+    const breakdownExplanation = document.getElementById('breakdown-explanation');
     
     const scoreAwareness = document.getElementById('score-awareness');
     const barAwareness = document.getElementById('bar-awareness');
@@ -294,14 +311,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Direct URL toggle button
         const btnToggleLink = item.querySelector('.btn-toggle-link');
         const urlContainer = item.querySelector('.direct-url-container');
-        const urlInput = item.querySelector('.platform-direct-url');
+        const urlInputs = item.querySelectorAll('.platform-direct-url');
         
-        if (btnToggleLink && urlContainer && urlInput) {
+        if (btnToggleLink && urlContainer && urlInputs.length > 0) {
             btnToggleLink.addEventListener('click', () => {
                 const isInputVisible = !urlContainer.classList.contains('hidden');
                 
                 if (isInputVisible) {
-                    // Hide input field and restore OAuth buttons
+                    // Hide input fields and restore OAuth buttons
                     urlContainer.classList.add('hidden');
                     btnToggleLink.classList.remove('active-link');
                     if (btn) btn.classList.remove('hidden');
@@ -315,33 +332,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         statusEl.className = 'oauth-status';
                     }
                 } else {
-                    // Show input field and hide OAuth button
+                    // Show input fields and hide OAuth button
                     urlContainer.classList.remove('hidden');
                     btnToggleLink.classList.add('active-link');
                     if (btn) btn.classList.add('hidden');
                     
-                    const val = urlInput.value.trim();
-                    if (val) {
+                    const hasValue = Array.from(urlInputs).some(inp => inp.value.trim());
+                    if (hasValue) {
                         statusEl.textContent = 'URL Configured';
                         statusEl.className = 'oauth-status text-success';
                     } else {
                         statusEl.textContent = 'Direct URL Configuration';
                         statusEl.className = 'oauth-status text-highlight';
                     }
-                    urlInput.focus();
+                    urlInputs[0].focus();
                 }
             });
             
-            // Sync status feedback text to user typing in direct URL field
-            urlInput.addEventListener('input', () => {
-                const val = urlInput.value.trim();
-                if (val) {
-                    statusEl.textContent = 'URL Configured';
-                    statusEl.className = 'oauth-status text-success';
-                } else {
-                    statusEl.textContent = 'Direct URL Configuration';
-                    statusEl.className = 'oauth-status text-highlight';
-                }
+            // Sync status feedback text to user typing in any direct URL field
+            urlInputs.forEach(inpEl => {
+                inpEl.addEventListener('input', () => {
+                    const hasValue = Array.from(urlInputs).some(inp => inp.value.trim());
+                    if (hasValue) {
+                        statusEl.textContent = 'URL Configured';
+                        statusEl.className = 'oauth-status text-success';
+                    } else {
+                        statusEl.textContent = 'Direct URL Configuration';
+                        statusEl.className = 'oauth-status text-highlight';
+                    }
+                });
             });
         }
     });
@@ -462,11 +481,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Dynamic dashboard scoring update
         overallScoreVal.textContent = "6.8";
         overallScoreVal.style.animation = "scaleIn 0.5s ease";
+        if (overallBadgeDisplay) {
+            overallBadgeDisplay.textContent = "Growing Presence";
+            overallBadgeDisplay.className = "badge badge-success";
+        }
+        updateOverallScoreBreakdown(6.8);
         
         const detectedClassStr = preflightClassVal.textContent;
         businessClassDisplay.textContent = detectedClassStr;
         classConfidenceVal.textContent = "94%";
         classConfidenceFill.style.width = "94%";
+        
+        // Update classification breakdown sub-segmentation
+        updateClassificationBreakdown(detectedClassStr);
 
         // Update stages
         scoreAwareness.textContent = "8.5 / 10";
@@ -488,16 +515,617 @@ document.addEventListener('DOMContentLoaded', () => {
         weakestStageDisplay.textContent = "Conversion";
         weakestStageDisplay.className = "value-display text-warning";
         weakestStageDesc.textContent = "Conversion has improved via Google booking integration, but shop and pricing page tiers can be optimized further.";
+        updateWeakestStageBreakdown("Conversion");
 
         // LinkedIn is now simulated as active card
         const linkedinCard = document.querySelector('.channels-grid .channel-card:last-child');
-        linkedinCard.className = "channel-card active-channel";
-        linkedinCard.querySelector('.channel-status').className = "channel-status badge-success";
-        linkedinCard.querySelector('.channel-status').textContent = "OK";
-        linkedinCard.querySelector('.channel-body').innerHTML = `
-            <div class="detail-row"><span>Followers:</span> <span class="text-highlight">830</span></div>
-            <div class="detail-row"><span>Class:</span> <span class="text-meta">Company Page</span></div>
-            <div class="detail-row"><span>Completeness:</span> <span class="text-success">92%</span></div>
-        `;
+        if (linkedinCard) {
+            linkedinCard.className = "channel-card active-channel";
+            const statusBadge = linkedinCard.querySelector('.channel-status');
+            if (statusBadge) {
+                statusBadge.className = "channel-status badge-success";
+                statusBadge.textContent = "OK";
+            }
+            const cardBody = linkedinCard.querySelector('.channel-body');
+            if (cardBody) {
+                cardBody.innerHTML = `
+                    <div class="detail-row"><span>Followers:</span> <span class="text-highlight">830</span></div>
+                    <div class="detail-row"><span>Class:</span> <span class="text-meta">Company Page</span></div>
+                    <div class="detail-row"><span>Completeness:</span> <span class="text-success">92%</span></div>
+                `;
+            }
+        }
     }
+
+    function updateClassificationBreakdown(detectedClass) {
+        if (!breakdownLabel1) return;
+        
+        let label1, val1, label2, val2, label3, val3, explanation;
+        
+        switch (detectedClass) {
+            case 'Content Creator':
+                label1 = "Organic Media (Culinary Content)";
+                val1 = "50%";
+                label2 = "Local Footprint (Maps & GBP)";
+                val2 = "30%";
+                label3 = "Transactional Engine (Direct Booking)";
+                val3 = "20%";
+                explanation = "Restaurateurs act as digital creators to capture organic local attention and funnel social followers into physical dining tables.";
+                break;
+            case 'Local Business':
+                label1 = "Local Footprint (Maps & GBP)";
+                val1 = "55%";
+                label2 = "Organic Media (Culinary Content)";
+                val2 = "25%";
+                label3 = "Transactional Engine (Direct Booking)";
+                val3 = "20%";
+                explanation = "Traditional local establishment focus. Prioritizes local citations, search map packs, and direct booking/ordering engines.";
+                break;
+            case 'SaaS Platform':
+                label1 = "Product Utility / Demo Content";
+                val1 = "60%";
+                label2 = "Organic Community Builders";
+                val2 = "20%";
+                label3 = "Transactional Conversion (Pricing)";
+                val3 = "20%";
+                explanation = "Leverages cloud software, subscription pricing tiers, and online developer/customer education documentation.";
+                break;
+            case 'E-Commerce':
+                label1 = "Inventory Catalog Content";
+                val1 = "50%";
+                label2 = "Paid & Organic Ads (Socials)";
+                val2 = "30%";
+                label3 = "Cart/Checkout Conversion";
+                val3 = "20%";
+                explanation = "Focuses on shopping carts, product detail pages, and social media commerce integrations to drive direct checkouts.";
+                break;
+            case 'Professional Services':
+                label1 = "Advisory Authority Content";
+                val1 = "55%";
+                label2 = "Relationship & Referrals";
+                val2 = "25%";
+                label3 = "Consultation Bookings (Leads)";
+                val3 = "20%";
+                explanation = "Establishes industry expertise and trust through white papers, blogs, and advisory posts to book direct consultation sessions.";
+                break;
+            default:
+                label1 = "Organic Media & Audiences";
+                val1 = "40%";
+                label2 = "Local Authority & Listings";
+                val2 = "30%";
+                label3 = "Monetization & Conversion";
+                val3 = "30%";
+                explanation = "Multi-channel digital presence. Balances organic content generation with localized search visibility and direct conversion.";
+        }
+        
+        breakdownLabel1.textContent = label1;
+        breakdownVal1.textContent = val1;
+        breakdownFill1.style.width = val1;
+        
+        breakdownLabel2.textContent = label2;
+        breakdownVal2.textContent = val2;
+        breakdownFill2.style.width = val2;
+        
+        breakdownLabel3.textContent = label3;
+        breakdownVal3.textContent = val3;
+        breakdownFill3.style.width = val3;
+        
+        breakdownExplanation.textContent = explanation;
+    }
+
+    function updateWeakestStageBreakdown(stage) {
+        if (!weakestGapList) return;
+        
+        let gapsHtml = '';
+        
+        switch (stage) {
+            case 'Conversion':
+                gapsHtml = `
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Booking Engine</strong>: Unlinked or offline on social accounts.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Shop Integration</strong>: Inactive/broken link-in-bio checkout paths.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-warning">&bull;</span>
+                        <span class="gap-text"><strong>Profile CTAs</strong>: Muted action banners on bio headings.</span>
+                    </div>
+                `;
+                break;
+            case 'Awareness':
+                gapsHtml = `
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Posting Consistency</strong>: Long intervals between updates.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Local Citation Rank</strong>: Low visibility in map pack search.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-warning">&bull;</span>
+                        <span class="gap-text"><strong>Short-form Reach</strong>: Negligible algorithmic recommendation views.</span>
+                    </div>
+                `;
+                break;
+            case 'Consideration':
+                gapsHtml = `
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Interaction Rate</strong>: High views but low comment/share counts.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Bio Optimization</strong>: Profiles don't clearly state what you solve.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-warning">&bull;</span>
+                        <span class="gap-text"><strong>Community Engagement</strong>: Direct replies to comments are missing.</span>
+                    </div>
+                `;
+                break;
+            case 'Decision':
+                gapsHtml = `
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Social Proof</strong>: No user testimonials or ratings in profiles.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Map Ratings</strong>: GBP rating is below target benchmark (4.2 stars).</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-warning">&bull;</span>
+                        <span class="gap-text"><strong>Authority Seals</strong>: Badges and trust certifications unverified.</span>
+                    </div>
+                `;
+                break;
+            case 'Retention':
+                gapsHtml = `
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>Returning Engagement</strong>: Low interaction from existing followers.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>FAQ & Support</strong>: Missing customer service links or chat options.</span>
+                    </div>
+                    <div class="gap-item">
+                        <span class="gap-bullet text-warning">&bull;</span>
+                        <span class="gap-text"><strong>User-Gen Content</strong>: Brand tags and customer reposts are uncurated.</span>
+                    </div>
+                `;
+                break;
+            default:
+                gapsHtml = `
+                    <div class="gap-item">
+                        <span class="gap-bullet text-error">&bull;</span>
+                        <span class="gap-text"><strong>High Priority Gaps</strong>: Key channels require basic setups.</span>
+                    </div>
+                `;
+        }
+        
+        weakestGapList.innerHTML = gapsHtml;
+    }
+
+    function updateOverallScoreBreakdown(score) {
+        if (!overallFactorList) return;
+        
+        let factorsHtml = '';
+        
+        if (score < 4.0) {
+            factorsHtml = `
+                <div class="factor-item positive">
+                    <span class="factor-bullet">+</span>
+                    <span class="factor-text"><strong>Broad Coverage</strong>: 7 active channels crawled.</span>
+                </div>
+                <div class="factor-item positive">
+                    <span class="factor-bullet">+</span>
+                    <span class="factor-text"><strong>Awareness Baseline</strong>: Active search listings (5.2/10).</span>
+                </div>
+                <div class="factor-item negative">
+                    <span class="factor-bullet">-</span>
+                    <span class="factor-text"><strong>Conversion Gap</strong>: Unlinked booking engine (-2.1 points).</span>
+                </div>
+                <div class="factor-item negative">
+                    <span class="factor-bullet">-</span>
+                    <span class="factor-text"><strong>Muted Authority</strong>: Low reviews and decision signals (-1.4 points).</span>
+                </div>
+            `;
+        } else if (score < 7.0) {
+            factorsHtml = `
+                <div class="factor-item positive">
+                    <span class="factor-bullet">+</span>
+                    <span class="factor-text"><strong>Local Search Dominance</strong>: High GBP mapping and indexing (+1.8 points).</span>
+                </div>
+                <div class="factor-item positive">
+                    <span class="factor-bullet">+</span>
+                    <span class="factor-text"><strong>Connected Funnel</strong>: LinkedIn and Google Booking active (+1.2 points).</span>
+                </div>
+                <div class="factor-item negative">
+                    <span class="factor-bullet">-</span>
+                    <span class="factor-text"><strong>Retention Leak</strong>: Support & returning pathways unlinked (-0.8 points).</span>
+                </div>
+                <div class="factor-item negative">
+                    <span class="factor-bullet">-</span>
+                    <span class="factor-text"><strong>Engagement Cap</strong>: Low social dialogue rates (-0.4 points).</span>
+                </div>
+            `;
+        } else {
+            factorsHtml = `
+                <div class="factor-item positive">
+                    <span class="factor-bullet">+</span>
+                    <span class="factor-text"><strong>Strong Direct Conversions</strong>: High booking & menu links (+2.2 points).</span>
+                </div>
+                <div class="factor-item positive">
+                    <span class="factor-bullet">+</span>
+                    <span class="factor-text"><strong>Active Audiences</strong>: High frequency posting (+1.4 points).</span>
+                </div>
+                <div class="factor-item positive">
+                    <span class="factor-bullet">+</span>
+                    <span class="factor-text"><strong>Authority Verified</strong>: Trust seals & 4.5+ star review average.</span>
+                </div>
+            `;
+        }
+        
+        overallFactorList.innerHTML = factorsHtml;
+    }
+
+    function initGlowCards() {
+        const cards = document.querySelectorAll('.dashboard-card');
+        
+        function getCardGlowProps(card) {
+            const heading = card.querySelector('h3');
+            if (heading) {
+                const title = heading.textContent.toLowerCase();
+                if (title.includes('overall score')) {
+                    return { r: 240, g: 180, b: 41, colorVar: 'var(--color-secondary)' };
+                } else if (title.includes('weakest stage')) {
+                    return { r: 239, g: 68, b: 68, colorVar: 'var(--color-error)' };
+                } else if (title.includes('classification')) {
+                    return { r: 32, g: 201, b: 151, colorVar: 'var(--color-accent)' };
+                } else if (title.includes('journey')) {
+                    return { r: 240, g: 180, b: 41, colorVar: 'var(--color-secondary)' };
+                } else if (title.includes('channel')) {
+                    return { r: 32, g: 201, b: 151, colorVar: 'var(--color-accent)' };
+                }
+            }
+            return { r: 32, g: 201, b: 151, colorVar: 'var(--color-accent)' };
+        }
+
+        cards.forEach((card) => {
+            let edgeGlow = card.querySelector('.edge-glow');
+            if (!edgeGlow) {
+                edgeGlow = document.createElement('div');
+                edgeGlow.className = 'edge-glow';
+                card.appendChild(edgeGlow);
+            }
+            let innerGlow = card.querySelector('.inner-glow');
+            if (!innerGlow) {
+                innerGlow = document.createElement('div');
+                innerGlow.className = 'inner-glow';
+                card.appendChild(innerGlow);
+            }
+            let borderPulse = card.querySelector('.border-pulse');
+            if (!borderPulse) {
+                borderPulse = document.createElement('div');
+                borderPulse.className = 'border-pulse';
+                card.appendChild(borderPulse);
+            }
+
+            const glow = getCardGlowProps(card);
+
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = ((centerY - y) / centerY) * 2.5;
+                const rotateY = ((x - centerX) / centerX) * 2.5;
+
+                card.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+                const pctX = (x / rect.width) * 100;
+                const pctY = (y / rect.height) * 100;
+
+                edgeGlow.style.opacity = '1';
+                edgeGlow.style.boxShadow = `inset 0 0 30px 8px rgba(${glow.r},${glow.g},${glow.b},0.08)`;
+                edgeGlow.style.maskImage = `radial-gradient(ellipse at ${pctX}% ${pctY}%, transparent 20%, black 70%)`;
+                edgeGlow.style.webkitMaskImage = `radial-gradient(ellipse at ${pctX}% ${pctY}%, transparent 20%, black 70%)`;
+
+                innerGlow.style.opacity = '1';
+                innerGlow.style.background = `radial-gradient(circle at ${pctX}% ${pctY}%, rgba(${glow.r},${glow.g},${glow.b},0.06) 0%, transparent 50%)`;
+
+                borderPulse.classList.add('border-pulse-active');
+                borderPulse.style.setProperty('--glow-color', glow.colorVar);
+            });
+
+            card.addEventListener('mouseenter', () => {
+                let mist = card.querySelector('.nitrous-mist-wrapper');
+                if (!mist) {
+                    mist = document.createElement('div');
+                    mist.className = 'nitrous-mist-wrapper';
+                    
+                    const leftPuff = document.createElement('div');
+                    leftPuff.className = 'puff-left';
+                    const rightPuff = document.createElement('div');
+                    rightPuff.className = 'puff-right';
+                    const bottomSpill = document.createElement('div');
+                    bottomSpill.className = 'spill-bottom';
+                    
+                    mist.appendChild(leftPuff);
+                    mist.appendChild(rightPuff);
+                    mist.appendChild(bottomSpill);
+                    card.appendChild(mist);
+                } else {
+                    mist.style.opacity = '1';
+                }
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
+                edgeGlow.style.opacity = '0';
+                innerGlow.style.opacity = '0';
+                borderPulse.classList.remove('border-pulse-active');
+
+                const mist = card.querySelector('.nitrous-mist-wrapper');
+                if (mist) {
+                    mist.style.opacity = '0';
+                    mist.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => {
+                        if (mist.parentNode === card) {
+                            mist.remove();
+                        }
+                    }, 500);
+                }
+            });
+        });
+    }
+
+    function initStarFieldBackground() {
+        const canvas = document.getElementById('starfield-canvas');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        const stars = [];
+        const bodies = [];
+        const STAR_COUNT = 600;
+        const MIN_ADAPTIVE_STAR_COUNT = 180;
+        const STAR_DENSITY_DIVISOR = 2500;
+        const MAX_CANVAS_DPR = 1.5;
+        const CURSOR_RADIUS = 120;
+        const GATHER_STRENGTH = 0.015;
+        const DISPERSE_STRENGTH = 0.008;
+        const MAX_STAR_SIZE = 1.2;
+        const MIN_STAR_SIZE = 0.2;
+        const MAX_BODIES = 3;
+        const BODY_SPAWN_CHANCE = 0.003;
+        const METEOR_CHANCE = 0.35;
+        
+        const dpr = Math.min(window.devicePixelRatio || 1, MAX_CANVAS_DPR);
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        
+        const setCanvasSize = () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
+        
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+        
+        function starColor(warmth, alpha) {
+            const r = Math.round(lerp(180, 240, warmth));
+            const g = Math.round(lerp(200, 232, warmth));
+            const b = Math.round(lerp(255, 220, warmth));
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+        
+        function glowColor(warmth, alpha) {
+            const r = Math.round(lerp(140, 240, warmth));
+            const g = Math.round(lerp(170, 200, warmth));
+            const b = Math.round(lerp(255, 160, warmth));
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+        
+        function initStars(w, h) {
+            stars.length = 0;
+            const adaptiveStarCount = Math.min(
+                STAR_COUNT,
+                Math.max(MIN_ADAPTIVE_STAR_COUNT, Math.round((w * h) / STAR_DENSITY_DIVISOR))
+            );
+            for (let i = 0; i < adaptiveStarCount; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const bright = Math.random();
+                const baseOpacity = bright < 0.85
+                    ? 0.08 + Math.random() * 0.2
+                    : bright < 0.97
+                        ? 0.25 + Math.random() * 0.3
+                        : 0.55 + Math.random() * 0.35;
+                const size = bright < 0.85
+                    ? MIN_STAR_SIZE + Math.random() * 0.3
+                    : bright < 0.97
+                        ? 0.4 + Math.random() * 0.4
+                        : 0.7 + Math.random() * (MAX_STAR_SIZE - 0.7);
+                stars.push({
+                    x, y, baseX: x, baseY: y, size,
+                    opacity: baseOpacity, baseOpacity,
+                    twinkleSpeed: 0.3 + Math.random() * 1.5,
+                    twinkleOffset: Math.random() * Math.PI * 2,
+                    warmth: Math.random(),
+                });
+            }
+        }
+        
+        function spawnBody(w, h) {
+            const isMeteor = Math.random() < METEOR_CHANCE;
+            if (isMeteor) {
+                const edge = Math.random();
+                let x, y, vx, vy;
+                if (edge < 0.5) {
+                    x = edge < 0.25 ? -10 : w + 10;
+                    y = Math.random() * h;
+                    vx = (edge < 0.25 ? 1 : -1) * (3 + Math.random() * 5);
+                    vy = (Math.random() - 0.5) * 2;
+                } else {
+                    x = Math.random() * w;
+                    y = edge < 0.75 ? -10 : h + 10;
+                    vx = (Math.random() - 0.5) * 2;
+                    vy = (edge < 0.75 ? 1 : -1) * (3 + Math.random() * 5);
+                }
+                return {
+                    x, y, vx, vy,
+                    size: 0.8 + Math.random() * 0.8,
+                    opacity: 0.3 + Math.random() * 0.35,
+                    tailLength: 30 + Math.random() * 60,
+                    life: 0, maxLife: 120 + Math.random() * 180,
+                    kind: 'meteor', warmth: 0.3 + Math.random() * 0.7,
+                };
+            } else {
+                const x = Math.random() < 0.5 ? -10 : w + 10;
+                const y = Math.random() * h;
+                const direction = x < 0 ? 1 : -1;
+                return {
+                    x, y,
+                    vx: direction * (0.15 + Math.random() * 0.4),
+                    vy: (Math.random() - 0.5) * 0.15,
+                    size: 0.6 + Math.random() * 0.6,
+                    opacity: 0.12 + Math.random() * 0.2,
+                    tailLength: 0, life: 0, maxLife: 600 + Math.random() * 900,
+                    kind: 'drift', warmth: Math.random(),
+                };
+            }
+        }
+        
+        setCanvasSize();
+        initStars(width, height);
+        
+        const mouse = { x: -9999, y: -9999, active: false };
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            mouse.active = true;
+        });
+        document.addEventListener('mouseleave', () => {
+            mouse.active = false;
+        });
+        
+        window.addEventListener('resize', () => {
+            setCanvasSize();
+            initStars(width, height);
+        });
+        
+        let time = 0;
+        const animate = () => {
+            time += 0.016;
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw Stars
+            stars.forEach((s) => {
+                const twinkle = 0.7 + 0.3 * Math.sin(time * s.twinkleSpeed + s.twinkleOffset);
+                s.opacity = s.baseOpacity * twinkle;
+                
+                if (mouse.active) {
+                    const dx = mouse.x - s.x;
+                    const dy = mouse.y - s.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < CURSOR_RADIUS) {
+                        const force = (1 - dist / CURSOR_RADIUS) * GATHER_STRENGTH;
+                        s.x += dx * force;
+                        s.y += dy * force;
+                        s.opacity = Math.min(s.baseOpacity + 0.15, s.opacity + (1 - dist / CURSOR_RADIUS) * 0.12);
+                    } else {
+                        s.x += (s.baseX - s.x) * DISPERSE_STRENGTH;
+                        s.y += (s.baseY - s.y) * DISPERSE_STRENGTH;
+                    }
+                } else {
+                    s.x += (s.baseX - s.x) * DISPERSE_STRENGTH;
+                    s.y += (s.baseY - s.y) * DISPERSE_STRENGTH;
+                }
+                
+                if (s.baseOpacity > 0.3) {
+                    ctx.globalAlpha = s.opacity * 0.15;
+                    ctx.fillStyle = glowColor(s.warmth, 1);
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.size * 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = s.opacity;
+                ctx.fillStyle = starColor(s.warmth, 1);
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Spawn moving bodies (drift + meteor)
+            if (bodies.length < MAX_BODIES && Math.random() < BODY_SPAWN_CHANCE) {
+                bodies.push(spawnBody(width, height));
+            }
+            
+            // Draw bodies
+            for (let i = bodies.length - 1; i >= 0; i--) {
+                const b = bodies[i];
+                b.x += b.vx;
+                b.y += b.vy;
+                b.life++;
+                
+                const fadeIn = Math.min(1, b.life / 30);
+                const fadeOut = Math.max(0, 1 - (b.life - b.maxLife + 40) / 40);
+                const alpha = b.opacity * fadeIn * (b.life > b.maxLife - 40 ? fadeOut : 1);
+                
+                if (b.kind === 'meteor' && b.tailLength > 0) {
+                    const grad = ctx.createLinearGradient(b.x, b.y, b.x - b.vx * b.tailLength * 0.3, b.y - b.vy * b.tailLength * 0.3);
+                    grad.addColorStop(0, starColor(b.warmth, alpha));
+                    grad.addColorStop(1, starColor(b.warmth, 0));
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = b.size * 0.6;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(b.x, b.y);
+                    ctx.lineTo(b.x - b.vx * b.tailLength * 0.3, b.y - b.vy * b.tailLength * 0.3);
+                    ctx.stroke();
+                }
+                
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = starColor(b.warmth, 1);
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.globalAlpha = alpha * 0.2;
+                ctx.fillStyle = glowColor(b.warmth, 1);
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.size * 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                if (b.life > b.maxLife || b.x < -50 || b.x > width + 50 || b.y < -50 || b.y > height + 50) {
+                    bodies.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        };
+        
+        requestAnimationFrame(animate);
+    }
+
+    // Initialize Default Classification, Weakest Stage, Overall Score Breakdowns, GlowCards and StarField on Load
+    updateClassificationBreakdown('Content Creator');
+    updateWeakestStageBreakdown('Conversion');
+    updateOverallScoreBreakdown(3.3);
+    initGlowCards();
+    initStarFieldBackground();
 });
