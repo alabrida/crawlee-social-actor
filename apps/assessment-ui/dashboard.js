@@ -987,6 +987,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (overallBadgeDisplay) {
             overallBadgeDisplay.textContent = "Growing Presence";
             overallBadgeDisplay.className = "badge badge-success";
+            overallBadgeDisplay.style.background = ""; // Reset style override
+            overallBadgeDisplay.style.color = "";
         }
         updateOverallScoreBreakdown(6.8);
         
@@ -1017,24 +1019,93 @@ document.addEventListener('DOMContentLoaded', () => {
         // Adjust weakest stage
         weakestStageDisplay.textContent = "Conversion";
         weakestStageDisplay.className = "value-display text-warning";
+        weakestStageDisplay.style.background = ""; // Reset style override
+        weakestStageDisplay.style.webkitTextFillColor = "";
         weakestStageDesc.textContent = "Conversion has improved via Google booking integration, but shop and pricing page tiers can be optimized further.";
         updateWeakestStageBreakdown("Conversion");
 
-        // LinkedIn is now simulated as active card
-        const linkedinCard = document.querySelector('.channels-grid .channel-card:last-child');
+        // Activate Scraped Channel Matrix Cards
+        const websiteCard = document.getElementById('channel-card-website');
+        if (websiteCard) {
+            websiteCard.className = "channel-card active-channel";
+            websiteCard.querySelector('.channel-status').className = "channel-status badge-success";
+            websiteCard.querySelector('.channel-status').textContent = "OK";
+            websiteCard.querySelector('.channel-body').innerHTML = `
+                <div class="detail-row"><span>SSL:</span> <span class="text-success">Active</span></div>
+                <div class="detail-row"><span>Schema.org:</span> <span class="text-success">JSON-LD</span></div>
+                <div class="detail-row"><span>Hero H1:</span> <span class="text-meta">"Original Burgers since 1952"</span></div>
+            `;
+        }
+        
+        const instagramCard = document.getElementById('channel-card-instagram');
+        if (instagramCard) {
+            instagramCard.className = "channel-card active-channel";
+            instagramCard.querySelector('.channel-status').className = "channel-status badge-success";
+            instagramCard.querySelector('.channel-status').textContent = "OK";
+            instagramCard.querySelector('.channel-body').innerHTML = `
+                <div class="detail-row"><span>Followers:</span> <span class="text-highlight">12.5K</span></div>
+                <div class="detail-row"><span>Bio link:</span> <span class="text-meta">Linktree</span></div>
+                <div class="detail-row"><span>Account:</span> <span class="text-meta">Business Page</span></div>
+            `;
+        }
+
+        const facebookCard = document.getElementById('channel-card-facebook');
+        if (facebookCard) {
+            facebookCard.className = "channel-card active-channel";
+            facebookCard.querySelector('.channel-status').className = "channel-status badge-success";
+            facebookCard.querySelector('.channel-status').textContent = "OK";
+            facebookCard.querySelector('.channel-body').innerHTML = `
+                <div class="detail-row"><span>Likes:</span> <span class="text-highlight">48K</span></div>
+                <div class="detail-row"><span>Class:</span> <span class="text-meta">Business Page</span></div>
+                <div class="detail-row"><span>Messenger:</span> <span class="text-success">Active</span></div>
+            `;
+        }
+
+        const youtubeCard = document.getElementById('channel-card-youtube');
+        if (youtubeCard) {
+            youtubeCard.className = "channel-card active-channel";
+            youtubeCard.querySelector('.channel-status').className = "channel-status badge-success";
+            youtubeCard.querySelector('.channel-status').textContent = "OK";
+            youtubeCard.querySelector('.channel-body').innerHTML = `
+                <div class="detail-row"><span>Subscribers:</span> <span class="text-highlight">1.2K</span></div>
+                <div class="detail-row"><span>Store Tab:</span> <span class="text-error">Missing</span></div>
+                <div class="detail-row"><span>Recency:</span> <span class="text-meta">14 days ago</span></div>
+            `;
+        }
+
+        const tiktokCard = document.getElementById('channel-card-tiktok');
+        if (tiktokCard) {
+            tiktokCard.className = "channel-card active-channel";
+            tiktokCard.querySelector('.channel-status').className = "channel-status badge-success";
+            tiktokCard.querySelector('.channel-status').textContent = "OK";
+            tiktokCard.querySelector('.channel-body').innerHTML = `
+                <div class="detail-row"><span>Followers:</span> <span class="text-highlight">5.8K</span></div>
+                <div class="detail-row"><span>Shop Tab:</span> <span class="text-error">Missing</span></div>
+                <div class="detail-row"><span>Bio Link:</span> <span class="text-meta">linktr.ee/milos</span></div>
+            `;
+        }
+
+        // LinkedIn is conditionally activated if connected in settings
+        const linkedinCard = document.getElementById('channel-card-linkedin');
         if (linkedinCard) {
-            linkedinCard.className = "channel-card active-channel";
-            const statusBadge = linkedinCard.querySelector('.channel-status');
-            if (statusBadge) {
-                statusBadge.className = "channel-status badge-success";
-                statusBadge.textContent = "OK";
-            }
-            const cardBody = linkedinCard.querySelector('.channel-body');
-            if (cardBody) {
-                cardBody.innerHTML = `
+            const linkedinOauth = document.getElementById('oauth-linkedin');
+            const isLinkedinConnected = linkedinOauth && linkedinOauth.querySelector('.oauth-status').getAttribute('data-connected') === 'true';
+            
+            if (isLinkedinConnected) {
+                linkedinCard.className = "channel-card active-channel";
+                linkedinCard.querySelector('.channel-status').className = "channel-status badge-success";
+                linkedinCard.querySelector('.channel-status').textContent = "OK";
+                linkedinCard.querySelector('.channel-body').innerHTML = `
                     <div class="detail-row"><span>Followers:</span> <span class="text-highlight">830</span></div>
                     <div class="detail-row"><span>Class:</span> <span class="text-meta">Company Page</span></div>
                     <div class="detail-row"><span>Completeness:</span> <span class="text-success">92%</span></div>
+                `;
+            } else {
+                linkedinCard.className = "channel-card inactive-channel";
+                linkedinCard.querySelector('.channel-status').className = "channel-status badge-inactive";
+                linkedinCard.querySelector('.channel-status').textContent = "Disconnected";
+                linkedinCard.querySelector('.channel-body').innerHTML = `
+                    <p class="card-desc">No profile was scraped or linked. Authenticate in settings to retry.</p>
                 `;
             }
         }
@@ -1046,6 +1117,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let label1, val1, label2, val2, label3, val3, explanation;
         
         switch (detectedClass) {
+            case 'Pending':
+                label1 = "Organic Media & Audiences";
+                val1 = "0%";
+                label2 = "Local Authority & Listings";
+                val2 = "0%";
+                label3 = "Monetization & Conversion";
+                val3 = "0%";
+                explanation = "No audit results available yet. Run the audit crawl sequence from the sidebar to populate digital presence classification.";
+                break;
             case 'Content Creator':
                 label1 = "Organic Media (Culinary Content)";
                 val1 = "50%";
@@ -1122,6 +1202,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let gapsHtml = '';
         
         switch (stage) {
+            case 'Pending':
+                gapsHtml = `
+                    <div class="gap-item">
+                        <span class="gap-bullet text-meta">&bull;</span>
+                        <span class="gap-text">No gaps identified yet. Start an audit run to analyze your revenue journey.</span>
+                    </div>
+                `;
+                break;
             case 'Conversion':
                 gapsHtml = `
                     <div class="gap-item">
@@ -1219,7 +1307,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let factorsHtml = '';
         
-        if (score < 4.0) {
+        if (score === 0.0) {
+            factorsHtml = `
+                <div class="factor-item" style="color: var(--text-secondary);">
+                    <span class="factor-bullet">&bull;</span>
+                    <span class="factor-text">Audit pending. Run the diagnostic to evaluate score contribution factors.</span>
+                </div>
+            `;
+        } else if (score < 4.0) {
             factorsHtml = `
                 <div class="factor-item positive">
                     <span class="factor-bullet">+</span>
@@ -1626,9 +1721,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize Default Classification, Weakest Stage, Overall Score Breakdowns, GlowCards and StarField on Load
-    updateClassificationBreakdown('Content Creator');
-    updateWeakestStageBreakdown('Conversion');
-    updateOverallScoreBreakdown(3.3);
+    updateClassificationBreakdown('Pending');
+    updateWeakestStageBreakdown('Pending');
+    updateOverallScoreBreakdown(0.0);
     initGlowCards();
     initStarFieldBackground();
 });

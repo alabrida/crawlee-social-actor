@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide & Revenue Architect | Richard Norwood, PMP</title>
+    <!-- Google Fonts: Inter and Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body class="dark-mode">
+    <canvas id="starfield-canvas" class="starfield-canvas" aria-hidden="true"></canvas>
+    <div class="app-container">
+        <!-- Sidebar Toggle Trigger Button for Mobile -->
+        <button id="mobile-sidebar-btn" class="floating-btn" aria-label="Open settings">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+        </button>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="logo-area">
+                    <div class="logo-glow"></div>
+                    <span class="logo-text">REVENUE JOURNEY <span class="accent-text">ARCHITECT</span></span>
+                </div>
+                <div class="header-actions">
+                    <button id="trigger-assessment-btn" class="btn btn-primary btn-glow">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Configure Audit Run
+                    </button>
+                </div>
+            </header>
+
+            <section class="dashboard-grid">
+                <!-- Row 1: Core Stats -->
+                <div class="dashboard-card stat-card main-score-card" style="background: linear-gradient(135deg, rgba(15, 26, 46, 0.6) 0%, rgba(255, 255, 255, 0.02) 100%); border-color: var(--border-color);">
+                    <div class="card-glow"></div>
+                    <h3>Overall Score</h3>
+                    <div class="score-display">
+                        <span id="overall-score-val" class="score-val">--</span>
+                        <span class="score-max">/ 10</span>
+                    </div>
+                    <p class="stat-meta">Based on 0 evaluated channels</p>
+                    <div class="badge" id="overall-badge-display" style="background: rgba(255, 255, 255, 0.05); color: var(--text-meta);">Pending Run</div>
+                    
+                    <!-- Dynamic Overall Score Breakdown -->
+                    <div class="overall-score-breakdown" id="overall-breakdown-container">
+                        <div class="breakdown-title">Score Contribution Factors</div>
+                        <div class="factor-list" id="overall-factor-list">
+                            <!-- Filled dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card stat-card">
+                    <h3>Classification</h3>
+                    <div class="value-display" id="business-class-display">Not Detected</div>
+                    <p class="stat-meta">Auto-detected via website metadata</p>
+                    <div class="confidence-bar-container">
+                        <div class="confidence-label">Confidence: <span id="class-confidence-val">0%</span></div>
+                        <div class="confidence-track">
+                            <div id="class-confidence-fill" class="confidence-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dynamic Classification Breakdown -->
+                    <div class="classification-breakdown" id="class-breakdown-container">
+                        <div class="breakdown-title">Diagnostic Sub-segmentation</div>
+                        <div class="breakdown-bars">
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span class="breakdown-label" id="breakdown-label-1">Awareness Funnel</span>
+                                    <span class="breakdown-percent" id="breakdown-val-1">0%</span>
+                                </div>
+                                <div class="breakdown-track">
+                                    <div class="breakdown-fill" id="breakdown-fill-1" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span class="breakdown-label" id="breakdown-label-2">Consideration Funnel</span>
+                                    <span class="breakdown-percent" id="breakdown-val-2">0%</span>
+                                </div>
+                                <div class="breakdown-track">
+                                    <div class="breakdown-fill" id="breakdown-fill-2" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span class="breakdown-label" id="breakdown-label-3">Conversion Engine</span>
+                                    <span class="breakdown-percent" id="breakdown-val-3">0%</span>
+                                </div>
+                                <div class="breakdown-track">
+                                    <div class="breakdown-fill" id="breakdown-fill-3" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="breakdown-note" id="breakdown-explanation">
+                            Configure website target URL and trigger audit run to calculate platform metrics.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card stat-card">
+                    <h3>Weakest Stage</h3>
+                    <div class="value-display" id="weakest-stage-display" style="background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-meta) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Pending</div>
+                    <p class="stat-meta">Highest priority gap identified</p>
+                    <p class="card-desc" id="weakest-stage-desc">Please configure parameters and start audit run.</p>
+                    
+                    <!-- Dynamic Weakest Stage Breakdown -->
+                    <div class="weakest-stage-breakdown" id="weakest-breakdown-container">
+                        <div class="breakdown-title">Primary Gaps Identified</div>
+                        <div class="gap-list" id="weakest-gap-list">
+                            <!-- Filled dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Journey Stage Details -->
+                <div class="dashboard-card grid-col-span-3 journey-card">
+                    <div class="card-header">
+                        <h3>5-Stage Revenue Journey Analytics</h3>
+                        <span class="card-header-badge">22-Point Structural Diagnostic</span>
+                    </div>
+                    <div class="stages-container">
+                        <!-- Stage 1 -->
+                        <div class="stage-item" data-stage="awareness">
+                            <div class="stage-metric">
+                                <span class="stage-name">Awareness</span>
+                                <span id="score-awareness" class="stage-score">0.0 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-awareness" class="progress-bar-fill fill-awareness" style="width: 0%;"></div>
+                            </div>
+                            <p class="stage-desc">Traffic generation, brand discovery & reach.</p>
+                        </div>
+                        <!-- Stage 2 -->
+                        <div class="stage-item" data-stage="consideration">
+                            <div class="stage-metric">
+                                <span class="stage-name">Consideration</span>
+                                <span id="score-consideration" class="stage-score">0.0 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-consideration" class="progress-bar-fill fill-consideration" style="width: 0%;"></div>
+                            </div>
+                            <p class="stage-desc">Target audience engagement & social signals.</p>
+                        </div>
+                        <!-- Stage 3 -->
+                        <div class="stage-item" data-stage="decision">
+                            <div class="stage-metric">
+                                <span class="stage-name">Decision</span>
+                                <span id="score-decision" class="stage-score">0.0 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-decision" class="progress-bar-fill fill-decision" style="width: 0%;"></div>
+                            </div>
+                            <p class="stage-desc">Reviews, trust signals, and brand credibility.</p>
+                        </div>
+                        <!-- Stage 4 -->
+                        <div class="stage-item" data-stage="conversion">
+                            <div class="stage-metric">
+                                <span class="stage-name">Conversion</span>
+                                <span id="score-conversion" class="stage-score">0.0 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-conversion" class="progress-bar-fill fill-conversion" style="width: 0%;"></div>
+                            </div>
+                            <p class="stage-desc">Ease of direct checkout, booking, or leads.</p>
+                        </div>
+                        <!-- Stage 5 -->
+                        <div class="stage-item" data-stage="retention">
+                            <div class="stage-metric">
+                                <span class="stage-name">Retention</span>
+                                <span id="score-retention" class="stage-score">0.0 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-retention" class="progress-bar-fill fill-retention" style="width: 0%;"></div>
+                            </div>
+                            <p class="stage-desc">Sub subscriptions, newsletter, community hooks.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Scraped Channels -->
+                <div class="dashboard-card grid-col-span-3">
+                    <div class="card-header">
+                        <h3>Scraped Channel Matrix</h3>
+                        <span id="scraped-url-indicator" class="target-url-label">Target: Pending Audit</span>
+                    </div>
+                    <div class="channels-grid">
+                        <div class="channel-card inactive-channel" id="channel-card-website">
+                            <div class="channel-header">
+                                <span class="channel-icon">🌐</span>
+                                <span class="channel-title">Website</span>
+                                <span class="channel-status badge-inactive">Pending</span>
+                            </div>
+                            <div class="channel-body">
+                                <p class="card-desc">Audit pending. Enter a target URL in the sidebar to scrape forensics.</p>
+                            </div>
+                        </div>
+
+                        <div class="channel-card inactive-channel" id="channel-card-instagram">
+                            <div class="channel-header">
+                                <span class="channel-icon">📸</span>
+                                <span class="channel-title">Instagram</span>
+                                <span class="channel-status badge-inactive">Pending</span>
+                            </div>
+                            <div class="channel-body">
+                                <p class="card-desc">Instagram signals will be evaluated after audit runs.</p>
+                            </div>
+                        </div>
+
+                        <div class="channel-card inactive-channel" id="channel-card-facebook">
+                            <div class="channel-header">
+                                <span class="channel-icon">👥</span>
+                                <span class="channel-title">Facebook</span>
+                                <span class="channel-status badge-inactive">Pending</span>
+                            </div>
+                            <div class="channel-body">
+                                <p class="card-desc">Facebook signals will be evaluated after audit runs.</p>
+                            </div>
+                        </div>
+
+                        <div class="channel-card inactive-channel" id="channel-card-youtube">
+                            <div class="channel-header">
+                                <span class="channel-icon">▶️</span>
+                                <span class="channel-title">YouTube</span>
+                                <span class="channel-status badge-inactive">Pending</span>
+                            </div>
+                            <div class="channel-body">
+                                <p class="card-desc">YouTube signals will be evaluated after audit runs.</p>
+                            </div>
+                        </div>
+
+                        <div class="channel-card inactive-channel" id="channel-card-tiktok">
+                            <div class="channel-header">
+                                <span class="channel-icon">🎵</span>
+                                <span class="channel-title">TikTok</span>
+                                <span class="channel-status badge-inactive">Pending</span>
+                            </div>
+                            <div class="channel-body">
+                                <p class="card-desc">TikTok signals will be evaluated after audit runs.</p>
+                            </div>
+                        </div>
+
+                        <div class="channel-card inactive-channel" id="channel-card-linkedin">
+                            <div class="channel-header">
+                                <span class="channel-icon">💼</span>
+                                <span class="channel-title">LinkedIn</span>
+                                <span class="channel-status badge-inactive">Disconnected</span>
+                            </div>
+                            <div class="channel-body">
+                                <p class="card-desc">No profile was scraped or linked. Authenticate in settings to retry.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- GLOWING SIDEBAR COMPONENT -->
+        <aside id="settings-sidebar" class="sidebar-panel">
+            <div class="sidebar-backdrop"></div>
+            <div class="sidebar-content">
+                <header class="sidebar-header">
+                    <div>
+                        <h2>Run Assessment</h2>
+                        <p class="sidebar-subtitle">Verify credentials & search parameters</p>
+                    </div>
+                    <button id="close-sidebar-btn" class="close-btn" aria-label="Close settings">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </header>
+
+                <div class="sidebar-scroll-area">
+                    <!-- Section 1: URL and Pre-flight -->
+                    <div class="settings-section">
+                        <label for="target-url" class="field-label">Target Website URL</label>
+                        <div class="input-with-action">
+                            <input type="url" id="target-url" placeholder="https://example.com" value="https://miloshamburgers.com/">
+                            <button id="preflight-btn" class="btn btn-secondary">Analyze</button>
+                        </div>
+                        <div id="preflight-status" class="preflight-info hidden">
+                            <div class="spinner-small"></div>
+                            <span>Inspecting hero headings and JSON-LD schema...</span>
+                        </div>
+                        <div id="preflight-success-info" class="preflight-success-block hidden">
+                            <div class="metadata-badge-grid">
+                                <div><span class="lbl">Class:</span> <span id="preflight-detected-class" class="val text-highlight">Local Business</span></div>
+                                <div><span class="lbl">JSON-LD:</span> <span id="preflight-jsonld-status" class="val text-success">Found</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Platform Connections (OAuth or Direct Link) -->
+                    <div class="settings-section">
+                        <h3 class="section-title">Platform Connections</h3>
+                        <p class="section-desc">Connect securely via browser login (Option 2-B) or import using the Chrome Extension (Option 1). Toggle the link icon to use direct profile URLs.</p>
+                        
+                        <button id="extension-import-btn" class="btn btn-outline btn-block btn-sm" style="margin-bottom: 1.25rem; border-color: rgba(32, 201, 151, 0.4); color: var(--color-accent-light); width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-weight: 600; background: rgba(32, 201, 151, 0.03);">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            Import Session via Chrome Extension
+                        </button>
+                        
+                        <div class="oauth-list">
+                            <!-- Google Business Profile -->
+                            <div class="oauth-item" id="oauth-google">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-google">G</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Google Business Profile</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="Google Maps Share Link...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="google">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- LinkedIn -->
+                            <div class="oauth-item" id="oauth-linkedin">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-linkedin">in</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">LinkedIn Profile / Page</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <div class="input-sub-group">
+                                                <span class="sub-label">Personal Profile URL</span>
+                                                <input type="url" class="platform-direct-url" placeholder="https://linkedin.com/in/username">
+                                            </div>
+                                            <div class="input-sub-group">
+                                                <span class="sub-label">Company/Business Page URL</span>
+                                                <input type="url" class="platform-direct-url" placeholder="https://linkedin.com/company/name">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="linkedin">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Facebook -->
+                            <div class="oauth-item" id="oauth-facebook">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-facebook">f</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Facebook Pages</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <div class="input-sub-group">
+                                                <span class="sub-label">Personal Profile URL</span>
+                                                <input type="url" class="platform-direct-url" placeholder="https://facebook.com/username">
+                                            </div>
+                                            <div class="input-sub-group">
+                                                <span class="sub-label">Business Page/Group URL</span>
+                                                <input type="url" class="platform-direct-url" placeholder="https://facebook.com/pages/name">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="facebook">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Instagram -->
+                            <div class="oauth-item" id="oauth-instagram">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-youtube" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;">📸</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Instagram Profile</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://instagram.com/...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="instagram">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- YouTube -->
+                            <div class="oauth-item" id="oauth-youtube">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-youtube">YT</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">YouTube Channel</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://youtube.com/@...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="youtube">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- TikTok -->
+                            <div class="oauth-item" id="oauth-tiktok">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-tiktok">🎵</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">TikTok Profile</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://tiktok.com/@...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="tiktok">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Twitter / X -->
+                            <div class="oauth-item" id="oauth-twitter">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-tiktok">𝕏</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Twitter / X</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://x.com/...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="twitter">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Pinterest -->
+                            <div class="oauth-item" id="oauth-pinterest">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-google" style="background-color: #bd081c !important;">P</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Pinterest</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://pinterest.com/...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="pinterest">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Reddit -->
+                            <div class="oauth-item" id="oauth-reddit">
+                                <div class="oauth-platform-info">
+                                    <div class="platform-icon-circle bg-google" style="background-color: #ff4500 !important;">R</div>
+                                    <div class="platform-details-box">
+                                        <div class="platform-name">Reddit</div>
+                                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                                        <div class="direct-url-container hidden">
+                                            <input type="url" class="platform-direct-url" placeholder="https://reddit.com/user/...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="oauth-actions">
+                                    <button class="btn btn-outline btn-sm oauth-toggle-btn btn-highlight" data-platform="reddit">Connect</button>
+                                    <button class="btn-toggle-link" title="Use profile URL instead">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Keyword Generator Intake -->
+                    <div class="settings-section">
+                        <h3 class="section-title">SERP Keyword Target Intake</h3>
+                        <p class="section-desc">Edit search terms derived from hero headings. These drive organic SEO ranking checks.</p>
+                        
+                        <div class="keyword-manager">
+                            <div class="tags-container" id="keyword-tags-container">
+                                <span class="keyword-tag" data-val="Milo's Original Burger Shop">
+                                    Milo's Original Burger Shop
+                                    <button class="remove-tag-btn" aria-label="Remove tag">&times;</button>
+                                </span>
+                                <span class="keyword-tag" data-val="Birmingham Burgers">
+                                    Birmingham Burgers
+                                    <button class="remove-tag-btn" aria-label="Remove tag">&times;</button>
+                                </span>
+                                <span class="keyword-tag" data-val="Hamburgers in Alabama">
+                                    Hamburgers in Alabama
+                                    <button class="remove-tag-btn" aria-label="Remove tag">&times;</button>
+                                </span>
+                            </div>
+                            <div class="input-with-action add-keyword-container">
+                                <input type="text" id="new-keyword-input" placeholder="+ Add custom search term...">
+                                <button id="add-keyword-btn" class="btn btn-secondary">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Console Output and Execution CTAs -->
+                <footer class="sidebar-footer">
+                    <!-- Console Log Display during execution -->
+                    <div id="execution-console" class="console-log-box hidden">
+                        <div class="console-header">
+                            <span>Apify Scraper Engine Logs</span>
+                            <span class="pulse-dot"></span>
+                        </div>
+                        <div class="console-lines" id="console-lines-container">
+                            <!-- Filled dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <div class="sidebar-action-bar">
+                        <button id="start-audit-btn" class="btn btn-primary btn-block btn-large btn-glow">
+                            <span class="btn-text">Start Audit Run</span>
+                            <div class="spinner-small hidden" id="audit-spinner"></div>
+                        </button>
+                    </div>
+                </footer>
+            </div>
+        </aside>
+
+        <!-- VNC INTERACTIVE BROWSER LOGIN POPUP (OPTION 2-B) -->
+        <div id="oauth-popup" class="modal-overlay hidden">
+            <div class="modal-card vnc-browser-card">
+                <!-- Browser Header / Chrome styling -->
+                <div class="browser-window-header">
+                    <div class="window-controls">
+                        <span class="ctrl-dot red-dot" id="cancel-vnc-btn-dot" title="Cancel connection"></span>
+                        <span class="ctrl-dot yellow-dot"></span>
+                        <span class="ctrl-dot green-dot"></span>
+                    </div>
+                    <div class="tab-bar">
+                        <div class="browser-tab active">
+                            <span class="tab-favicon" id="vnc-tab-favicon">in</span>
+                            <span class="tab-title" id="vnc-tab-title">LinkedIn Login</span>
+                            <span class="tab-close-x" id="vnc-tab-close">&times;</span>
+                        </div>
+                        <div class="incognito-badge">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                            <span>Incognito Mode</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="browser-navigation-bar">
+                    <div class="nav-arrows">
+                        <button class="nav-arrow-btn" disabled>&larr;</button>
+                        <button class="nav-arrow-btn" disabled>&rarr;</button>
+                        <button class="nav-arrow-btn" id="vnc-reload-btn" title="Reload browser session">&#8635;</button>
+                    </div>
+                    <div class="browser-address-bar">
+                        <span class="lock-icon">🔒</span>
+                        <input type="text" id="vnc-address-input" value="https://www.linkedin.com/login" readonly>
+                    </div>
+                </div>
+
+                <div class="modal-body vnc-body-container">
+                    <div class="vnc-main-viewport">
+                        <!-- Step 1: Initializing browser context -->
+                        <div id="vnc-step-init" class="vnc-step-pane text-center">
+                            <div class="vnc-loader-container">
+                                <div class="spinner-neon"></div>
+                                <div class="loading-bar-glow"></div>
+                            </div>
+                            <h3 class="vnc-step-heading">Spawning Isolated Browser Context</h3>
+                            <p class="vnc-step-desc text-meta">Allocating residential proxy & launching incognito sandbox session...</p>
+                        </div>
+
+                        <!-- Step 2: Platform Specific Form View -->
+                        <div id="vnc-step-login-form" class="vnc-step-pane hidden">
+                            <!-- Dynamic Content Injected Here via JS (e.g. LinkedIn, Facebook, X, etc.) -->
+                            <div id="vnc-dynamic-form-wrapper" style="width: 100%;"></div>
+                        </div>
+
+                        <!-- Step 3: Capturing cookies & checking health -->
+                        <div id="vnc-step-capturing" class="vnc-step-pane text-center hidden">
+                            <div class="radar-scan">
+                                <div class="radar-beam"></div>
+                                <div class="radar-circles">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                            <h3 class="vnc-step-heading text-highlight">Capturing storageState.json</h3>
+                            <p class="vnc-step-desc">Intercepting authenticated session tokens and validating session endpoint health...</p>
+                            <div class="health-indicator-bar" style="margin-top: 1rem;">
+                                <span class="health-label" style="font-size: 0.85rem; color: var(--text-secondary);">Session Status:</span>
+                                <span class="badge badge-warning font-pulse" id="vnc-health-status" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">INTERCEPTING</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Success View -->
+                        <div id="vnc-step-success" class="vnc-step-pane text-center hidden">
+                            <div class="success-checkmark-wrapper">
+                                <div class="checkmark-circle">
+                                    <div class="checkmark-kick"></div>
+                                    <div class="checkmark-stem"></div>
+                                </div>
+                                <div class="checkmark-glow"></div>
+                            </div>
+                            <h3 class="vnc-step-heading text-success">Authentication Verified!</h3>
+                            <p class="vnc-step-desc">Session state captured. Credentials and cookies successfully encrypted & stored in Supabase SessionVault.</p>
+                            
+                            <div class="session-details-card">
+                                <div class="detail-line">
+                                    <span class="detail-lbl">User Session:</span>
+                                    <span class="detail-val" id="vnc-success-user-display">Active</span>
+                                </div>
+                                <div class="detail-line">
+                                    <span class="detail-lbl">Security State:</span>
+                                    <span class="detail-val text-success">Active & Encrypted</span>
+                                </div>
+                                <div class="detail-line">
+                                    <span class="detail-lbl">Cookies Intercepted:</span>
+                                    <span class="detail-val" id="vnc-success-cookie-name">li_at</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terminal Logs Console at bottom of modal body -->
+                    <div class="vnc-terminal-console">
+                        <div class="terminal-title">
+                            <span>VNC Browser Stream Logs</span>
+                            <span class="terminal-status-dot green-pulse"></span>
+                        </div>
+                        <div class="terminal-lines" id="vnc-terminal-lines">
+                            <div class="term-line info">[System] Ready to spawn Playwright incognito instance...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer vnc-footer">
+                    <button id="cancel-auth-btn" class="btn btn-secondary">Cancel</button>
+                    <!-- Success button to complete the flow -->
+                    <button id="vnc-action-btn" class="btn btn-primary btn-glow hidden">Save Credentials</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION TOAST -->
+        <div id="toast-notification" class="toast hidden">
+            <div class="toast-content">
+                <span class="toast-icon">✓</span>
+                <span id="toast-message">Crawl Completed successfully!</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
