@@ -475,6 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 vncActionBtn.classList.add('hidden');
                 
                 oauthPopup.classList.add('show');
+                oauthPopup.classList.remove('hidden');
                 
                 runVncStep1(platform);
             }
@@ -559,6 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function hideModal() {
         oauthPopup.classList.remove('show');
+        oauthPopup.classList.add('hidden');
         clearVncTimeouts();
         currentOauthPlatform = null;
     }
@@ -689,6 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
             vncActionBtn.classList.add('hidden');
             
             oauthPopup.classList.add('show');
+            oauthPopup.classList.remove('hidden');
             
             runExtensionStep1();
         });
