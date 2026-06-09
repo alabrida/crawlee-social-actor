@@ -129,3 +129,14 @@ Finalize the codebase for Marketplace, SaaS, and Consultant deployment modes. Th
 - **Data Integrity:** Generated deterministic `lead_uuid` and `dedupe_key` properties in `main.ts` to prevent unique constraint conflicts during Supabase upsert calls.
 - **GBP Pipeline:** Adjusted output extraction logic in `google-maps.ts` to explicitly mark `google_business_profile` when requested.
 - **Validation:** Deployed Vitest specifications for `schema-mapper.ts`, `session-vault.ts`, and `google-maps.ts` resulting in 100% test success.
+
+## Phase 2: Sprint 3 — Authentication Hardening & Session Lifecycle Upgrades
+
+**Value Increment Definition:**
+Harden the actor's session lifecycle against authentication walls and login redirects. This sprint delivers: (1) Active pre-flight session health validation to detect expired/invalid tokens before running crawls, (2) Playwright `storageState` JSON support to capture and inject cookies, localStorage, and sessionStorage, and (3) Dynamic success-cookie polling in the interactive login flow to exit instantly upon successful authentication.
+
+**Delivery Evidence (Phase 2, Sprint 3 Shipped):**
+- **Pre-flight Checks:** Implemented `health-check.ts` and integrated it into the startup pipeline in `main.ts`. Active tokens are validated pre-flight; runs fail-fast with explicit warning prompts if target sessions are expired.
+- **Playwright storageState:** Updated interactive setups to capture the complete browser `storageState` JSON, and refactored `auth.ts` to parse and inject either JSON payloads or legacy cookie strings.
+- **Dynamic Polling:** Configured interactive handlers to poll for platform success cookies (e.g., `li_at`, `c_user`, `ds_user_id`) every 2 seconds, letting the VNC session exit immediately after the user logs in.
+- **Validation:** Verified code compilation (GREEN) and executed all Vitest unit tests (85/85 tests PASS). Added spec coverage in `auth.spec.ts` and `health-check.spec.ts`. All changes committed.
