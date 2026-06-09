@@ -307,7 +307,12 @@
                     <!-- Section 2: Platform Connections (OAuth or Direct Link) -->
                     <div class="settings-section">
                         <h3 class="section-title">Platform Connections</h3>
-                        <p class="section-desc">Connect accounts securely via OAuth OR toggle the link icon to paste direct profile URLs.</p>
+                        <p class="section-desc">Connect securely via browser login (Option 2-B) or import using the Chrome Extension (Option 1). Toggle the link icon to use direct profile URLs.</p>
+                        
+                        <button id="extension-import-btn" class="btn btn-outline btn-block btn-sm" style="margin-bottom: 1.25rem; border-color: rgba(32, 201, 151, 0.4); color: var(--color-accent-light); width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-weight: 600; background: rgba(32, 201, 151, 0.03);">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            Import Session via Chrome Extension
+                        </button>
                         
                         <div class="oauth-list">
                             <!-- Google Business Profile -->
@@ -557,21 +562,122 @@
             </div>
         </aside>
 
-        <!-- OAUTH POPUP SIMULATOR -->
+        <!-- VNC INTERACTIVE BROWSER LOGIN POPUP (OPTION 2-B) -->
         <div id="oauth-popup" class="modal-overlay hidden">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <span id="modal-platform-title">Connect Platform</span>
-                    <button id="close-modal-btn" class="close-btn">&times;</button>
+            <div class="modal-card vnc-browser-card">
+                <!-- Browser Header / Chrome styling -->
+                <div class="browser-window-header">
+                    <div class="window-controls">
+                        <span class="ctrl-dot red-dot" id="cancel-vnc-btn-dot" title="Cancel connection"></span>
+                        <span class="ctrl-dot yellow-dot"></span>
+                        <span class="ctrl-dot green-dot"></span>
+                    </div>
+                    <div class="tab-bar">
+                        <div class="browser-tab active">
+                            <span class="tab-favicon" id="vnc-tab-favicon">in</span>
+                            <span class="tab-title" id="vnc-tab-title">LinkedIn Login</span>
+                            <span class="tab-close-x" id="vnc-tab-close">&times;</span>
+                        </div>
+                        <div class="incognito-badge">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                            <span>Incognito Mode</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body text-center">
-                    <div class="spinner"></div>
-                    <p class="modal-instruction">Redirecting to platform secure login...</p>
-                    <p class="modal-detail">Authorizing Revenue Journey Assessment Engine to access read-only metrics.</p>
+                
+                <div class="browser-navigation-bar">
+                    <div class="nav-arrows">
+                        <button class="nav-arrow-btn" disabled>&larr;</button>
+                        <button class="nav-arrow-btn" disabled>&rarr;</button>
+                        <button class="nav-arrow-btn" id="vnc-reload-btn" title="Reload browser session">&#8635;</button>
+                    </div>
+                    <div class="browser-address-bar">
+                        <span class="lock-icon">🔒</span>
+                        <input type="text" id="vnc-address-input" value="https://www.linkedin.com/login" readonly>
+                    </div>
                 </div>
-                <div class="modal-footer">
+
+                <div class="modal-body vnc-body-container">
+                    <div class="vnc-main-viewport">
+                        <!-- Step 1: Initializing browser context -->
+                        <div id="vnc-step-init" class="vnc-step-pane text-center">
+                            <div class="vnc-loader-container">
+                                <div class="spinner-neon"></div>
+                                <div class="loading-bar-glow"></div>
+                            </div>
+                            <h3 class="vnc-step-heading">Spawning Isolated Browser Context</h3>
+                            <p class="vnc-step-desc text-meta">Allocating residential proxy & launching incognito sandbox session...</p>
+                        </div>
+
+                        <!-- Step 2: Platform Specific Form View -->
+                        <div id="vnc-step-login-form" class="vnc-step-pane hidden">
+                            <!-- Dynamic Content Injected Here via JS (e.g. LinkedIn, Facebook, X, etc.) -->
+                            <div id="vnc-dynamic-form-wrapper" style="width: 100%;"></div>
+                        </div>
+
+                        <!-- Step 3: Capturing cookies & checking health -->
+                        <div id="vnc-step-capturing" class="vnc-step-pane text-center hidden">
+                            <div class="radar-scan">
+                                <div class="radar-beam"></div>
+                                <div class="radar-circles">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                            <h3 class="vnc-step-heading text-highlight">Capturing storageState.json</h3>
+                            <p class="vnc-step-desc">Intercepting authenticated session tokens and validating session endpoint health...</p>
+                            <div class="health-indicator-bar" style="margin-top: 1rem;">
+                                <span class="health-label" style="font-size: 0.85rem; color: var(--text-secondary);">Session Status:</span>
+                                <span class="badge badge-warning font-pulse" id="vnc-health-status" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">INTERCEPTING</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Success View -->
+                        <div id="vnc-step-success" class="vnc-step-pane text-center hidden">
+                            <div class="success-checkmark-wrapper">
+                                <div class="checkmark-circle">
+                                    <div class="checkmark-kick"></div>
+                                    <div class="checkmark-stem"></div>
+                                </div>
+                                <div class="checkmark-glow"></div>
+                            </div>
+                            <h3 class="vnc-step-heading text-success">Authentication Verified!</h3>
+                            <p class="vnc-step-desc">Session state captured. Credentials and cookies successfully encrypted & stored in Supabase SessionVault.</p>
+                            
+                            <div class="session-details-card">
+                                <div class="detail-line">
+                                    <span class="detail-lbl">User Session:</span>
+                                    <span class="detail-val" id="vnc-success-user-display">Active</span>
+                                </div>
+                                <div class="detail-line">
+                                    <span class="detail-lbl">Security State:</span>
+                                    <span class="detail-val text-success">Active & Encrypted</span>
+                                </div>
+                                <div class="detail-line">
+                                    <span class="detail-lbl">Cookies Intercepted:</span>
+                                    <span class="detail-val" id="vnc-success-cookie-name">li_at</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terminal Logs Console at bottom of modal body -->
+                    <div class="vnc-terminal-console">
+                        <div class="terminal-title">
+                            <span>VNC Browser Stream Logs</span>
+                            <span class="terminal-status-dot green-pulse"></span>
+                        </div>
+                        <div class="terminal-lines" id="vnc-terminal-lines">
+                            <div class="term-line info">[System] Ready to spawn Playwright incognito instance...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer vnc-footer">
                     <button id="cancel-auth-btn" class="btn btn-secondary">Cancel</button>
-                    <button id="simulate-auth-success" class="btn btn-primary">Simulate Login Success</button>
+                    <!-- Success button to complete the flow -->
+                    <button id="vnc-action-btn" class="btn btn-primary btn-glow hidden">Save Credentials</button>
                 </div>
             </div>
         </div>

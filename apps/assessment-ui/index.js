@@ -23,10 +23,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const consoleLinesContainer = document.getElementById('console-lines-container');
     
     const oauthPopup = document.getElementById('oauth-popup');
-    const modalPlatformTitle = document.getElementById('modal-platform-title');
-    const closeModalBtn = document.getElementById('close-modal-btn');
     const cancelAuthBtn = document.getElementById('cancel-auth-btn');
-    const simulateAuthSuccessBtn = document.getElementById('simulate-auth-success');
+    
+    // VNC Selectors
+    const vncTabTitle = document.getElementById('vnc-tab-title');
+    const vncTabFavicon = document.getElementById('vnc-tab-favicon');
+    const vncAddressInput = document.getElementById('vnc-address-input');
+    const vncStepInit = document.getElementById('vnc-step-init');
+    const vncStepLoginForm = document.getElementById('vnc-step-login-form');
+    const vncStepCapturing = document.getElementById('vnc-step-capturing');
+    const vncStepSuccess = document.getElementById('vnc-step-success');
+    const vncTerminalLines = document.getElementById('vnc-terminal-lines');
+    const vncActionBtn = document.getElementById('vnc-action-btn');
+    const vncSuccessUserDisplay = document.getElementById('vnc-success-user-display');
+    const vncSuccessCookieName = document.getElementById('vnc-success-cookie-name');
+    const cancelVncBtnDot = document.getElementById('cancel-vnc-btn-dot');
+    const vncTabClose = document.getElementById('vnc-tab-close');
+    const vncDynamicFormWrapper = document.getElementById('vnc-dynamic-form-wrapper');
+    const extensionImportBtn = document.getElementById('extension-import-btn');
     
     const toast = document.getElementById('toast-notification');
     const toastMessage = document.getElementById('toast-message');
@@ -280,15 +294,165 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTags();
 
     // ==========================================
-    // OAuth Connections Simulation
+    // VNC Browser Stream & Extension Sync Simulation
     // ==========================================
+    let vncTimeouts = [];
+
+    function clearVncTimeouts() {
+        vncTimeouts.forEach(clearTimeout);
+        vncTimeouts = [];
+    }
+
+    function showVncStep(stepId) {
+        vncStepInit.classList.add('hidden');
+        vncStepLoginForm.classList.add('hidden');
+        vncStepCapturing.classList.add('hidden');
+        vncStepSuccess.classList.add('hidden');
+        
+        document.getElementById(stepId).classList.remove('hidden');
+    }
+
+    function clearVncTerminal() {
+        vncTerminalLines.innerHTML = '';
+    }
+
+    function appendVncTerminalLine(text, type = 'info') {
+        const line = document.createElement('div');
+        line.className = `term-line ${type}`;
+        line.textContent = text;
+        vncTerminalLines.appendChild(line);
+        vncTerminalLines.scrollTop = vncTerminalLines.scrollHeight;
+    }
+
+    function getPlatformFavicon(platform) {
+        switch(platform) {
+            case 'google':
+            case 'youtube': return 'G';
+            case 'linkedin': return 'in';
+            case 'facebook': return 'f';
+            case 'instagram': return '📸';
+            case 'twitter': return '𝕏';
+            case 'pinterest': return 'P';
+            case 'reddit': return 'R';
+            default: return '🌐';
+        }
+    }
+
+    function getPlatformCookie(platform) {
+        switch(platform) {
+            case 'linkedin': return 'li_at';
+            case 'facebook': return 'c_user';
+            case 'instagram': return 'ds_user_id';
+            case 'twitter': return 'auth_token';
+            case 'google':
+            case 'youtube': return 'VISITOR_INFO1_LIVE';
+            case 'pinterest': return '_auth';
+            case 'reddit': return 'reddit_session';
+            default: return 'session_id';
+        }
+    }
+
+    function getPlatformUrl(platform) {
+        switch(platform) {
+            case 'linkedin': return 'https://www.linkedin.com/login';
+            case 'facebook': return 'https://www.facebook.com/login';
+            case 'twitter': return 'https://x.com/i/flow/login';
+            case 'google':
+            case 'youtube': return 'https://accounts.google.com/signin';
+            case 'tiktok': return 'https://www.tiktok.com/login';
+            case 'instagram': return 'https://www.instagram.com/accounts/login/';
+            case 'pinterest': return 'https://www.pinterest.com/login/';
+            case 'reddit': return 'https://www.reddit.com/login/';
+            default: return 'https://' + platform + '.com/login';
+        }
+    }
+
+    function getLoginFormHTML(platform) {
+        let brandClass = 'brand-' + platform;
+        let btnClass = 'btn-' + platform;
+        let logoText = '';
+        let titleText = 'Incognito Authentication';
+        let userPlaceholder = 'Email or phone number';
+        let btnText = 'Sign In';
+
+        switch(platform) {
+            case 'linkedin':
+                logoText = '<span class="brand-linkedin">Linked</span>In';
+                titleText = 'Stay updated on your professional world';
+                btnText = 'Sign in';
+                break;
+            case 'facebook':
+                logoText = '<span class="brand-facebook">facebook</span>';
+                titleText = 'Connect with friends and the world around you.';
+                btnText = 'Log In';
+                break;
+            case 'twitter':
+                logoText = '𝕏';
+                titleText = 'Happening now. Join today.';
+                userPlaceholder = 'Phone, email, or username';
+                btnText = 'Log in';
+                break;
+            case 'google':
+            case 'youtube':
+                logoText = '<span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>';
+                titleText = 'Sign in to your Google Account';
+                userPlaceholder = 'Email or phone';
+                btnText = 'Next';
+                break;
+            case 'tiktok':
+                logoText = '🎵 TikTok';
+                titleText = 'Manage your account, check notifications, and more.';
+                btnText = 'Log in';
+                break;
+            case 'instagram':
+                logoText = '<span class="brand-instagram" style="font-family: serif; font-style: italic; font-weight: 700; font-size: 1.8rem;">Instagram</span>';
+                titleText = 'Sign up to see photos and videos from your friends.';
+                btnText = 'Log in';
+                break;
+            case 'pinterest':
+                logoText = '<span class="brand-pinterest">Pinterest</span>';
+                titleText = 'Find new ideas to try';
+                btnText = 'Log in';
+                break;
+            case 'reddit':
+                logoText = '<span class="brand-reddit">reddit</span>';
+                titleText = 'Dive into anything';
+                btnText = 'Log In';
+                break;
+            default:
+                logoText = platform.toUpperCase();
+                titleText = 'Connect Profile';
+                btnText = 'Connect';
+        }
+
+        return `
+            <div class="vnc-login-form-box">
+                <div class="vnc-form-header">
+                    <div class="vnc-form-logo">${logoText}</div>
+                    <div class="vnc-form-title">${titleText}</div>
+                </div>
+                <form id="vnc-simulated-form">
+                    <div class="vnc-form-group">
+                        <label>Username / Email</label>
+                        <input type="text" class="vnc-input" id="vnc-username-field" placeholder="${userPlaceholder}" value="growth@richardnorwood.com" required>
+                    </div>
+                    <div class="vnc-form-group">
+                        <label>Password</label>
+                        <input type="password" class="vnc-input" id="vnc-password-field" placeholder="Enter password" value="••••••••••••" required>
+                    </div>
+                    <button type="submit" class="vnc-submit-btn ${btnClass}">${btnText}</button>
+                </form>
+            </div>
+        `;
+    }
+
+    // Connect trigger listener loop
     const oauthItems = document.querySelectorAll('.oauth-item');
     oauthItems.forEach(item => {
         const btn = item.querySelector('.oauth-toggle-btn');
         const statusEl = item.querySelector('.oauth-status');
         const platform = btn.getAttribute('data-platform');
         
-        // Connect button (OAuth login)
         btn.addEventListener('click', () => {
             const isConnected = statusEl.getAttribute('data-connected') === 'true';
             
@@ -297,14 +461,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusEl.setAttribute('data-connected', 'false');
                 statusEl.textContent = 'Not Connected';
                 statusEl.className = 'oauth-status';
-                btn.textContent = 'Connect';
-                btn.classList.add('btn-highlight');
+                if (btn) {
+                    btn.textContent = 'Connect';
+                    btn.classList.add('btn-highlight');
+                }
                 showToast(`Disconnected from ${getPlatformName(platform)}.`);
             } else {
-                // Open Auth Modal popup simulator
+                // Open VNC modal (Option 2-B)
                 currentOauthPlatform = { btn, statusEl, platform };
-                modalPlatformTitle.textContent = `Connect to ${getPlatformName(platform)}`;
+                vncTabFavicon.textContent = getPlatformFavicon(platform);
+                vncTabTitle.textContent = `${getPlatformName(platform)} Login`;
+                vncAddressInput.value = getPlatformUrl(platform);
+                vncActionBtn.classList.add('hidden');
+                
                 oauthPopup.classList.add('show');
+                
+                runVncStep1(platform);
             }
         });
 
@@ -325,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     const isConnected = statusEl.getAttribute('data-connected') === 'true';
                     if (isConnected) {
-                        statusEl.textContent = `Connected: @milos_${platform}`;
+                        statusEl.textContent = `Connected: @richard_${platform}`;
                         statusEl.className = 'oauth-status text-success';
                     } else {
                         statusEl.textContent = 'Not Connected';
@@ -380,24 +552,352 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    closeModalBtn.addEventListener('click', hideModal);
-    cancelAuthBtn.addEventListener('click', hideModal);
+    // VNC Control Event Bindings
+    if (cancelVncBtnDot) cancelVncBtnDot.addEventListener('click', hideModal);
+    if (vncTabClose) vncTabClose.addEventListener('click', hideModal);
+    if (cancelAuthBtn) cancelAuthBtn.addEventListener('click', hideModal);
     
     function hideModal() {
         oauthPopup.classList.remove('show');
+        clearVncTimeouts();
         currentOauthPlatform = null;
     }
 
-    simulateAuthSuccessBtn.addEventListener('click', () => {
+    // Step 1 Simulation (Spawn browser context)
+    function runVncStep1(platform) {
+        clearVncTimeouts();
+        showVncStep('vnc-step-init');
+        clearVncTerminal();
+        
+        // Restore Step 4 Success Pane defaults
+        const detailsCard = document.querySelector('#vnc-step-success .session-details-card');
+        detailsCard.innerHTML = `
+            <div class="detail-line">
+                <span class="detail-lbl">User Session:</span>
+                <span class="detail-val" id="vnc-success-user-display">Active</span>
+            </div>
+            <div class="detail-line">
+                <span class="detail-lbl">Security State:</span>
+                <span class="detail-val text-success">Active & Encrypted</span>
+            </div>
+            <div class="detail-line">
+                <span class="detail-lbl">Cookies Intercepted:</span>
+                <span class="detail-val" id="vnc-success-cookie-name">li_at</span>
+            </div>
+        `;
+        const succHeading = document.querySelector('#vnc-step-success .vnc-step-heading');
+        const succDesc = document.querySelector('#vnc-step-success .vnc-step-desc');
+        succHeading.textContent = "Authentication Verified!";
+        succDesc.textContent = "Session state captured. Credentials and cookies successfully encrypted & stored in Supabase SessionVault.";
+
+        appendVncTerminalLine(`[System] Spawning incognito browserContext for ${getPlatformName(platform)}...`, 'info');
+        
+        let t1 = setTimeout(() => {
+            appendVncTerminalLine(`[Proxy] Routed traffic via Residential US-East proxy (172.98.43.201)...`, 'info');
+        }, 300);
+        
+        let t2 = setTimeout(() => {
+            appendVncTerminalLine(`[Playwright] Spawning isolated Chromium context (fingerprints active)...`, 'info');
+        }, 700);
+        
+        let t3 = setTimeout(() => {
+            appendVncTerminalLine(`[Playwright] Navigating context to login portal: ${getPlatformUrl(platform)}...`, 'info');
+        }, 1100);
+        
+        let t4 = setTimeout(() => {
+            appendVncTerminalLine(`[VNC Server] Stream connection established (60fps, 1024x768).`, 'success');
+            runVncStep2(platform);
+        }, 1500);
+        
+        vncTimeouts.push(t1, t2, t3, t4);
+    }
+
+    // Step 2 Simulation (LoginForm render and await click)
+    function runVncStep2(platform) {
+        showVncStep('vnc-step-login-form');
+        vncDynamicFormWrapper.innerHTML = getLoginFormHTML(platform);
+        
+        const form = document.getElementById('vnc-simulated-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('vnc-username-field').value || 'growth@richardnorwood.com';
+            runVncStep3(platform, username);
+        });
+    }
+
+    // Step 3 Simulation (Capturing cookie credentials and health checking)
+    function runVncStep3(platform, email) {
+        showVncStep('vnc-step-capturing');
+        
+        const cookieName = getPlatformCookie(platform);
+        appendVncTerminalLine(`[VNC Browser] Form submit intercepted. Capturing authentication trigger...`, 'info');
+        
+        let t1 = setTimeout(() => {
+            appendVncTerminalLine(`[Playwright] Waiting for cookies to be set...`, 'info');
+        }, 400);
+        
+        let t2 = setTimeout(() => {
+            appendVncTerminalLine(`[SessionVault] Intercepted network cookies: checking requirements...`, 'info');
+        }, 800);
+        
+        let t3 = setTimeout(() => {
+            appendVncTerminalLine(`[SessionVault] Found session key: '${cookieName}' detected.`, 'success');
+        }, 1200);
+        
+        let t4 = setTimeout(() => {
+            appendVncTerminalLine(`[Playwright] Capture successful! Storing storageState JSON structure.`, 'success');
+        }, 1600);
+        
+        let t5 = setTimeout(() => {
+            appendVncTerminalLine(`[Health Check] Running pre-flight request with captured storageState...`, 'info');
+        }, 2000);
+        
+        let t6 = setTimeout(() => {
+            appendVncTerminalLine(`[Health Check] Request GET /feed HTTP/1.1 -> Status 200 OK (Auth Valid)`, 'success');
+        }, 2400);
+        
+        let t7 = setTimeout(() => {
+            appendVncTerminalLine(`[SessionVault] Encrypting and saving context credentials to Supabase...`, 'info');
+        }, 2800);
+        
+        let t8 = setTimeout(() => {
+            runVncStep4(platform, email);
+        }, 3200);
+        
+        vncTimeouts.push(t1, t2, t3, t4, t5, t6, t7, t8);
+    }
+
+    // Step 4 Simulation (Success confirmed)
+    function runVncStep4(platform, email) {
+        showVncStep('vnc-step-success');
+        vncActionBtn.classList.remove('hidden');
+        vncActionBtn.textContent = 'Save Credentials';
+        
+        vncSuccessUserDisplay.textContent = email;
+        vncSuccessCookieName.textContent = getPlatformCookie(platform);
+        
+        appendVncTerminalLine(`[SessionVault] Context credentials saved successfully. Session verified as HEALTHY.`, 'success');
+    }
+
+    // Chrome Extension Import Trigger (Option 1)
+    if (extensionImportBtn) {
+        extensionImportBtn.addEventListener('click', () => {
+            currentOauthPlatform = { platform: 'extension' };
+            vncTabFavicon.textContent = '🔌';
+            vncTabTitle.textContent = `Extension Sync`;
+            vncAddressInput.value = 'chrome-extension://moat-authenticator/popup.html';
+            vncActionBtn.classList.add('hidden');
+            
+            oauthPopup.classList.add('show');
+            
+            runExtensionStep1();
+        });
+    }
+
+    function runExtensionStep1() {
+        clearVncTimeouts();
+        showVncStep('vnc-step-init');
+        clearVncTerminal();
+        
+        const loadingHeading = document.querySelector('#vnc-step-init .vnc-step-heading');
+        const loadingDesc = document.querySelector('#vnc-step-init .vnc-step-desc');
+        const origHeading = loadingHeading.textContent;
+        const origDesc = loadingDesc.textContent;
+        
+        loadingHeading.textContent = "Connecting to Chrome Extension...";
+        loadingDesc.textContent = "Scanning active browser tabs for valid authenticated sessions (Option 1)...";
+        
+        appendVncTerminalLine(`[Extension] Hooking Chrome API chrome.cookies.getAll...`, 'info');
+        
+        let t1 = setTimeout(() => {
+            appendVncTerminalLine(`[Extension] Inspecting active security origins...`, 'info');
+        }, 400);
+        
+        let t2 = setTimeout(() => {
+            appendVncTerminalLine(`[Extension] Detected active LinkedIn session: @richard_norwood`, 'success');
+        }, 800);
+        
+        let t3 = setTimeout(() => {
+            appendVncTerminalLine(`[Extension] Detected active Facebook session: /RichardNorwoodPMP`, 'success');
+        }, 1200);
+        
+        let t4 = setTimeout(() => {
+            appendVncTerminalLine(`[Extension] Detected active YouTube session: growth@richardnorwood.com`, 'success');
+        }, 1600);
+        
+        let t5 = setTimeout(() => {
+            appendVncTerminalLine(`[Extension] 3 active sessions found. Rendering sync console.`, 'success');
+            loadingHeading.textContent = origHeading;
+            loadingDesc.textContent = origDesc;
+            
+            runExtensionStep2();
+        }, 2000);
+        
+        vncTimeouts.push(t1, t2, t3, t4, t5);
+    }
+
+    function runExtensionStep2() {
+        showVncStep('vnc-step-login-form');
+        
+        vncDynamicFormWrapper.innerHTML = `
+            <div class="vnc-login-form-box" style="max-width: 420px;">
+                <div class="vnc-form-header" style="margin-bottom: 1rem;">
+                    <div class="vnc-form-logo" style="color: var(--color-accent-light); font-size: 1.25rem;">🔌 Chrome Extension Moat</div>
+                    <div class="vnc-form-title">Select active browser sessions to import:</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);">
+                        <input type="checkbox" id="ext-check-linkedin" checked style="width: 16px; height: 16px; accent-color: var(--color-accent);">
+                        <span>LinkedIn Profile (@richard_norwood)</span>
+                        <span class="text-success" style="font-size: 0.7rem; margin-left: auto; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(16,185,129,0.2);">ACTIVE</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);">
+                        <input type="checkbox" id="ext-check-facebook" checked style="width: 16px; height: 16px; accent-color: var(--color-accent);">
+                        <span>Facebook Profile (/RichardNorwoodPMP)</span>
+                        <span class="text-success" style="font-size: 0.7rem; margin-left: auto; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(16,185,129,0.2);">ACTIVE</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);">
+                        <input type="checkbox" id="ext-check-youtube" checked style="width: 16px; height: 16px; accent-color: var(--color-accent);">
+                        <span>YouTube Channel (growth@richardnorwood.com)</span>
+                        <span class="text-success" style="font-size: 0.7rem; margin-left: auto; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(16,185,129,0.2);">ACTIVE</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; opacity: 0.5; padding: 8px; background: rgba(0,0,0,0.25); border-radius: 6px; border: 1px solid rgba(255,255,255,0.02);">
+                        <input type="checkbox" disabled style="width: 16px; height: 16px;">
+                        <span>Twitter / X (Session Expired - Connect manually)</span>
+                        <span class="text-error" style="font-size: 0.7rem; margin-left: auto; background: rgba(239,68,68,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.2);">EXPIRED</span>
+                    </label>
+                </div>
+                <button id="ext-sync-submit-btn" class="vnc-submit-btn" style="background: var(--color-accent); color: #000;">Sync 3 Selected Sessions</button>
+            </div>
+        `;
+        
+        const syncBtn = document.getElementById('ext-sync-submit-btn');
+        syncBtn.addEventListener('click', () => {
+            const syncList = [];
+            if (document.getElementById('ext-check-linkedin').checked) syncList.push('LinkedIn');
+            if (document.getElementById('ext-check-facebook').checked) syncList.push('Facebook');
+            if (document.getElementById('ext-check-youtube').checked) syncList.push('YouTube');
+            
+            runExtensionStep3(syncList);
+        });
+    }
+
+    function runExtensionStep3(syncList) {
+        showVncStep('vnc-step-capturing');
+        
+        const capHeading = document.querySelector('#vnc-step-capturing .vnc-step-heading');
+        const capDesc = document.querySelector('#vnc-step-capturing .vnc-step-desc');
+        const origHeading = capHeading.textContent;
+        const origDesc = capDesc.textContent;
+        
+        capHeading.textContent = "Syncing Cookies via Chrome Extension";
+        capDesc.textContent = `Extracting active token profiles for ${syncList.join(', ')}...`;
+        
+        appendVncTerminalLine(`[Extension] Extracting browser storageState payload for checked sessions...`, 'info');
+        
+        let t1 = setTimeout(() => {
+            appendVncTerminalLine(`[SessionVault] Syncing ${syncList.length} platform contexts to database...`, 'info');
+        }, 400);
+        
+        let t2 = setTimeout(() => {
+            if (syncList.includes('LinkedIn')) {
+                appendVncTerminalLine(`[Health Check] Verifying active LinkedIn session... Status 200 OK`, 'success');
+            }
+        }, 800);
+        
+        let t3 = setTimeout(() => {
+            if (syncList.includes('Facebook')) {
+                appendVncTerminalLine(`[Health Check] Verifying active Facebook session... Status 200 OK`, 'success');
+            }
+        }, 1200);
+        
+        let t4 = setTimeout(() => {
+            if (syncList.includes('YouTube')) {
+                appendVncTerminalLine(`[Health Check] Verifying active YouTube session... Status 200 OK`, 'success');
+            }
+        }, 1600);
+        
+        let t5 = setTimeout(() => {
+            appendVncTerminalLine(`[SessionVault] All ${syncList.length} contexts stored & encrypted in Supabase.`, 'success');
+        }, 2000);
+        
+        let t6 = setTimeout(() => {
+            capHeading.textContent = origHeading;
+            capDesc.textContent = origDesc;
+            
+            runExtensionStep4(syncList);
+        }, 2400);
+        
+        vncTimeouts.push(t1, t2, t3, t4, t5, t6);
+    }
+
+    function runExtensionStep4(syncList) {
+        showVncStep('vnc-step-success');
+        
+        const succHeading = document.querySelector('#vnc-step-success .vnc-step-heading');
+        const succDesc = document.querySelector('#vnc-step-success .vnc-step-desc');
+        
+        succHeading.textContent = "Import Sync Successful!";
+        succDesc.textContent = `Successfully updated SessionVault with ${syncList.length} active sessions from your Chrome browser.`;
+        
+        const detailsCard = document.querySelector('#vnc-step-success .session-details-card');
+        detailsCard.innerHTML = `
+            <div class="detail-line">
+                <span class="detail-lbl">Imported Profiles:</span>
+                <span class="detail-val" style="color: var(--color-accent-light); font-weight: 700;">${syncList.length} Connected</span>
+            </div>
+            <div class="detail-line">
+                <span class="detail-lbl">Connection Path:</span>
+                <span class="detail-val">Chrome Extension Moat</span>
+            </div>
+            <div class="detail-line">
+                <span class="detail-lbl">Synced Platforms:</span>
+                <span class="detail-val" style="font-size: 0.75rem;">${syncList.join(', ')}</span>
+            </div>
+        `;
+        
+        vncActionBtn.classList.remove('hidden');
+        vncActionBtn.textContent = 'Complete Sync';
+        
+        appendVncTerminalLine(`[Extension] Session state import finalized. Ready to save.`, 'success');
+    }
+
+    // Unified Save action click handler
+    vncActionBtn.addEventListener('click', () => {
         if (currentOauthPlatform) {
             const { btn, statusEl, platform } = currentOauthPlatform;
-            statusEl.setAttribute('data-connected', 'true');
-            statusEl.textContent = `Connected: @milos_${platform}`;
-            statusEl.className = 'oauth-status text-success';
-            btn.textContent = 'Disconnect';
-            btn.classList.remove('btn-highlight');
             
-            showToast(`Successfully authenticated with ${getPlatformName(platform)}!`);
+            if (platform === 'extension') {
+                const platformsToSync = ['linkedin', 'facebook', 'youtube'];
+                platformsToSync.forEach(p => {
+                    const oauthItem = document.getElementById(`oauth-${p}`);
+                    if (oauthItem) {
+                        const sEl = oauthItem.querySelector('.oauth-status');
+                        const bEl = oauthItem.querySelector('.oauth-toggle-btn');
+                        
+                        sEl.setAttribute('data-connected', 'true');
+                        sEl.textContent = `Connected: @richard_${p}`;
+                        sEl.className = 'oauth-status text-success';
+                        
+                        if (bEl) {
+                            bEl.textContent = 'Disconnect';
+                            bEl.classList.remove('btn-highlight');
+                        }
+                    }
+                });
+                showToast("Chrome Extension synced 3 sessions successfully!");
+            } else {
+                statusEl.setAttribute('data-connected', 'true');
+                statusEl.textContent = `Connected: @richard_${platform}`;
+                statusEl.className = 'oauth-status text-success';
+                
+                if (btn) {
+                    btn.textContent = 'Disconnect';
+                    btn.classList.remove('btn-highlight');
+                }
+                
+                showToast(`Successfully authenticated with ${getPlatformName(platform)}!`);
+            }
             hideModal();
         }
     });
