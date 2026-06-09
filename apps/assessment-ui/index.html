@@ -410,8 +410,7 @@
                 </ul>
 
                 <div class="gateway-actions">
-                    <button id="download-ext-btn" class="btn-landing btn-mint-outline">Download Extension Package (.zip)</button>
-                    <a href="dashboard.html" class="btn-landing btn-mint-primary">Launch Dashboard & Sync</a>
+                    <a href="extension-gate.html" class="btn-landing btn-mint-primary">Configure Extension Sync</a>
                 </div>
             </section>
 
@@ -437,7 +436,7 @@
                 </ul>
 
                 <div class="gateway-actions">
-                    <a href="dashboard.html" class="btn-landing btn-gold-primary">Launch Web Dashboard (VNC)</a>
+                    <a href="auth-gate.html" class="btn-landing btn-gold-primary">Configure Web VNC Login</a>
                 </div>
             </section>
         </main>
@@ -447,28 +446,7 @@
         </footer>
     </div>
 
-    <!-- Notification Toast for Simulated Download -->
-    <div id="simulate-toast" class="toast-simulate">
-        <span class="toast-icon">📦</span>
-        <div class="toast-details">
-            <h4>Extension Download Started</h4>
-            <p>MoatSessionSync.zip downloaded. Unzip and load as unpacked extension in chrome://extensions to sync cookies.</p>
-        </div>
-    </div>
-
     <script>
-        // Simulated Extension Download
-        const downloadBtn = document.getElementById('download-ext-btn');
-        const toast = document.getElementById('simulate-toast');
-
-        downloadBtn.addEventListener('click', () => {
-            // Trigger simulated download toast
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 5000);
-        });
-
         // ── Canvas Starfield background simulation ──
         const canvas = document.getElementById('starfield-canvas');
         const ctx = canvas.getContext('2d');

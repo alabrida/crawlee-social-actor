@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Connection Wall - Diagnostic Auth Gate</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+
+        .gate-container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gate-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .gate-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(180deg, #ffffff 0%, var(--color-text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gate-subtitle {
+            font-size: 1.05rem;
+            color: var(--color-text-muted);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--color-text-subtle);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            align-self: flex-start;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: #ffffff;
+        }
+
+        .auth-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3.5rem;
+        }
+
+        @media (max-width: 992px) {
+            .auth-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .auth-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glassmorphic Auth Cards */
+        .auth-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .auth-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .auth-card.connected {
+            border-color: rgba(32, 201, 151, 0.3);
+            background: rgba(15, 26, 46, 0.85);
+            box-shadow: 0 0 20px rgba(32, 201, 151, 0.05);
+        }
+
+        .auth-platform-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .platform-icon-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--color-border);
+            flex-shrink: 0;
+        }
+
+        .platform-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #ffffff;
+        }
+
+        .oauth-status {
+            font-size: 0.78rem;
+            color: var(--color-text-subtle);
+            margin-top: 2px;
+            transition: color 0.3s ease;
+        }
+
+        .oauth-status.text-success {
+            color: var(--color-accent-light);
+            font-weight: 500;
+        }
+
+        .oauth-actions {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .oauth-toggle-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid var(--color-border);
+            background: transparent;
+            color: var(--color-text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .oauth-toggle-btn.btn-highlight {
+            background: var(--color-secondary);
+            color: var(--color-primary-dark);
+            border-color: transparent;
+            box-shadow: 0 4px 10px rgba(240, 180, 41, 0.15);
+        }
+
+        .oauth-toggle-btn.btn-highlight:hover {
+            background: var(--color-secondary-light);
+            box-shadow: 0 6px 15px rgba(240, 180, 41, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .oauth-toggle-btn:not(.btn-highlight):hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-toggle-link {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 1px solid var(--color-border);
+            background: transparent;
+            color: var(--color-text-subtle);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-toggle-link:hover {
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .btn-toggle-link.active-link {
+            color: var(--color-accent-light);
+            border-color: rgba(32, 201, 151, 0.3);
+            background: rgba(32, 201, 151, 0.05);
+        }
+
+        .direct-url-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .platform-direct-url {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #ffffff;
+            font-size: 0.8rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .platform-direct-url:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 8px rgba(32, 201, 151, 0.2);
+        }
+
+        .input-sub-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sub-label {
+            font-size: 0.7rem;
+            color: var(--color-text-subtle);
+            font-weight: 500;
+        }
+
+        /* Bottom Action Panel */
+        .bottom-action-bar {
+            background: var(--glass-bg-heavy);
+            backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (max-width: 600px) {
+            .bottom-action-bar {
+                flex-direction: column;
+                padding: 1.5rem;
+                text-align: center;
+            }
+        }
+
+        .counter-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .counter-heading {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #ffffff;
+        }
+
+        .counter-sub {
+            font-size: 0.82rem;
+            color: var(--color-text-subtle);
+        }
+
+        .btn-submit-gate {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--color-text-subtle);
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit-gate.active {
+            cursor: pointer;
+            background: var(--color-accent);
+            color: var(--color-primary-dark);
+            box-shadow: 0 4px 15px rgba(32, 201, 151, 0.25);
+        }
+
+        .btn-submit-gate.active:hover {
+            background: var(--color-accent-light);
+            box-shadow: 0 6px 20px rgba(32, 201, 151, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Specific animations */
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starfield-canvas" class="starfield-canvas" aria-hidden="true"></canvas>
+
+    <div class="gate-container">
+        <a href="index.html" class="back-link">← Back to Gateway Selection</a>
+
+        <header class="gate-header">
+            <h1 class="gate-title">Platform Connection Wall</h1>
+            <p class="gate-subtitle">Launch secure, sandboxed incognito browser streams (VNC) to authorize read-only access for each social channel. Authentication state is compiled locally and encrypted in Supabase SessionVault.</p>
+        </header>
+
+        <main class="auth-grid">
+            <!-- Google Business Profile -->
+            <div class="auth-card" id="oauth-google">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle bg-google" style="color: #4285F4;">G</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">Google Business</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <input type="url" class="platform-direct-url" placeholder="Google Maps Share Link...">
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="google">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- LinkedIn -->
+            <div class="auth-card" id="oauth-linkedin">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle bg-linkedin" style="color: #0077B5;">in</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">LinkedIn Profile / Page</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <div class="input-sub-group">
+                        <span class="sub-label">Personal Profile URL</span>
+                        <input type="url" class="platform-direct-url" placeholder="https://linkedin.com/in/username">
+                    </div>
+                    <div class="input-sub-group">
+                        <span class="sub-label">Company/Business Page URL</span>
+                        <input type="url" class="platform-direct-url" placeholder="https://linkedin.com/company/name">
+                    </div>
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="linkedin">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Facebook -->
+            <div class="auth-card" id="oauth-facebook">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle bg-facebook" style="color: #1877F2;">f</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">Facebook Pages</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <div class="input-sub-group">
+                        <span class="sub-label">Personal Profile URL</span>
+                        <input type="url" class="platform-direct-url" placeholder="https://facebook.com/username">
+                    </div>
+                    <div class="input-sub-group">
+                        <span class="sub-label">Business Page/Group URL</span>
+                        <input type="url" class="platform-direct-url" placeholder="https://facebook.com/pages/name">
+                    </div>
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="facebook">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instagram -->
+            <div class="auth-card" id="oauth-instagram">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important; color: #ffffff;">📸</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">Instagram Profile</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <input type="url" class="platform-direct-url" placeholder="https://instagram.com/...">
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="instagram">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- YouTube -->
+            <div class="auth-card" id="oauth-youtube">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle bg-youtube" style="color: #FF0000;">YT</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">YouTube Channel</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <input type="url" class="platform-direct-url" placeholder="https://youtube.com/@...">
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="youtube">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TikTok -->
+            <div class="auth-card" id="oauth-tiktok">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle" style="background-color: #000000; color: #ffffff;">🎵</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">TikTok Profile</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <input type="url" class="platform-direct-url" placeholder="https://tiktok.com/@...">
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="tiktok">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Twitter / X -->
+            <div class="auth-card" id="oauth-twitter">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle" style="background-color: #000000; color: #ffffff; font-size: 1.05rem;">𝕏</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">Twitter / X</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <input type="url" class="platform-direct-url" placeholder="https://x.com/...">
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="twitter">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pinterest -->
+            <div class="auth-card" id="oauth-pinterest">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle" style="background-color: #bd081c; color: #ffffff;">P</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">Pinterest</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <input type="url" class="platform-direct-url" placeholder="https://pinterest.com/...">
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="pinterest">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reddit -->
+            <div class="auth-card" id="oauth-reddit">
+                <div class="auth-platform-info">
+                    <div class="platform-icon-circle" style="background-color: #ff4500; color: #ffffff;">R</div>
+                    <div class="platform-details-box">
+                        <div class="platform-name">Reddit</div>
+                        <div class="oauth-status" data-connected="false">Not Connected</div>
+                    </div>
+                </div>
+                <div class="direct-url-container hidden">
+                    <input type="url" class="platform-direct-url" placeholder="https://reddit.com/user/...">
+                </div>
+                <div class="oauth-actions">
+                    <button class="oauth-toggle-btn btn-highlight" data-platform="reddit">Connect</button>
+                    <button class="btn-toggle-link" title="Use profile URL instead">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <section class="bottom-action-bar">
+            <div class="counter-details">
+                <div class="counter-heading" id="connections-count">0 Platforms Connected</div>
+                <div class="counter-sub">At least 1 connection is required to proceed to the revenue dashboard.</div>
+            </div>
+            <button id="generate-audit" class="btn-submit-gate">Generate Audit & Enter Dashboard</button>
+        </section>
+    </div>
+
+    <!-- VNC INTERACTIVE BROWSER LOGIN POPUP (OPTION 2-B) -->
+    <div id="oauth-popup" class="modal-overlay hidden">
+        <div class="modal-card vnc-browser-card">
+            <!-- Browser Header / Chrome styling -->
+            <div class="browser-window-header">
+                <div class="window-controls">
+                    <span class="ctrl-dot red-dot" id="cancel-vnc-btn-dot" title="Cancel connection"></span>
+                    <span class="ctrl-dot yellow-dot"></span>
+                    <span class="ctrl-dot green-dot"></span>
+                </div>
+                <div class="browser-tabs">
+                    <div class="browser-tab active-tab">
+                        <span class="tab-favicon" id="vnc-tab-favicon">🌐</span>
+                        <span class="tab-title" id="vnc-tab-title">Loading...</span>
+                        <span class="tab-close" id="vnc-tab-close">&times;</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="browser-address-bar">
+                <div class="address-lock-icon">🔒</div>
+                <input type="text" id="vnc-address-input" class="address-input" value="https://linkedin.com/login" readonly>
+                <div class="address-reload-icon">⟳</div>
+            </div>
+
+            <!-- VNC Stream Window Container -->
+            <div class="vnc-stream-container">
+                <!-- Step 1: Initializing browser context -->
+                <div class="vnc-step-pane" id="vnc-step-init">
+                    <div class="vnc-loading-wrapper">
+                        <div class="neon-loader"></div>
+                        <h3 class="vnc-step-heading">Spawning Playwright Context</h3>
+                        <p class="vnc-step-desc">Allocating static residential proxy and building clean browser fingerprint...</p>
+                    </div>
+                </div>
+
+                <!-- Step 2: Login Form Submission -->
+                <div class="vnc-step-pane hidden" id="vnc-step-login-form">
+                    <div class="vnc-stream-watermark">VNC STREAM ACTIVE (SANDBOX)</div>
+                    <div class="vnc-form-frame" id="vnc-dynamic-form-wrapper">
+                        <!-- Loaded dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- Step 3: Capturing Credentials / Captchas -->
+                <div class="vnc-step-pane hidden" id="vnc-step-capturing">
+                    <div class="vnc-loading-wrapper">
+                        <div class="radar-scan">
+                            <div class="radar-beam"></div>
+                        </div>
+                        <h3 class="vnc-step-heading">Capturing Session Storage State</h3>
+                        <p class="vnc-step-desc">Awaiting cookies extraction & checking encryption hashes...</p>
+                    </div>
+                </div>
+
+                <!-- Step 4: Verification Success -->
+                <div class="vnc-step-pane hidden" id="vnc-step-success">
+                    <div class="success-checkmark-wrapper">
+                        <div class="checkmark-circle">
+                            <div class="checkmark-draw"></div>
+                        </div>
+                        <h3 class="vnc-step-heading">Authentication Verified!</h3>
+                        <p class="vnc-step-desc">Session state captured. Credentials and cookies successfully encrypted & stored in Supabase SessionVault.</p>
+                    </div>
+                    <div class="session-details-card">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Console Log Panel -->
+            <div class="vnc-console-panel">
+                <div class="console-head">
+                    <span>Sandboxed Browser Event Stream</span>
+                    <span class="vnc-pulse"></span>
+                </div>
+                <div class="vnc-term-lines" id="vnc-terminal-lines">
+                    <!-- Console outputs -->
+                </div>
+            </div>
+
+            <!-- Modal footer actions -->
+            <div class="vnc-modal-footer">
+                <button class="btn btn-secondary" id="cancel-auth-btn">Cancel</button>
+                <button class="btn btn-primary hidden" id="vnc-action-btn">Save Credentials</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast-card">
+        <span class="toast-indicator"></span>
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="auth-gate.js"></script>
+</body>
+</html>

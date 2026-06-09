@@ -1720,10 +1720,43 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(animate);
     }
 
+    // Auth gate check
+    const authCompleted = sessionStorage.getItem('auth_completed') === 'true';
+    if (!authCompleted) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // Set connected platforms from sessionStorage in sidebar on load
+    const savedPlatformsStr = sessionStorage.getItem('connected_platforms');
+    if (savedPlatformsStr) {
+        try {
+            const savedPlatforms = JSON.parse(savedPlatformsStr);
+            savedPlatforms.forEach(p => {
+                const oauthItem = document.getElementById(`oauth-${p}`);
+                if (oauthItem) {
+                    const sEl = oauthItem.querySelector('.oauth-status');
+                    const bEl = oauthItem.querySelector('.oauth-toggle-btn');
+                    
+                    sEl.setAttribute('data-connected', 'true');
+                    sEl.textContent = `Connected: @richard_${p}`;
+                    sEl.className = 'oauth-status text-success';
+                    
+                    if (bEl) {
+                        bEl.textContent = 'Disconnect';
+                        bEl.classList.remove('btn-highlight');
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Error parsing connected platforms", e);
+        }
+    }
+
     // Initialize Default Classification, Weakest Stage, Overall Score Breakdowns, GlowCards and StarField on Load
-    updateClassificationBreakdown('Pending');
-    updateWeakestStageBreakdown('Pending');
-    updateOverallScoreBreakdown(0.0);
     initGlowCards();
     initStarFieldBackground();
+
+    // Enforce populated dashboard since auth has been completed
+    updateDashboardWithNewAudit();
 });
