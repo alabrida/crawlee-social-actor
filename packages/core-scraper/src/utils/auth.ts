@@ -43,27 +43,53 @@ export async function injectCookies(
 
         const cookiesToInject: any[] = [];
 
-        const parsedCookies = tokenString.split(';')
-            .map((c: string) => c.trim())
-            .filter((c: string) => c)
-            .map((c: string) => {
-                const sepIndex = c.indexOf('=');
-                if (sepIndex === -1) return null;
-                const name = c.substring(0, sepIndex);
-                const value = c.substring(sepIndex + 1);
-                return { name, value, path: '/' };
-            })
-            .filter((c: any): c is any => c !== null);
+        if (tokenString.trim().startsWith('{')) {
+            try {
+                const state = JSON.parse(tokenString);
+                if (state.cookies && Array.isArray(state.cookies)) {
+                    for (const c of state.cookies) {
+                        const domainMatches = allowedDomains.some(domain =>
+                            c.domain && (c.domain === domain || c.domain.endsWith(domain))
+                        );
+                        if (domainMatches) {
+                            cookiesToInject.push({
+                                name: c.name,
+                                value: c.value,
+                                domain: c.domain,
+                                path: c.path || '/',
+                                expires: c.expires,
+                                httpOnly: c.httpOnly,
+                                secure: c.secure,
+                                sameSite: c.sameSite
+                            });
+                        }
+                    }
+                }
+            } catch (e: any) {
+                log.error(`[Auth] Failed to parse storageState JSON: ${e.message}`);
+            }
+        } else {
+            const parsedCookies = tokenString.split(';')
+                .map((c: string) => c.trim())
+                .filter((c: string) => c)
+                .map((c: string) => {
+                    const sepIndex = c.indexOf('=');
+                    if (sepIndex === -1) return null;
+                    const name = c.substring(0, sepIndex);
+                    const value = c.substring(sepIndex + 1);
+                    return { name, value, path: '/' };
+                })
+                .filter((c: any): c is any => c !== null);
 
-        // Inject the cookies for all mapped domains associated with the platform
-        for (const domain of allowedDomains) {
-            for (const c of parsedCookies) {
-                cookiesToInject.push({
-                    name: c.name,
-                    value: c.value,
-                    domain,
-                    path: c.path
-                });
+            for (const domain of allowedDomains) {
+                for (const c of parsedCookies) {
+                    cookiesToInject.push({
+                        name: c.name,
+                        value: c.value,
+                        domain,
+                        path: c.path
+                    });
+                }
             }
         }
 

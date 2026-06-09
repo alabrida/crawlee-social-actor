@@ -115,18 +115,46 @@ export class SessionVault {
             },
             requestHandler: async ({ page, request, log: pwLog }) => {
                 const platform = request.label as keyof VaultData['tokens'];
-                pwLog.info(`[Live View] Please log into ${platform}. Waiting 3 minutes...`);
+                pwLog.info(`[Live View] Please log into ${platform}. Watching for session cookies...`);
 
-                // Allow user 3 minutes per platform to login
-                await page.waitForTimeout(180000);
+                const requiredCookies: Record<string, string[]> = {
+                    linkedin: ['li_at'],
+                    facebook: ['c_user'],
+                    instagram: ['ds_user_id'],
+                    twitter: ['auth_token'],
+                    youtube: ['VISITOR_INFO1_LIVE'],
+                };
 
-                // Only get cookies for the specific platform's domain to avoid mixing tokens
-                const cookies = await page.context().cookies([request.url]);
+                const required = requiredCookies[platform] || [];
+                const maxWaitMs = 180000;
+                const pollIntervalMs = 2000;
+                let elapsedMs = 0;
+                let tokenString = '';
 
-                // Convert cookies back to a token string for simple storage
-                const tokenString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+                while (elapsedMs < maxWaitMs) {
+                    const cookies = await page.context().cookies([request.url]);
+                    const hasAllRequired = required.length > 0 && required.every(reqName =>
+                        cookies.some(c => c.name === reqName)
+                    );
+
+                    if (hasAllRequired) {
+                        const state = await page.context().storageState();
+                        tokenString = JSON.stringify(state);
+                        pwLog.info(`[Live View] Detected successful login for ${platform}!`);
+                        break;
+                    }
+
+                    await page.waitForTimeout(pollIntervalMs);
+                    elapsedMs += pollIntervalMs;
+                }
+
+                if (!tokenString) {
+                    const state = await page.context().storageState();
+                    tokenString = JSON.stringify(state);
+                    pwLog.warning(`[Live View] Timeout reached for ${platform}. Captured available storageState.`);
+                }
+
                 capturedTokens[platform] = tokenString;
-
                 pwLog.info(`[Live View] Captured cookies for ${platform}.`);
             }
         });

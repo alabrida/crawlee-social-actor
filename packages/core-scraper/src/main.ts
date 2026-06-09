@@ -14,6 +14,7 @@ import { cleanAssessmentPayload } from './utils/data-cleaner.js';
 import { FEATURES } from './utils/mode-gate.js';
 import { SessionVault } from './utils/session-vault.js';
 import { runCheerioCrawler, runPlaywrightCrawler } from './runner.js';
+import { checkSessionHealth } from './utils/health-check.js';
 import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
 import { PLATFORM_CRAWLER_MAP } from './types.js';
 
@@ -51,6 +52,29 @@ export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
         twitter: input.authTokens?.twitter || process.env.AUTH_TOKENS_X,
         youtube: input.authTokens?.youtube || process.env.AUTH_TOKENS_YOUTUBE,
     };
+
+    const activePlatforms = new Set<Platform>();
+    if (input.platforms) {
+        input.platforms.forEach(p => activePlatforms.add(p));
+    }
+    if (input.urls) {
+        input.urls.forEach(u => activePlatforms.add(u.platform));
+    }
+    if (input.businessUrl) {
+        activePlatforms.add('general_hub');
+    }
+
+    for (const platform of activePlatforms) {
+        if (['linkedin', 'facebook', 'instagram', 'twitter'].includes(platform)) {
+            const tokenKey = platform === 'twitter' ? 'twitter' : (platform as keyof typeof input.authTokens);
+            const token = input.authTokens?.[tokenKey as keyof typeof input.authTokens];
+            const check = await checkSessionHealth(platform, token);
+            if (!check.ok) {
+                log.error(`[Pre-flight Validation Failed] ${platform.toUpperCase()}: ${check.error}`);
+                throw new Error(`Authentication token for ${platform} is invalid or expired. Please run interactiveSessionSetup to re-authenticate.`);
+            }
+        }
+    }
 }
 
 /**

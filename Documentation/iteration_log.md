@@ -142,3 +142,18 @@
     - **Meta (FB/IG):** 12/12 Auth Wall Detected (100% Detection). Gracefully handled login walls, validating "fail-fast" logic.
     - **Twitter/X:** 8/8 Auth Wall Detected (100% Detection).
 - **Status:** PASS (SHIPPED). Local environment hardened, synchronized, and verified with premium proxies. Ready for Phase 2 Sprint 2 (Enrichment).
+
+### Iteration 6 (Authentication Hardening & Pre-Flight Checks)
+- **Goal:** Harden the actor against auth walls and login redirects, optimize interactive setups, and support Playwright `storageState` JSON.
+- **Changes:**
+  - Fixed copy-paste double-equals typo in `.env` (`STITCH_CLIENT_ID`).
+  - Implemented `src/utils/health-check.ts` to perform pre-flight validation on target platform session tokens (LinkedIn, Facebook, Instagram, Twitter) before launching full crawls.
+  - Integrated health check loop into `setupSessionAndAuth` in `src/main.ts` to fail-fast on expired/invalid credentials.
+  - Upgraded interactive setup in `src/utils/session-vault.ts` to poll for active session cookies instead of sleeping for a hardcoded 3 minutes.
+  - Configured `session-vault.ts` to capture and serialize the full Playwright `storageState` JSON (cookies, localStorage, sessionStorage).
+  - Enhanced `src/utils/auth.ts` to support injecting both Playwright `storageState` JSON and legacy semicolon-separated cookie strings.
+  - Added unit test suites in `auth.spec.ts` and `health-check.spec.ts`.
+- **Validation:**
+  - Verified full workspace compilation with `npm run build` (GREEN).
+  - Executed entire test suite using `npm run test` (85/85 tests PASS).
+- **Status:** PASS (SHIPPED). Authentication pipeline hardened and validated.

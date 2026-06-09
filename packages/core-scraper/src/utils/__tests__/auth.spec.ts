@@ -66,4 +66,31 @@ describe('auth.ts', () => {
             expect.stringContaining('[Auth] Failed to inject cookies for linkedin: Failed to add cookies')
         );
     });
+
+    it('should inject storageState JSON cookies correctly', async () => {
+        const storageStateObj = {
+            cookies: [
+                { name: 'name1', value: 'value1', domain: '.linkedin.com', path: '/' },
+                { name: 'name2', value: 'value2', domain: 'unrelated.com', path: '/' }
+            ]
+        };
+        const tokenString = JSON.stringify(storageStateObj);
+        const url = 'https://www.linkedin.com/feed/';
+        const platform = 'linkedin' as any;
+
+        await injectCookies(mockPage, platform, tokenString, url);
+
+        expect(mockContext.addCookies).toHaveBeenCalledWith([
+            {
+                name: 'name1',
+                value: 'value1',
+                domain: '.linkedin.com',
+                path: '/',
+                expires: undefined,
+                httpOnly: undefined,
+                secure: undefined,
+                sameSite: undefined
+            }
+        ]);
+    });
 });
