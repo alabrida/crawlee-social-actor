@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 import { BusinessClass, AssessmentResult, StageScore, ScoredMechanism } from './types.js';
 import { MECHANISMS, STAGE_WEIGHTS } from './rubric.js';
 import { classifyBusiness } from './classifier.js';
+import { collapsePlatforms } from './profile-aggregator.js';
 
 /**
  * Pure function to calculate a complete assessment score.
@@ -18,15 +19,30 @@ import { classifyBusiness } from './classifier.js';
  * @param classOverride - Optional manual business class override.
  */
 export function calculateAssessment(
-    platforms: Record<string, any>,
+    platforms: Record<string, any[] | any>,
     hubForensics: any,
     serpData: any,
     brandName: string,
     businessUrl: string,
     classOverride: BusinessClass | null = null
 ): AssessmentResult {
+    // Normalize platforms: map single object value to array of profiles
+    const normalizedPlatforms: Record<string, any[]> = {};
+    for (const [key, val] of Object.entries(platforms || {})) {
+        if (Array.isArray(val)) {
+            normalizedPlatforms[key] = val;
+        } else if (val) {
+            normalizedPlatforms[key] = [val];
+        } else {
+            normalizedPlatforms[key] = [];
+        }
+    }
+
+    // Collapse profiles into a single virtual profile for rubric evaluation
+    const collapsedPlatforms = collapsePlatforms(normalizedPlatforms);
+
     // 1. Determine business class
-    const classification = classifyBusiness(platforms, hubForensics, classOverride);
+    const classification = classifyBusiness(collapsedPlatforms, hubForensics, classOverride);
     const bizClass = classification.detected_class;
 
     // Initialize stage scores
@@ -40,7 +56,7 @@ export function calculateAssessment(
 
     // 2. Evaluate all mechanisms
     for (const mech of MECHANISMS) {
-        const { score, evidence } = mech.evaluate(platforms, hubForensics, serpData);
+        const { score, evidence } = mech.evaluate(collapsedPlatforms, hubForensics, serpData);
         const weight = mech.weights[bizClass] || 0;
 
         const isLowScore = score < 2;
@@ -102,12 +118,13 @@ export function calculateAssessment(
         }
     }
 
-    const platformsFound = Object.keys(platforms).filter(key => platforms[key] && platforms[key].url);
+    const platformsFound = Object.keys(normalizedPlatforms).filter(key => normalizedPlatforms[key] && normalizedPlatforms[key].length > 0);
     const screenshots: Record<string, string> = {};
     if (hubForensics?.screenshotUrl) {
         screenshots.hub = hubForensics.screenshotUrl;
     }
-    Object.entries(platforms).forEach(([key, p]: [string, any]) => {
+    Object.entries(normalizedPlatforms).forEach(([key, list]: [string, any[]]) => {
+        const p = list.find(item => item?.screenshotUrl);
         if (p?.screenshotUrl) {
             screenshots[key] = p.screenshotUrl;
         }
@@ -140,7 +157,7 @@ export function calculateAssessment(
                 conversion: stageScores.conversion,
                 retention: stageScores.retention
             },
-            platforms,
+            platforms: normalizedPlatforms,
             hub_forensics: hubForensics,
             classification: {
                 detected_class: bizClass,

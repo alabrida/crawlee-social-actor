@@ -62,7 +62,7 @@ export interface AssessmentResult {
             conversion: StageScore;
             retention: StageScore;
         };
-        platforms: Record<string, any>;
+        platforms: Record<string, any[]>;
         hub_forensics: any;
         classification: {
             detected_class: BusinessClass;

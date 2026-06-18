@@ -51,6 +51,11 @@ export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
         instagram: input.authTokens?.instagram || process.env.AUTH_TOKENS_INSTAGRAM,
         twitter: input.authTokens?.twitter || process.env.AUTH_TOKENS_X,
         youtube: input.authTokens?.youtube || process.env.AUTH_TOKENS_YOUTUBE,
+        tiktok: input.authTokens?.tiktok || process.env.AUTH_TOKENS_TIKTOK,
+        pinterest: input.authTokens?.pinterest || process.env.AUTH_TOKENS_PINTEREST,
+        reddit: input.authTokens?.reddit || process.env.AUTH_TOKENS_REDDIT,
+        google: input.authTokens?.google || process.env.AUTH_TOKENS_GOOGLE,
+        ...input.authTokens,
     };
 
     const activePlatforms = new Set<Platform>();
@@ -64,14 +69,41 @@ export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
         activePlatforms.add('general_hub');
     }
 
-    for (const platform of activePlatforms) {
-        if (['linkedin', 'facebook', 'instagram', 'twitter'].includes(platform)) {
-            const tokenKey = platform === 'twitter' ? 'twitter' : (platform as keyof typeof input.authTokens);
-            const token = input.authTokens?.[tokenKey as keyof typeof input.authTokens];
-            const check = await checkSessionHealth(platform, token);
-            if (!check.ok) {
-                log.error(`[Pre-flight Validation Failed] ${platform.toUpperCase()}: ${check.error}`);
-                throw new Error(`Authentication token for ${platform} is invalid or expired. Please run interactiveSessionSetup to re-authenticate.`);
+    const validatedTokenKeys = new Set<string>();
+
+    if (input.urls) {
+        for (const entry of input.urls) {
+            const platform = entry.platform;
+            if (['linkedin', 'facebook', 'instagram', 'twitter'].includes(platform)) {
+                const slot = entry.sessionSlot;
+                const tokenKey = slot || (platform === 'twitter' ? 'twitter' : platform);
+
+                if (validatedTokenKeys.has(tokenKey)) continue;
+                validatedTokenKeys.add(tokenKey);
+
+                const token = input.authTokens?.[tokenKey];
+                const check = await checkSessionHealth(platform, token);
+                if (!check.ok) {
+                    log.error(`[Pre-flight Validation Failed] ${platform.toUpperCase()} (${tokenKey}): ${check.error}`);
+                    throw new Error(`Authentication token for ${platform} (${tokenKey}) is invalid or expired. Please run interactiveSessionSetup to re-authenticate.`);
+                }
+            }
+        }
+    }
+
+    if (input.platforms) {
+        for (const platform of input.platforms) {
+            if (['linkedin', 'facebook', 'instagram', 'twitter'].includes(platform)) {
+                const tokenKey = platform === 'twitter' ? 'twitter' : platform;
+                if (validatedTokenKeys.has(tokenKey)) continue;
+                validatedTokenKeys.add(tokenKey);
+
+                const token = input.authTokens?.[tokenKey];
+                const check = await checkSessionHealth(platform, token);
+                if (!check.ok) {
+                    log.error(`[Pre-flight Validation Failed] ${platform.toUpperCase()}: ${check.error}`);
+                    throw new Error(`Authentication token for ${platform} is invalid or expired. Please run interactiveSessionSetup to re-authenticate.`);
+                }
             }
         }
     }
@@ -113,7 +145,7 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
     const dataset = await Actor.openDataset();
     const { items } = await dataset.getData();
 
-    const platforms: Record<string, any> = {};
+    const platforms: Record<string, any[]> = {};
     let hubForensics: any = null;
     let serpData: any = null;
 
@@ -126,16 +158,19 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
         } else if (p === 'seo_serp') {
             serpData = item.data;
         } else {
-            platforms[p] = {
+            if (!platforms[p]) {
+                platforms[p] = [];
+            }
+            platforms[p].push({
                 url: item.url,
                 ...item.data
-            };
+            });
         }
     });
 
     const brandName = input.brandName || hubForensics?.seo?.title || (input.businessUrl ? new URL(input.businessUrl).hostname : 'Unknown Business');
     const businessUrl = input.businessUrl || hubForensics?.seo?.canonical || '';
-    const classOverride = (input as any).businessClass || null;
+    const classOverride = input.businessClass || null;
 
     // Calculate score using v2 Scoring Engine
     const scoreResult = calculateAssessment(
@@ -159,26 +194,21 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
     });
 
     if (FEATURES.directUpsert()) {
-        const supabaseUrl = process.env.SUPABASE_URL || (input as any).supabaseUrl;
-        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || (input as any).supabaseServiceKey;
+        const url = process.env.SUPABASE_URL || input.supabaseUrl;
+        const key = process.env.SUPABASE_SERVICE_ROLE_KEY || input.supabaseServiceKey;
 
-        if (supabaseUrl && supabaseKey) {
+        if (url && key) {
             log.info('[Consultant Workflow] Internal Mode detected. Triggering direct upsert...');
-            const result = await upsertAssessment(cleanedItem, supabaseUrl, supabaseKey);
-            if (result.success) {
-                log.info('[Consultant Workflow] Data is now live in Supabase dashboard.');
-            } else {
-                log.warning('[Consultant Workflow] Supabase upsert failed.');
-            }
+            const res = await upsertAssessment(cleanedItem, url, key);
+            log.info(res.success ? '[Consultant Workflow] Live in Supabase.' : '[Consultant Workflow] Upsert failed.');
         } else {
-            log.error('[Consultant Workflow] Internal Mode active but missing Supabase credentials.');
+            log.error('[Consultant Workflow] Missing Supabase credentials.');
         }
     } else {
         log.info('[Marketplace/SaaS Mode] Skipping direct upsert for data privacy.');
     }
 }
 
-// Crawler execution functions are imported from ./runner.js
 
 /**
  * Main actor function. Initializes the Apify Actor, creates crawlers,

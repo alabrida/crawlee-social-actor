@@ -5,78 +5,15 @@
 
 import { CheerioCrawler, PlaywrightCrawler } from 'crawlee';
 import { Actor } from 'apify';
-import { createHash } from 'crypto';
 import { log } from './utils/logger.js';
 import { getRandomUserAgent } from './utils/ua-rotation.js';
 import { buildCheerioRouter, buildPlaywrightRouter } from './routes.js';
 import { injectCookies } from './utils/auth.js';
 import { createProxyConfig } from './utils/proxy.js';
+import { handleScreenshotCollection } from './screenshot.js';
 import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
 
-/**
- * Handles the collection of screenshots for Cheerio-extracted platforms.
- */
-export async function handleScreenshotCollection({ page, request, log: pwLog }: any): Promise<void> {
-    const { platform, originalUrl } = request.userData;
-    pwLog.info(`[Screenshot Collector] Capturing ${platform}: ${originalUrl}`);
 
-    const urlHash = createHash('md5').update(originalUrl).digest('hex');
-    const dataKey = `data_${urlHash}`;
-
-    try {
-        await page.goto(originalUrl, { waitUntil: 'commit', timeout: 60000 });
-        await page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
-        await page.waitForTimeout(3000);
-
-        const screenshotKey = `screenshot_${request.id}.png`;
-        let screenshotBuffer;
-        try {
-            screenshotBuffer = await page.screenshot({ fullPage: true, timeout: 15000 });
-        } catch (e) {
-            pwLog.warning(`Full-page screenshot failed for ${originalUrl}, capturing viewport instead.`);
-            screenshotBuffer = await page.screenshot({ fullPage: false });
-        }
-        
-        await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
-        const storeId = Actor.getEnv().defaultKeyValueStoreId || 'default';
-        const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${storeId}/records/${screenshotKey}`;
-
-        const cheerioResult = await Actor.getValue<any>(dataKey);
-
-        if (!cheerioResult) {
-            pwLog.error(`Could not find Enriched Cheerio-extracted data for: ${originalUrl} (Key: ${dataKey})`);
-            return;
-        }
-
-        const finalItem = {
-            ...cheerioResult,
-            data: {
-                ...cheerioResult.data,
-                screenshotUrl,
-            }
-        };
-
-        const dataset = await Actor.openDataset();
-        await dataset.pushData(finalItem);
-        pwLog.info(`Finalized item with screenshot for: ${originalUrl}`);
-    } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        pwLog.error(`[Screenshot Collector] Failed for ${originalUrl}: ${msg}`);
-        const cheerioResult = await Actor.getValue<any>(dataKey);
-        if (cheerioResult) {
-            const dataset = await Actor.openDataset();
-            await dataset.pushData({
-                ...cheerioResult,
-                errors: [...(cheerioResult.errors || []), `Screenshot failed: ${msg}`]
-            });
-        }
-    }
-}
-
-/**
- * Runs the Playwright crawler for browser-required platforms and for capturing
- * screenshots of Cheerio-extracted platforms.
- */
 /**
  * Helper to build a PlaywrightCrawler with standard configurations.
  */
@@ -111,8 +48,20 @@ function createPlaywrightCrawler(
         preNavigationHooks: [
             async ({ page, request }) => {
                 const platform = request.userData.platform as Platform;
-                if (input.authTokens && (input.authTokens as any)[platform]) {
-                    const tokenString = (input.authTokens as any)[platform];
+                const slot = request.userData.sessionSlot;
+
+                // Try slot-specific token first, fallback to platform default
+                let tokenString = (slot && input.authTokens) ? (input.authTokens as any)[slot] : undefined;
+                if (!tokenString && input.authTokens) {
+                    tokenString = (input.authTokens as any)[platform];
+                }
+
+                // Fallback for Google Business / Maps platforms to use the generic 'google' auth token
+                if (!tokenString && input.authTokens && (platform === 'google_maps' || platform === 'google_business_profile')) {
+                    tokenString = input.authTokens.google;
+                }
+
+                if (tokenString) {
                     await injectCookies(page, platform, tokenString, request.url);
                 }
             },
@@ -152,7 +101,7 @@ export async function runPlaywrightCrawler(
         return {
             url: targetUrl,
             label: entry.platform,
-            userData: { platform: entry.platform },
+            userData: { platform: entry.platform, sessionSlot: entry.sessionSlot },
         };
     });
 
@@ -170,7 +119,7 @@ export async function runPlaywrightCrawler(
         return {
             url: targetUrl,
             label: entry.platform,
-            userData: { platform: entry.platform },
+            userData: { platform: entry.platform, sessionSlot: entry.sessionSlot },
         };
     });
 

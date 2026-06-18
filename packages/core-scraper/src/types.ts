@@ -4,6 +4,7 @@
  */
 
 import type { CheerioCrawlingContext, PlaywrightCrawlingContext } from 'crawlee';
+import type { BusinessClass } from './scoring/types.js';
 
 /**
  * Supported platform identifiers.
@@ -55,6 +56,8 @@ export interface UrlEntry {
     platform: Platform;
     /** Full URL to scrape. */
     url: string;
+    /** Optional session slot mapping for credentials routing. */
+    sessionSlot?: string;
 }
 
 /**
@@ -97,6 +100,8 @@ export interface ActorInput {
     consultantEmail?: string;
     /** Workflow status (draft/final). */
     workflowStatus?: string;
+    /** Overridden business classification class. */
+    businessClass?: BusinessClass;
     /** Supabase URL for direct upsert. */
     supabaseUrl?: string;
     /** Supabase Service Role Key. */
@@ -110,6 +115,11 @@ export interface ActorInput {
         instagram?: string;
         twitter?: string;
         youtube?: string;
+        tiktok?: string;
+        pinterest?: string;
+        reddit?: string;
+        google?: string;
+        [slotName: string]: string | undefined;
     };
     /** Interactive Session Setup flag. */
     interactiveSessionSetup?: boolean;
@@ -233,7 +243,3 @@ export interface PlaywrightHandler {
     detectBlock(responseBody: string): boolean;
 }
 
-/**
- * Union type for all platform handlers.
- */
-export type PlatformHandler = CheerioHandler | PlaywrightHandler;

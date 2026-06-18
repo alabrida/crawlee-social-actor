@@ -126,4 +126,51 @@ describe('Scoring Engine', () => {
         expect(result.total_platforms).toBe(1);
         expect(result.assessment_detail.stages.awareness).toBeDefined();
     });
+
+    it('should handle and aggregate multiple profiles for the same platform correctly', () => {
+        const platforms = {
+            linkedin: [
+                {
+                    url: 'https://linkedin.com/company/test-company',
+                    isPersonalProfile: false,
+                    followerCount: 500
+                },
+                {
+                    url: 'https://linkedin.com/in/test-personal',
+                    isPersonalProfile: true,
+                    connectionsCount: 300,
+                    featured_section: true
+                }
+            ],
+            instagram: [
+                {
+                    url: 'https://instagram.com/test1',
+                    followers: 1200
+                },
+                {
+                    url: 'https://instagram.com/test2',
+                    followers: 800
+                }
+            ]
+        };
+
+        const hubForensics = { scrapeSuccess: true };
+        const serpData = null;
+
+        const result = calculateAssessment(
+            platforms,
+            hubForensics,
+            serpData,
+            'Multi Test',
+            'https://example.com'
+        );
+
+        expect(result.platforms_found).toContain('linkedin');
+        expect(result.platforms_found).toContain('instagram');
+        expect(result.total_platforms).toBe(2);
+        
+        const aggregated = result.assessment_detail.platforms;
+        expect(aggregated.linkedin).toHaveLength(2);
+        expect(aggregated.instagram).toHaveLength(2);
+    });
 });
