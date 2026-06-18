@@ -1,25 +1,22 @@
 {
-  "businessUrl": "https://miloshamburgers.com/",
-  "brandName": "Milo's Hamburgers",
-  "targetKeywords": ["Hamburgers in birmingham"],
-  "platforms": ["tiktok", "youtube", "reddit", "google_maps", "linkedin", "pinterest", "facebook", "instagram", "twitter", "seo_serp", "general_hub"],
+  "platforms": ["youtube", "general_hub"],
+  "businessUrl": "https://eatatjacks.com/",
+  "brandName": "Jack's Family Restaurants",
+  "consultantEmail": "validation@alabrida.com",
   "urls": [
-    { "platform": "tiktok", "url": "https://www.tiktok.com/@milosburgershop" },
-    { "platform": "youtube", "url": "https://www.youtube.com/@NightcapShow_" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/Damnthatsinteresting/" },
-    { "platform": "google_maps", "url": "https://maps.app.goo.gl/j993HmW5CgoXExQC7" },
-    { "platform": "linkedin", "url": "https://www.linkedin.com/in/samaltman/" },
-    { "platform": "pinterest", "url": "https://www.pinterest.com/alwaysdwell/" },
-    { "platform": "facebook", "url": "https://www.facebook.com/MilosOriginalBurgerShop" },
-    { "platform": "instagram", "url": "https://instagram.com/milosburgershop" },
-    { "platform": "twitter", "url": "https://twitter.com/milosburgershop" }
+    { "platform": "youtube", "url": "https://www.youtube.com/@DustysNewsNetwork" },
+    { "platform": "general_hub", "url": "https://eatatjacks.com/" }
   ],
   "proxy": {
     "useApifyProxy": true,
     "apifyProxyGroups": ["RESIDENTIAL"],
-    "proxyUrls": []
+    "apifyProxyCountry": "US"
   },
-  "maxConcurrency": 2,
+  "maxConcurrency": 1,
   "maxRequestRetries": 1,
-  "googleMapsGrid": { "enabled": false, "cellSizeKm": 5 }
+  "linkedinDailyLimit": 250,
+  "googleMapsGrid": {
+    "enabled": false,
+    "cellSizeKm": 1
+  }
 }

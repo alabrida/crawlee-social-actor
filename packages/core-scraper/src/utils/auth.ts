@@ -3,6 +3,30 @@ import { log } from './logger.js';
 import type { Platform } from '../types.js';
 
 /**
+ * Resolves a token string (which could be a JSON storageState or a raw cookie string)
+ * into a standard semicolon-separated Cookie header value.
+ * @param tokenString - The raw token/cookie string.
+ * @returns Semicolon-separated Cookie header value.
+ */
+export function getCookieHeaderString(tokenString: string | undefined): string {
+    if (!tokenString) return '';
+    const trimmed = tokenString.trim();
+    if (trimmed.startsWith('{')) {
+        try {
+            const state = JSON.parse(trimmed);
+            if (state.cookies && Array.isArray(state.cookies)) {
+                return state.cookies
+                    .map((c: any) => `${c.name}=${c.value}`)
+                    .join('; ');
+            }
+        } catch (e: any) {
+            log.error(`[Auth] Failed to parse storageState JSON for cookie header: ${e.message}`);
+        }
+    }
+    return tokenString;
+}
+
+/**
  * Parses a cookie string and injects it into the Playwright page context.
  * The cookie string should be in the format: 'name1=value1; name2=value2;'
  * @param page - Playwright page object.
@@ -94,7 +118,6 @@ export async function injectCookies(
         }
 
         if (cookiesToInject.length > 0) {
-            console.log(`[DEBUG] Injecting ${cookiesToInject.length} cookies for ${platform} onto domains: ${allowedDomains.join(', ')}`);
             log.info(`Injecting ${cookiesToInject.length} auth cookies for ${platform}`);
             await page.context().addCookies(cookiesToInject);
         }

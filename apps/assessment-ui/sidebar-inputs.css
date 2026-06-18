@@ -1,0 +1,175 @@
+/* Form Inputs */
+.field-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+input[type="url"], input[type="text"] {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    width: 100%;
+    transition: var(--transition-smooth);
+}
+
+input[type="url"]:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    background: rgba(240, 180, 41, 0.05);
+    box-shadow: 0 0 10px rgba(240, 180, 41, 0.2);
+}
+
+.input-with-action {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-with-action input {
+    flex: 1;
+}
+
+/* Pre-flight block UI */
+.preflight-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(240, 180, 41, 0.05);
+    border: 1px solid rgba(240, 180, 41, 0.15);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #f7d070;
+}
+
+.preflight-success-block {
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    animation: fadeIn 0.4s ease;
+}
+
+.metadata-badge-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.metadata-badge-grid .lbl {
+    color: var(--text-secondary);
+}
+
+.metadata-badge-grid .val {
+    font-weight: 600;
+}
+
+/* OAuth Connections list styles */
+.oauth-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+@media (max-width: 480px) {
+    .oauth-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+.oauth-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 0.75rem;
+    transition: var(--transition-smooth);
+}
+
+.oauth-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.oauth-item#oauth-google {
+    grid-column: span 2;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+@media (max-width: 480px) {
+    .oauth-item#oauth-google {
+        grid-column: span 1;
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+.platform-details-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+
+.oauth-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+
+.oauth-platform-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+}
+
+.platform-icon-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #ffffff;
+}
+
+.platform-icon-google { color: #4285F4; background: rgba(66,133,244,0.1); border-color: rgba(66,133,244,0.3); }
+.platform-icon-linkedin { color: #0A66C2; background: rgba(10,102,194,0.1); border-color: rgba(10,102,194,0.3); }
+.platform-icon-facebook { color: #1877F2; background: rgba(24,119,242,0.1); border-color: rgba(24,119,242,0.3); }
+.platform-icon-instagram { color: #E4405F; background: rgba(228,64,95,0.1); border-color: rgba(228,64,95,0.3); }
+.platform-icon-twitter { color: #000000; background: rgba(0,0,0,0.15); border-color: rgba(0,0,0,0.3); }
+.platform-icon-youtube { color: #FF0000; background: rgba(255,0,0,0.1); border-color: rgba(255,0,0,0.3); }
+.platform-icon-tiktok { color: #000000; background: rgba(0,0,0,0.15); border-color: rgba(0,0,0,0.3); }
+.platform-icon-pinterest { color: #E60023; background: rgba(230,0,35,0.1); border-color: rgba(230,0,35,0.3); }
+.platform-icon-reddit { color: #FF4500; background: rgba(255,69,0,0.1); border-color: rgba(255,69,0,0.3); }
+
+.platform-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.oauth-status {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.oauth-status[data-connected="true"] {
+    color: var(--accent-success);
+}
+

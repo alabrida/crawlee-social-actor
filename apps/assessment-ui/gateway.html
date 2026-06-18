@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Connection Gateway - Revenue Journey Diagnostic</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="glow-cards.css">
+    <link rel="stylesheet" href="stat-cards.css">
+    <link rel="stylesheet" href="breakdowns.css">
+    <link rel="stylesheet" href="stage-matrix.css">
+    <link rel="stylesheet" href="components.css">
+    <link rel="stylesheet" href="sidebar-base.css">
+    <link rel="stylesheet" href="sidebar-inputs.css">
+    <link rel="stylesheet" href="sidebar-console.css">
+    <link rel="stylesheet" href="animations.css">
+    <link rel="stylesheet" href="responsive.css">
+    <link rel="stylesheet" href="intake-extension.css">
+    <link rel="stylesheet" href="index-gate-style-1.css">
+    <link rel="stylesheet" href="index-gate-style-2.css">
+    
+    <!-- JSON-LD SEO Metadata -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "Account Connection Gateway",
+      "description": "Secure gateway to connect social accounts and credentials for the Revenue Journey Diagnostic engine.",
+      "provider": {
+        "@type": "Organization",
+        "name": "Alabrida"
+      }
+    }
+    </script>
+</head>
+<body>
+    <canvas id="starfield-canvas" class="starfield-canvas" aria-hidden="true"></canvas>
+
+    <div class="landing-container">
+        <!-- Back Link to Main Landing Page -->
+        <a href="index.html" class="back-link" style="align-self: flex-start; margin-bottom: 1rem; text-decoration: none; color: var(--color-text-muted); font-size: 0.9rem;">&larr; Back to Main Landing Page</a>
+
+        <header class="landing-header">
+            <div class="logo-mark">⚡</div>
+            <h1 class="landing-title">Account Connection Gateway</h1>
+            <p class="landing-subtitle">To retrieve social insights and perform scoring, the diagnostic engine requires active session cookies for LinkedIn, Facebook, Instagram, and Twitter/X. Choose how you would like to connect your accounts.</p>
+        </header>
+
+        <main class="gateways-grid fade-in-cards">
+            <!-- Option 1: Chrome Extension Card -->
+            <section class="gateway-card extension">
+                <div class="gateway-badge mint">Option 1: Recommended</div>
+                <h2 class="gateway-card-title">Browser Extension Sync</h2>
+                <p class="gateway-desc">Sync credentials directly from your currently active browser tabs. Extracts session tokens locally, keeping your master passwords fully private. Bypasses multi-factor auth (MFA) challenges automatically.</p>
+                
+                <ul class="gateway-features">
+                    <li class="gateway-feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span><strong>One-Click Sync</strong>: Batch import all active platform sessions</span>
+                    </li>
+                    <li class="gateway-feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span><strong>No Password Sharing</strong>: Only session cookies leave your browser</span>
+                    </li>
+                    <li class="gateway-feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span><strong>Zero Setup Complexity</strong>: Connects instantly in the background</span>
+                    </li>
+                </ul>
+
+                <div class="gateway-actions">
+                    <a href="extension-gate.html" class="btn-landing btn-mint-primary">Configure Extension Sync</a>
+                </div>
+            </section>
+
+            <!-- Option 2: Direct Web Auth Wall Card -->
+            <section class="gateway-card direct-auth">
+                <div class="gateway-badge gold">Option 2: Web Authentication</div>
+                <h2 class="gateway-card-title">Direct Account Login</h2>
+                <p class="gateway-desc">Don't want to install browser plugins? Authenticate directly by logging into your social accounts in a secure browser stream, or paste session cookies manually as an administrative fallback.</p>
+                
+                <ul class="gateway-features">
+                    <li class="gateway-feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span><strong>Direct Platform Login</strong>: Prioritizes user's actual accounts</span>
+                    </li>
+                    <li class="gateway-feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span><strong>Safe Authentication</strong>: Encrypted tokens saved to SessionVault</span>
+                    </li>
+                    <li class="gateway-feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span><strong>Manual Injection Fallback</strong>: Paste raw cookie keys if login fails</span>
+                    </li>
+                </ul>
+
+                <div class="gateway-actions">
+                    <a href="auth-gate.html" class="btn-landing btn-gold-primary">Configure Direct Authentication</a>
+                </div>
+            </section>
+        </main>
+
+        <footer class="landing-footer">
+            <p>Revenue Journey Diagnostic Engine &copy; 2026. Fully secure, read-only token extraction architecture.</p>
+        </footer>
+    </div>
+
+    <script src="starfield.js"></script>
+    <script>
+        if (window.initStarField) window.initStarField('starfield-canvas');
+
+        // Logic to preserve the token in query strings across page transitions
+        document.addEventListener('DOMContentLoaded', () => {
+            const search = window.location.search;
+            if (search) {
+                document.querySelectorAll('a').forEach(a => {
+                    const href = a.getAttribute('href');
+                    if (href && (href.includes('gate.html') || href.includes('dashboard.html'))) {
+                        a.setAttribute('href', href.split('?')[0] + search);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

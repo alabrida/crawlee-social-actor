@@ -34,3 +34,15 @@ storage/
 # Model/Agent files
 [Gg]emini.md
 
+# Playwright & Testing
+playwright-report/
+test-results/
+
+# TypeScript Build Cache
+*.tsbuildinfo
+
+# Subagents
+.agents/
+
+
+

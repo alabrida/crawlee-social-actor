@@ -1,5 +1,6 @@
 import { log } from './logger.js';
 import type { Platform } from '../types.js';
+import { getCookieHeaderString } from './auth.js';
 
 export interface HealthCheckResult {
     ok: boolean;
@@ -38,10 +39,11 @@ export async function checkSessionHealth(
         }
 
         log.info(`[Pre-flight] Checking session health for platform: ${platform}`);
+        const cookieHeader = getCookieHeaderString(cookieStr);
         const res = await fetch(url, {
             headers: {
                 'User-Agent': userAgent,
-                'Cookie': cookieStr
+                'Cookie': cookieHeader
             },
             redirect: 'manual'
         });

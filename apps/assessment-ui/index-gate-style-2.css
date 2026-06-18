@@ -1,0 +1,85 @@
+        .direct-auth .feature-icon {
+            background: rgba(240, 180, 41, 0.12);
+            color: var(--color-secondary-light);
+        }
+
+        .gateway-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-landing {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-sizing: border-box;
+            display: block;
+        }
+
+        .btn-mint-primary {
+            background: var(--color-accent);
+            color: var(--color-primary-dark);
+            border: none;
+            box-shadow: 0 4px 15px rgba(32, 201, 151, 0.25);
+        }
+
+        .btn-mint-primary:hover {
+            background: var(--color-accent-light);
+            box-shadow: 0 6px 20px rgba(32, 201, 151, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-gold-primary {
+            background: var(--color-secondary);
+            color: var(--color-primary-dark);
+            border: none;
+            box-shadow: 0 4px 15px rgba(240, 180, 41, 0.25);
+        }
+
+        .btn-gold-primary:hover {
+            background: var(--color-secondary-light);
+            box-shadow: 0 6px 20px rgba(240, 180, 41, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .landing-footer {
+            text-align: center;
+            color: var(--color-text-subtle);
+            font-size: 0.85rem;
+            animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-cards {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+        }
+    

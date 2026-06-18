@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { injectCookies } from '../auth.js';
+import { injectCookies, getCookieHeaderString } from '../auth.js';
 import { log } from '../logger.js';
 
 // Mock log
@@ -11,6 +11,29 @@ vi.mock('../logger.js', () => ({
         warning: vi.fn(),
     },
 }));
+
+describe('getCookieHeaderString', () => {
+    it('should pass through standard cookie string', () => {
+        const str = 'name1=value1; name2=value2';
+        expect(getCookieHeaderString(str)).toBe(str);
+    });
+
+    it('should convert storageState JSON to cookie string', () => {
+        const storageStateObj = {
+            cookies: [
+                { name: 'name1', value: 'value1', domain: '.linkedin.com', path: '/' },
+                { name: 'name2', value: 'value2', domain: 'unrelated.com', path: '/' }
+            ]
+        };
+        const str = JSON.stringify(storageStateObj);
+        expect(getCookieHeaderString(str)).toBe('name1=value1; name2=value2');
+    });
+
+    it('should return empty string for undefined/null/empty inputs', () => {
+        expect(getCookieHeaderString(undefined)).toBe('');
+        expect(getCookieHeaderString('')).toBe('');
+    });
+});
 
 describe('auth.ts', () => {
     let mockPage: any;

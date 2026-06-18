@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { sanitizeQuery } from './validation.js';
-import { fetchSerpApi } from './serp.js';
+import { sanitizeQuery } from '../validation.js';
+import { fetchSerpApi } from '../serp.js';
 
-vi.mock('./logger.js', () => ({
+vi.mock('../logger.js', () => ({
     log: {
         info: vi.fn(),
         error: vi.fn(),

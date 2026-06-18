@@ -4,7 +4,7 @@
  * Orchestrates Math-Steward, Link-Strategist, and forensic mappings.
  */
 
-import { parseNumericCount } from './parsers.js';
+import { parseCount } from './parse-count.js';
 import { auditLink } from './links.js';
 import { FEATURES } from './mode-gate.js';
 import type { ScrapedItem } from '../types.js';
@@ -32,17 +32,17 @@ export async function enrichItem(item: ScrapedItem): Promise<ScrapedItem> {
     if (revenueIndicators?.conversionMarkers) {
         revenueIndicators.conversionMarkers.forEach((marker: string) => {
             if (marker.includes('Followers Raw:')) {
-                enrichedData.followerCount = parseNumericCount(marker.split(':')[1]);
+                enrichedData.followerCount = parseCount(marker.split(':')[1]);
             }
             if (marker.includes('Following Raw:')) {
-                enrichedData.followingCount = parseNumericCount(marker.split(':')[1]);
+                enrichedData.followingCount = parseCount(marker.split(':')[1]);
             }
             // Google Business Profile (GBP) High-Res Mapping
             if (platform === 'google_maps' || platform === 'google_business_profile') {
                 if (marker.includes('Title:')) enrichedData.gbpBusinessName = marker.split('Title:')[1].trim();
                 if (marker.includes('Category:')) enrichedData.gbpCategory = marker.split('Category:')[1].trim();
                 if (marker.includes('Rating:')) enrichedData.gbpRating = parseFloat(marker.split('Rating:')[1].trim());
-                if (marker.includes('Reviews:')) enrichedData.gbpReviewsCount = parseNumericCount(marker.split('Reviews:')[1].trim());
+                if (marker.includes('Reviews:')) enrichedData.gbpReviewsCount = parseCount(marker.split('Reviews:')[1].trim());
                 if (marker.includes('Phone:')) enrichedData.gbpPhone = marker.split('Phone:')[1].trim();
                 if (marker.includes('Address:')) enrichedData.gbpAddress = marker.split('Address:')[1].trim();
                 if (marker.includes('Signal: Has Photos')) enrichedData.gbpHasPhotos = true;

@@ -1,0 +1,220 @@
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+
+        .gate-container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gate-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .gate-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(180deg, #ffffff 0%, var(--color-text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gate-subtitle {
+            font-size: 1.05rem;
+            color: var(--color-text-muted);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--color-text-subtle);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            align-self: flex-start;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: #ffffff;
+        }
+
+        /* Glassmorphic Platform Grid - 3 Columns for 9 Platforms */
+        .auth-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3.5rem;
+        }
+
+        @media (max-width: 992px) {
+            .auth-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .auth-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .auth-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .auth-card.connected {
+            border-color: rgba(32, 201, 151, 0.3);
+            background: rgba(15, 26, 46, 0.85);
+            box-shadow: 0 0 20px rgba(32, 201, 151, 0.05);
+        }
+
+        .auth-platform-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .platform-icon-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--color-border);
+            flex-shrink: 0;
+        }
+
+        .platform-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .oauth-status {
+            font-size: 0.78rem;
+            color: var(--color-text-subtle);
+            margin-top: 2px;
+            transition: color 0.3s ease;
+        }
+
+        .oauth-status.text-success {
+            color: var(--color-accent-light);
+            font-weight: 600;
+        }
+
+        .auth-platform-details {
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+            line-height: 1.4;
+            flex-grow: 1;
+        }
+
+        .oauth-actions {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .oauth-toggle-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid var(--color-border);
+            background: transparent;
+            color: var(--color-text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .oauth-toggle-btn.btn-highlight {
+            background: var(--color-secondary);
+            color: var(--color-primary-dark);
+            border-color: transparent;
+            box-shadow: 0 4px 10px rgba(240, 180, 41, 0.15);
+        }
+
+        .oauth-toggle-btn.btn-highlight:hover {
+            background: var(--color-secondary-light);
+            box-shadow: 0 6px 15px rgba(240, 180, 41, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .oauth-toggle-btn:not(.btn-highlight):hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Bottom Action Panel */
+        .bottom-action-bar {
+            background: var(--glass-bg-heavy);
+            backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (max-width: 600px) {
+            .bottom-action-bar {
+                flex-direction: column;
+                padding: 1.5rem;
+                text-align: center;
+            }
+        }
+
+        .counter-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;

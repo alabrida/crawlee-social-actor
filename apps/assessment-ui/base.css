@@ -1,0 +1,182 @@
+/* Reset & Core Design Tokens matching richardnorwood.com */
+:root {
+  /* ── Core Palette ── */
+  --color-primary: #0a1628;
+  --color-primary-light: #162240;
+  --color-primary-dark: #060b16;
+  --color-secondary: #f0b429;
+  --color-secondary-light: #f7d070;
+  --color-secondary-dark: #d49a1a;
+  --color-accent: #20c997;
+  --color-accent-light: #63e6be;
+  --color-accent-dark: #12b886;
+
+  /* ── Background & Surface ── */
+  --color-bg: #060b16;
+  --color-bg-alt: #0a1024;
+  --color-surface: #0f1a2e;
+  --color-surface-elevated: #162240;
+  --color-surface-overlay: rgba(10, 22, 40, 0.85);
+  --card-surface-fade: linear-gradient(180deg, rgba(136, 153, 180, 0.12) 0%, rgba(15, 26, 46, 0.08) 60%, rgba(15, 26, 46, 0) 100%);
+
+  /* ── Text ── */
+  --color-text: #e8edf5;
+  --color-text-muted: #8899b4;
+  --color-text-subtle: #74839e;
+  --color-text-inverse: #060b16;
+
+  /* ── Revenue Journey Stage Colors ── */
+  --stage-awareness: #3b82f6;
+  --stage-consideration: #8b5cf6;
+  --stage-decision: #f59e0b;
+  --stage-conversion: #10b981;
+  --stage-retention: #ef4444;
+
+  /* ── Semantic Colors ── */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* ── Borders ── */
+  --color-border: rgba(136, 153, 180, 0.15);
+  --color-border-hover: rgba(136, 153, 180, 0.3);
+  --color-border-accent: rgba(240, 180, 41, 0.3);
+
+  /* ── Glassmorphism ── */
+  --glass-bg: rgba(15, 26, 46, 0.7);
+  --glass-bg-heavy: rgba(15, 26, 46, 0.85);
+  --glass-border: rgba(136, 153, 180, 0.12);
+  --glass-blur: 16px;
+  --glass-blur-heavy: 24px;
+
+  /* Compatibility Mapping */
+  --bg-app: var(--color-bg);
+  --bg-surface: var(--glass-bg);
+  --bg-surface-solid: var(--color-surface);
+  --border-color: var(--color-border);
+  --border-glow: rgba(240, 180, 41, 0.15);
+  
+  --accent-primary: var(--color-secondary);
+  --accent-primary-hover: var(--color-secondary-dark);
+  --accent-secondary: var(--color-accent);
+  --accent-success: var(--color-success);
+  --accent-warning: var(--color-warning);
+  --accent-error: var(--color-error);
+  
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-text-muted);
+  --text-meta: var(--color-text-subtle);
+  --font-heading: 'Outfit', 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  
+  --transition-smooth: all 0.25s cubic-bezier(.16, 1, .3, 1);
+  --transition-bounce: all 0.4s cubic-bezier(.34, 1.56, .64, 1);
+  --sidebar-width: 440px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Background Gradients & Glows */
+body::before {
+    content: '';
+    position: fixed;
+    top: -10%;
+    left: -10%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle, rgba(240, 180, 41, 0.08) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    bottom: -10%;
+    right: -10%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(circle, rgba(32, 201, 151, 0.06) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Starfield canvas background positioning */
+.starfield-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    background-color: #060b16;
+}
+
+/* Lockscreen styling */
+.lockscreen-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: #0f0f11;
+    color: #e2e2e3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    font-family: 'Inter', sans-serif;
+    padding: 1.5rem;
+}
+.lockscreen-content {
+    max-width: 420px;
+    width: 100%;
+    background: #1e1e24;
+    border: 1px solid #2d2d38;
+    border-radius: 12px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+.lock-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+.lockscreen-content h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #ffffff;
+    font-weight: 700;
+}
+.lockscreen-content p {
+    font-size: 0.9rem;
+    color: #a3a3ac;
+    line-height: 1.5;
+    margin-bottom: 1.75rem;
+}
+
+

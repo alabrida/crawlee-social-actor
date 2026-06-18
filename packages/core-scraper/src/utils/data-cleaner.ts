@@ -25,39 +25,6 @@ const REQUIRED_FIELDS = new Set([
     'source_channel',
 ]);
 
-/**
- * Clean a scraped item's data object immediately after handler extraction.
- * - Converts empty strings (`''`) to `null` for string fields (except HTML/screenshot)
- * - Strips `undefined` values
- * - Preserves valid `0`, `false`, and `null`
- *
- * @param data - The handler's data output object.
- * @returns Cleaned data object.
- */
-export function cleanScrapedItemData(data: Record<string, any>): Record<string, any> {
-    const cleaned: Record<string, any> = {};
-
-    for (const [key, value] of Object.entries(data)) {
-        // Skip undefined values entirely
-        if (value === undefined) continue;
-
-        // Preserve nested objects (revenueIndicators, forensics, etc.) as-is
-        if (value !== null && typeof value === 'object') {
-            cleaned[key] = value;
-            continue;
-        }
-
-        // Convert empty strings to null for non-HTML, non-screenshot fields
-        if (typeof value === 'string' && value === '' && !key.includes('Html') && !key.includes('screenshot')) {
-            cleaned[key] = null;
-            continue;
-        }
-
-        cleaned[key] = value;
-    }
-
-    return cleaned;
-}
 
 /**
  * Clean the master assessment payload before Supabase upsert.

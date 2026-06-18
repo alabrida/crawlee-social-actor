@@ -1,0 +1,224 @@
+/* Additional styling for the B2B Conversion Landing Page - Data Gates, Framework, and Prequalifier Form */
+/* Gateway Preview styling */
+.gateway-preview-section {
+    padding: 4rem 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+.gateway-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+@media (max-width: 992px) {
+    .gateway-preview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .gateway-preview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.gate-preview-card {
+    background: rgba(15, 26, 46, 0.4);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    padding: 2.25rem;
+    transition: all 0.3s cubic-bezier(.16, 1, .3, 1);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.gate-preview-card:hover {
+    border-color: rgba(240, 180, 41, 0.25);
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 20px rgba(240, 180, 41, 0.05);
+}
+.gate-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    margin-bottom: 1.5rem;
+}
+.gate-preview-card h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #ffffff;
+}
+.gate-preview-card p {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+.gate-tag {
+    font-size: 0.75rem;
+    color: var(--color-text-subtle);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+}
+.gate-tag-premium {
+    font-size: 0.75rem;
+    color: var(--color-secondary-light);
+    background: rgba(240, 180, 41, 0.06);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(240, 180, 41, 0.2);
+}
+
+.framework-section {
+    padding: 3rem 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+.section-header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+}
+.section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+.section-desc {
+    color: var(--color-text-muted);
+    max-width: 600px;
+    margin: 0 auto;
+}
+.framework-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 4rem;
+}
+@media (max-width: 1024px) {
+    .framework-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .framework-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
+.stage-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    box-sizing: border-box;
+}
+.stage-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--stage-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px var(--stage-color-glow);
+}
+.stage-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--stage-color);
+    opacity: 0.85;
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+.stage-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+.stage-desc {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+.prequalifier-container {
+    max-width: 700px;
+    margin: 5rem auto;
+    background: rgba(15, 26, 46, 0.45);
+    border: 1px solid rgba(240, 180, 41, 0.2);
+    border-radius: 24px;
+    padding: 3.5rem 3rem;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(240, 180, 41, 0.03);
+    backdrop-filter: blur(20px);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.prequalifier-container:hover {
+    border-color: rgba(240, 180, 41, 0.4);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 50px rgba(240, 180, 41, 0.08);
+}
+.form-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+.form-desc {
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+.form-input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: var(--color-primary-dark);
+    border: 1px solid var(--color-border);
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-secondary);
+}
+.btn-submit {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+    color: var(--color-primary-dark);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(240, 180, 41, 0.25);
+    transition: all 0.3s ease;
+}
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(240, 180, 41, 0.45);
+}
