@@ -138,9 +138,24 @@ export async function handle(
 
     // Smart-Crawl enqueuing: homepage enqueues key pages only
     if (!isSubPage && !isBlocked && !shouldStop) {
+        const { crawler } = context;
+
+        // Extract and dynamically enqueue current keywords for background rank check
+        const keywordsToSearch = suggestedKeywords.slice(0, 3);
+        if (keywordsToSearch.length > 0) {
+            log.info(`[General] Enqueueing discovered website keywords for background SERP check: [${keywordsToSearch.join(', ')}]`);
+            for (const kw of keywordsToSearch) {
+                if (kw && kw.trim()) {
+                    await crawler.addRequests([{
+                        url: `https://www.google.com/search?q=${encodeURIComponent(kw.trim())}`,
+                        userData: { ...request.userData, platform: 'seo_serp' }
+                    }]);
+                }
+            }
+        }
+
         log.info(`[General] Analyzing homepage links for key pages: ${url}`);
         const keyPages = identifyKeyPages(anchors, url);
-        const { crawler } = context;
 
         // Filter and enqueue top 5-7 highest-scoring unique key pages
         const toEnqueue = keyPages

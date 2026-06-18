@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { classifyBusiness } from '../classifier.js';
 import { calculateAssessment } from '../engine.js';
+import { resolveBestSerp, generateRecommendedKeywords } from '../keyword-helper.js';
 
 describe('Business Classifier', () => {
     it('should detect local business class based on GBP presence', () => {
@@ -172,5 +173,25 @@ describe('Scoring Engine', () => {
         const aggregated = result.assessment_detail.platforms;
         expect(aggregated.linkedin).toHaveLength(2);
         expect(aggregated.instagram).toHaveLength(2);
+    });
+
+    it('should resolve the best SERP ranking from multiple results', () => {
+        const serpResults = [
+            { serpKeyword: 'keyword 1', serpRankingPosition: 12 },
+            { serpKeyword: 'keyword 2', serpRankingPosition: 3 },
+            { serpKeyword: 'keyword 3', serpRankingPosition: null }
+        ];
+
+        const best = resolveBestSerp(serpResults);
+        expect(best.serpRankingPosition).toBe(3);
+        expect(best.serpKeyword).toBe('keyword 2');
+    });
+
+    it('should generate appropriate recommended target keywords based on business class', () => {
+        const saasKeywords = generateRecommendedKeywords('saas', 'MyBrand');
+        expect(saasKeywords).toContain('MyBrand pricing');
+
+        const localKeywords = generateRecommendedKeywords('local', 'BurgerShop');
+        expect(localKeywords).toContain('BurgerShop near me');
     });
 });

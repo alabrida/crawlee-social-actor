@@ -96,6 +96,8 @@ export interface ActorInput {
     businessUrl?: string;
     /** Brand name/Business title. */
     brandName?: string;
+    /** Target keywords to check SERP ranking. */
+    targetKeywords?: string[];
     /** Email of the consultant triggering the run. */
     consultantEmail?: string;
     /** Workflow status (draft/final). */

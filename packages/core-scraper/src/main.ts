@@ -16,7 +16,8 @@ import { SessionVault } from './utils/session-vault.js';
 import { runCheerioCrawler, runPlaywrightCrawler } from './runner.js';
 import { checkSessionHealth } from './utils/health-check.js';
 import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
-import { PLATFORM_CRAWLER_MAP } from './types.js';
+import { prepareUrls } from './utils/url-helper.js';
+import { resolveBestSerp, generateRecommendedKeywords } from './scoring/keyword-helper.js';
 
 /**
  * Sets up the Session Vault, handling interactive authentication flows
@@ -109,31 +110,7 @@ export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
     }
 }
 
-/**
- * Prepares the URLs by combining the main input URLs with potential general hub
- * inputs and partitions them into Cheerio vs Playwright queues.
- */
-export function prepareUrls(input: ActorInput): { cheerioUrls: UrlEntry[], playwrightUrls: UrlEntry[], finalUrls: UrlEntry[] } {
-    const finalUrls: UrlEntry[] = input.urls || [];
-    if (input.businessUrl && !finalUrls.some(u => u.platform === 'general_hub')) {
-        finalUrls.push({ platform: 'general_hub', url: input.businessUrl });
-    }
 
-    const cheerioUrls: UrlEntry[] = [];
-    const playwrightUrls: UrlEntry[] = [];
-
-    for (const entry of finalUrls) {
-        const platform = entry.platform as Platform;
-        const crawlerType = PLATFORM_CRAWLER_MAP[platform];
-        if (crawlerType === 'cheerio') {
-            cheerioUrls.push(entry);
-        } else {
-            playwrightUrls.push(entry);
-        }
-    }
-
-    return { cheerioUrls, playwrightUrls, finalUrls };
-}
 
 /**
  * Aggregates extracted data into a single master row and performs a Supabase
@@ -147,7 +124,8 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
 
     const platforms: Record<string, any[]> = {};
     let hubForensics: any = null;
-    let serpData: any = null;
+    const serpResults: any[] = [];
+    const currentKeywords: string[] = [];
 
     items.forEach((item: any) => {
         const p = item.platform;
@@ -156,7 +134,12 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
         if (p === 'general' || p === 'general_hub') {
             hubForensics = item.data;
         } else if (p === 'seo_serp') {
-            serpData = item.data;
+            if (item.data) {
+                serpResults.push(item.data);
+                if (item.data.serpKeyword) {
+                    currentKeywords.push(item.data.serpKeyword);
+                }
+            }
         } else {
             if (!platforms[p]) {
                 platforms[p] = [];
@@ -172,15 +155,26 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
     const businessUrl = input.businessUrl || hubForensics?.seo?.canonical || '';
     const classOverride = input.businessClass || null;
 
+    // Pick the best SERP ranking result for stage score calculation
+    const bestSerpData = resolveBestSerp(serpResults);
+
     // Calculate score using v2 Scoring Engine
     const scoreResult = calculateAssessment(
         platforms,
         hubForensics,
-        serpData,
+        bestSerpData,
         brandName,
         businessUrl,
         classOverride
     );
+
+    // Generate recommended target keywords for future positioning
+    const recommendedKeywords = generateRecommendedKeywords(scoreResult.business_class, brandName);
+
+    // Attach keyword and competitor results to assessment_detail
+    scoreResult.assessment_detail.current_keywords = currentKeywords;
+    scoreResult.assessment_detail.serp_results = serpResults;
+    scoreResult.assessment_detail.recommended_keywords = recommendedKeywords;
 
     // Clean the payload: remove nulls/undefined while preserving valid 0 and false
     const cleanedItem = cleanAssessmentPayload(scoreResult);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { prepareUrls } from '../../src/main.js';
+import { prepareUrls } from '../../src/utils/url-helper.js';
 import type { ActorInput } from '../../src/types.js';
 
 describe('main.js refactored functions', () => {

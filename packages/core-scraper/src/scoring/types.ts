@@ -70,5 +70,8 @@ export interface AssessmentResult {
             signals: string[];
             override: string | null;
         };
+        current_keywords?: string[];
+        serp_results?: any[];
+        recommended_keywords?: string[];
     };
 }
