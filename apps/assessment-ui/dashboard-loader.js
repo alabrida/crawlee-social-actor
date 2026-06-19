@@ -1,13 +1,4 @@
 (function() {
-    const mainGridPlatforms = [
-        { id: 'website', name: 'Website', icon: '🌐', desc: 'Audit pending. Enter a target URL in the sidebar to scrape forensics.', status: 'Pending' },
-        { id: 'instagram', name: 'Instagram', icon: '📸', desc: 'Instagram signals will be evaluated after audit runs.', status: 'Pending' },
-        { id: 'facebook', name: 'Facebook', icon: '👥', desc: 'Facebook signals will be evaluated after audit runs.', status: 'Pending' },
-        { id: 'youtube', name: 'YouTube', icon: '▶️', desc: 'YouTube signals will be evaluated after audit runs.', status: 'Pending' },
-        { id: 'tiktok', name: 'TikTok', icon: '🎵', desc: 'TikTok signals will be evaluated after audit runs.', status: 'Pending' },
-        { id: 'linkedin', name: 'LinkedIn', icon: '💼', desc: 'No profile was scraped or linked. Authenticate in settings to retry.', status: 'Disconnected' }
-    ];
-
     const sidebarPlatforms = [
         { id: 'google', name: 'Google Business', icon: 'G', cssClass: 'platform-icon-google' },
         { id: 'linkedin', name: 'LinkedIn', icon: 'in', cssClass: 'platform-icon-linkedin' },
@@ -57,20 +48,13 @@
             `).join('');
         }
 
-        const channelsGrid = document.getElementById('channels-grid-container');
-        if (channelsGrid) {
-            channelsGrid.innerHTML = mainGridPlatforms.map(p => `
-                <div class="channel-card inactive-channel" id="channel-card-${p.id}">
-                    <div class="channel-header">
-                        <span class="channel-icon">${p.icon}</span>
-                        <span class="channel-title">${p.name}</span>
-                        <span class="channel-status ${p.status === 'Disconnected' ? 'badge-inactive' : 'badge-inactive'}">${p.status}</span>
-                    </div>
-                    <div class="channel-body">
-                        <p class="card-desc">${p.desc}</p>
-                    </div>
+        const leaksSolutions = document.getElementById('leaks-solutions-container');
+        if (leaksSolutions) {
+            leaksSolutions.innerHTML = `
+                <div style="grid-column: span 3; text-align: center; padding: 3rem; color: var(--color-text-muted); font-style: italic; background: rgba(255,255,255,0.01); border: 1px dashed var(--border-color); border-radius: 12px;">
+                    Awaiting diagnostic run to map unified commercial engine leaks and platform-specific solutions.
                 </div>
-            `).join('');
+            `;
         }
 
         const oauthList = document.getElementById('oauth-list-container');

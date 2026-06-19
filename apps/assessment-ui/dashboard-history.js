@@ -139,6 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
             window.UIRenderer.updateClassificationBreakdown(record.business_class || 'Content Creator');
             window.UIRenderer.updateWeakestStageBreakdown(record.weakest_stage || 'Awareness');
             window.UIRenderer.updateOverallScoreBreakdown(score);
+            if (window.UIRenderer.renderLeaksAndSolutions) {
+                window.UIRenderer.renderLeaksAndSolutions(record);
+            }
         }
     }
 

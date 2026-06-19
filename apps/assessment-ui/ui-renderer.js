@@ -68,21 +68,6 @@
         overallFactorList.innerHTML = factorsHtml;
     }
 
-    function updateChannelCard(cardId, data) {
-        const card = document.getElementById(`channel-card-${cardId}`);
-        if (!card) return;
-        card.className = `channel-card ${data.active ? 'active-channel' : 'inactive-channel'}`;
-        const statusEl = card.querySelector('.channel-status');
-        if (statusEl) {
-            statusEl.className = `channel-status ${data.active ? 'badge-success' : 'badge-inactive'}`;
-            statusEl.textContent = data.active ? 'OK' : 'Disconnected';
-        }
-        const bodyEl = card.querySelector('.channel-body');
-        if (bodyEl) {
-            bodyEl.innerHTML = data.html;
-        }
-    }
-
     function updateDashboardWithNewAudit() {
         const urlInput = document.getElementById('target-url');
         const url = urlInput ? urlInput.value.trim() : '';
@@ -149,65 +134,25 @@
         }
         updateWeakestStageBreakdown("Conversion");
 
-        // Channel Cards
-        const channelData = {
-            website: {
-                active: true,
-                html: `
-                    <div class="detail-row"><span>SSL:</span> <span class="text-success">Active</span></div>
-                    <div class="detail-row"><span>Schema.org:</span> <span class="text-success">JSON-LD</span></div>
-                    <div class="detail-row"><span>Hero H1:</span> <span class="text-meta">"Original Burgers since 1952"</span></div>
-                `
-            },
-            instagram: {
-                active: true,
-                html: `
-                    <div class="detail-row"><span>Followers:</span> <span class="text-highlight">12.5K</span></div>
-                    <div class="detail-row"><span>Bio link:</span> <span class="text-meta">Linktree</span></div>
-                    <div class="detail-row"><span>Account:</span> <span class="text-meta">Business Page</span></div>
-                `
-            },
-            facebook: {
-                active: true,
-                html: `
-                    <div class="detail-row"><span>Likes:</span> <span class="text-highlight">48K</span></div>
-                    <div class="detail-row"><span>Class:</span> <span class="text-meta">Business Page</span></div>
-                    <div class="detail-row"><span>Messenger:</span> <span class="text-success">Active</span></div>
-                `
-            },
-            youtube: {
-                active: true,
-                html: `
-                    <div class="detail-row"><span>Subscribers:</span> <span class="text-highlight">1.2K</span></div>
-                    <div class="detail-row"><span>Store Tab:</span> <span class="text-error">Missing</span></div>
-                    <div class="detail-row"><span>Recency:</span> <span class="text-meta">14 days ago</span></div>
-                `
-            },
-            tiktok: {
-                active: true,
-                html: `
-                    <div class="detail-row"><span>Followers:</span> <span class="text-highlight">5.8K</span></div>
-                    <div class="detail-row"><span>Shop Tab:</span> <span class="text-error">Missing</span></div>
-                    <div class="detail-row"><span>Bio Link:</span> <span class="text-meta">linktr.ee/milos</span></div>
-                `
-            }
-        };
-
-        Object.keys(channelData).forEach(id => {
-            updateChannelCard(id, channelData[id]);
-        });
-
         // LinkedIn Connected Check
         const linkedinOauth = document.getElementById('oauth-linkedin');
         const isLinkedinConnected = linkedinOauth && linkedinOauth.querySelector('.oauth-status').getAttribute('data-connected') === 'true';
-        updateChannelCard('linkedin', {
-            active: isLinkedinConnected,
-            html: isLinkedinConnected ? `
-                <div class="detail-row"><span>Followers:</span> <span class="text-highlight">830</span></div>
-                <div class="detail-row"><span>Class:</span> <span class="text-meta">Company Page</span></div>
-                <div class="detail-row"><span>Completeness:</span> <span class="text-success">92%</span></div>
-            ` : `<p class="card-desc">No profile was scraped or linked. Authenticate in settings to retry.</p>`
-        });
+
+        const mockRecord = {
+            overall_score: 6.8,
+            awareness_score: 8.5,
+            consideration_score: 7.2,
+            decision_score: 6.8,
+            conversion_score: 5.5,
+            retention_score: 5.8,
+            weakest_stage: 'Conversion',
+            platforms_found: ['website', 'instagram', 'facebook', 'youtube', 'tiktok', isLinkedinConnected ? 'linkedin' : ''].filter(Boolean),
+            business_url: url || 'https://miloshamburgers.com/'
+        };
+
+        if (window.UIRenderer && window.UIRenderer.renderLeaksAndSolutions) {
+            window.UIRenderer.renderLeaksAndSolutions(mockRecord);
+        }
     }
 
     window.UIRenderer = {

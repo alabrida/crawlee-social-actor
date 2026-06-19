@@ -56,14 +56,14 @@
                 </div>
             </header>
             <section class="dashboard-grid">
-                <div class="dashboard-card stat-card main-score-card" style="background: linear-gradient(135deg, rgba(15, 26, 46, 0.6) 0%, rgba(255, 255, 255, 0.02) 100%); border-color: var(--border-color);">
-                    <div class="card-glow"></div><h3>Overall Score</h3>
-                    <div class="score-display"><span id="overall-score-val" class="score-val">--</span><span class="score-max">/ 10</span></div>
-                    <p class="stat-meta">Based on 0 evaluated channels</p>
-                    <div class="badge" id="overall-badge-display" style="background: rgba(255, 255, 255, 0.05); color: var(--text-meta);">Pending Run</div>
-                    <div class="overall-score-breakdown" id="overall-breakdown-container">
-                        <div class="breakdown-title">Score Contribution Factors</div>
-                        <div class="factor-list" id="overall-factor-list"></div>
+                <div class="dashboard-card stat-card">
+                    <h3>Weakest Stage</h3>
+                    <div class="value-display" id="weakest-stage-display" style="background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-meta) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Pending</div>
+                    <p class="stat-meta">Highest priority gap identified</p>
+                    <p class="card-desc" id="weakest-stage-desc">Please configure parameters and start audit run.</p>
+                    <div class="weakest-stage-breakdown" id="weakest-breakdown-container">
+                        <div class="breakdown-title">Primary Gaps Identified</div>
+                        <div class="gap-list" id="weakest-gap-list"></div>
                     </div>
                 </div>
                 <div class="dashboard-card stat-card">
@@ -92,14 +92,14 @@
                         <p class="breakdown-note" id="breakdown-explanation">Configure website target URL and trigger audit run to calculate platform metrics.</p>
                     </div>
                 </div>
-                <div class="dashboard-card stat-card">
-                    <h3>Weakest Stage</h3>
-                    <div class="value-display" id="weakest-stage-display" style="background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-meta) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Pending</div>
-                    <p class="stat-meta">Highest priority gap identified</p>
-                    <p class="card-desc" id="weakest-stage-desc">Please configure parameters and start audit run.</p>
-                    <div class="weakest-stage-breakdown" id="weakest-breakdown-container">
-                        <div class="breakdown-title">Primary Gaps Identified</div>
-                        <div class="gap-list" id="weakest-gap-list"></div>
+                <div class="dashboard-card stat-card main-score-card" style="background: linear-gradient(135deg, rgba(15, 26, 46, 0.6) 0%, rgba(255, 255, 255, 0.02) 100%); border-color: var(--border-color);">
+                    <div class="card-glow"></div><h3>Overall Score</h3>
+                    <div class="score-display"><span id="overall-score-val" class="score-val">--</span><span class="score-max">/ 10</span></div>
+                    <p class="stat-meta">Based on 0 evaluated channels</p>
+                    <div class="badge" id="overall-badge-display" style="background: rgba(255, 255, 255, 0.05); color: var(--text-meta);">Pending Run</div>
+                    <div class="overall-score-breakdown" id="overall-breakdown-container">
+                        <div class="breakdown-title">Score Contribution Factors</div>
+                        <div class="factor-list" id="overall-factor-list"></div>
                     </div>
                 </div>
                 <div class="dashboard-card grid-col-span-3 journey-card">
@@ -107,8 +107,8 @@
                     <div class="stages-container" id="stages-container"></div>
                 </div>
                 <div class="dashboard-card grid-col-span-3">
-                    <div class="card-header"><h3>Scraped Channel Matrix</h3><span id="scraped-url-indicator" class="target-url-label">Target: Pending Audit</span></div>
-                    <div class="channels-grid" id="channels-grid-container"></div>
+                    <div class="card-header"><h3>Leaks & Solutions Matrix</h3><span id="scraped-url-indicator" class="target-url-label">Target: Pending Audit</span></div>
+                    <div class="channels-grid" id="leaks-solutions-container"></div>
                 </div>
             </section>
         </main>
@@ -201,6 +201,7 @@
     <script src="mock-data.js"></script>
     <script src="ui-renderer-data.js"></script>
     <script src="ui-renderer.js"></script>
+    <script src="ui-renderer-leaks.js"></script>
     <script src="glow-cards.js"></script>
     <script src="preflight-controller.js"></script>
     <script src="audit-controller.js"></script>
