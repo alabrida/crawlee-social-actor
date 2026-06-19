@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guide & Revenue Architect | Richard Norwood, PMP</title>
+    <title>Revenue Architect Console — Richard Norwood, PMP</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,9 +15,9 @@
     {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      "name": "Revenue Journey Diagnostics Dashboard",
-      "description": "Granular analytics scores, diagnostic matrices, and execution logs for social media channels.",
-      "publisher": {
+      "name": "Revenue Architect Console",
+      "description": "Granular analytics scores, diagnostic matrices, and execution logs for the Alabrida Revenue Journey Diagnostic (RJD).",
+      "provider": {
         "@type": "Organization",
         "name": "Alabrida"
       }
@@ -30,8 +30,8 @@
     <div id="lockscreen-gate" class="lockscreen-overlay obsidian-lockscreen" style="display: none;">
         <div class="lockscreen-content">
             <div class="lock-icon">🔒</div>
-            <h2>Clearance Code Required</h2>
-            <p>Access to the Revenue Journey Diagnostics Dashboard is restricted. Please enter your license token or registered email address.</p>
+            <h2>Architect Clearance Required</h2>
+            <p>Access to the RJD Analytics Console is restricted to authorized Revenue Architects. Please verify your token.</p>
             <form id="lockscreen-form">
                 <input type="text" id="token-input" placeholder="Email address or Access Token" required style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--color-border); color: #fff; margin-bottom: 0.5rem; box-sizing: border-box; text-align: center;">
                 <input type="password" id="lockscreen-password-input" placeholder="Password (only for email logins)" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--color-border); color: #fff; margin-bottom: 1rem; box-sizing: border-box; text-align: center;">
@@ -47,7 +47,7 @@
         </button>
         <main class="main-content">
             <header class="main-header">
-                <div class="logo-area"><div class="logo-glow"></div><span class="logo-text">REVENUE JOURNEY <span class="accent-text">ARCHITECT</span></span></div>
+                <div class="logo-area"><div class="logo-glow"></div><span class="logo-text">RICHARD NORWOOD, PMP | <span class="accent-text">REVENUE ARCHITECT CONSOLE</span></span></div>
                 <div class="header-actions" style="display: flex; gap: 0.5rem; align-items: center;">
                     <button id="trigger-assessment-btn" class="btn btn-primary btn-glow">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Configure Audit Run
@@ -72,6 +72,10 @@
                     <div class="confidence-bar-container">
                         <div class="confidence-label">Confidence: <span id="class-confidence-val">0%</span></div>
                         <div class="confidence-track"><div id="class-confidence-fill" class="confidence-fill" style="width: 0%;"></div></div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; margin: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--color-text-muted);">Maturity Tier:</span> <span id="maturity-tier-val" class="val text-highlight" style="font-weight:600;">Not Detected</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--color-text-muted);">NAICS Code:</span> <span id="naics-code-val" class="val text-highlight" style="font-weight:600;">Not Detected</span></div>
                     </div>
                     <div class="classification-breakdown" id="class-breakdown-container">
                         <div class="breakdown-title">Diagnostic Sub-segmentation</div>
@@ -116,7 +120,7 @@
             <div class="sidebar-backdrop"></div>
             <div class="sidebar-content">
                 <header class="sidebar-header">
-                    <div><h2>Run Assessment</h2><p class="sidebar-subtitle">Verify credentials & search parameters</p></div>
+                    <div><h2>Execute Footprint Scan</h2><p class="sidebar-subtitle">Verify credentials & search parameters</p></div>
                     <button id="close-sidebar-btn" class="close-btn" aria-label="Close settings">
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
@@ -143,9 +147,14 @@
                         <p class="section-desc">Active session states are retrieved from the vault. To change or add connected accounts, manage connections in the gateway.</p>
                         <div class="oauth-list" id="oauth-list-container"></div>
                         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 1.25rem;">
-                            <button id="evoke-extension-btn" class="btn btn-outline btn-block btn-sm" style="width: 100%; border-color: var(--color-accent-light); color: var(--color-accent-light); padding: 10px; border-radius: 8px; font-weight: 600; background: rgba(32, 201, 151, 0.03); cursor: pointer; border-style: solid; text-align: center;">Evoke Extension Sync</button>
+                            <button id="evoke-extension-btn" class="btn btn-outline btn-block btn-sm" style="width: 100%; border-color: var(--color-accent-light); color: var(--color-accent-light); padding: 10px; border-radius: 8px; font-weight: 600; background: rgba(32, 201, 151, 0.03); cursor: pointer; border-style: solid; text-align: center;">Evoke MapMoreMoney Sync</button>
                             <button id="download-payload-btn" class="btn btn-outline btn-block btn-sm" style="width: 100%; border-color: var(--color-secondary); color: var(--color-secondary-light); padding: 10px; border-radius: 8px; font-weight: 600; background: rgba(240, 180, 41, 0.03); cursor: pointer; border-style: solid; text-align: center;">Download Scraper Payload</button>
                             <a href="index.html" class="btn btn-outline btn-block btn-sm" style="width: 100%; text-align: center; display: block; border-color: var(--color-border); color: var(--color-text-muted); text-decoration: none; padding: 10px; border-radius: 8px; font-weight: 600; box-sizing: border-box; background: transparent;">Manage Gateway Connections</a>
+                        </div>
+                        <div class="partnership-promo-card" style="background: linear-gradient(135deg, rgba(240, 180, 41, 0.05) 0%, rgba(15, 26, 46, 0.8) 100%); border: 1px solid var(--color-secondary); border-radius: 12px; padding: 1rem; margin-top: 1.25rem; font-size: 0.8rem; line-height: 1.4; text-align: center;">
+                            <h4 style="margin: 0 0 6px 0; color: #ffffff; font-family: 'Outfit', sans-serif;">Deploy Your Unified Commercial Engine</h4>
+                            <p style="margin: 0 0 8px 0; color: var(--color-text-muted);">Partner with alabrida.org and Richard Norwood, PMP to accelerate information velocity and shorten your sales cycles.</p>
+                            <a href="https://alabrida.org/" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; text-align: center; padding: 6px; font-size: 0.75rem;">Explore Partnership</a>
                         </div>
                     </div>
                     <div class="settings-section" id="audit-history-section" style="display: none;">
@@ -185,9 +194,9 @@
             </div>
         </aside>
         <div id="extension-sidebar-drawer" class="extension-drawer">
-            <div class="drawer-header"><span class="drawer-title">🔌 Moat Session Sync</span><button id="close-drawer-btn" class="drawer-close">&times;</button></div>
+            <div class="drawer-header"><span class="drawer-title">🔌 MapMoreMoney Sync</span><button id="close-drawer-btn" class="drawer-close">&times;</button></div>
             <div class="drawer-body">
-                <p class="drawer-desc">The Chrome extension sync sidebar allows you to quickly import active browser cookies directly into your local SessionVault. Ideal if you get logged out during execution.</p>
+                <p class="drawer-desc">The MapMoreMoney Sync extension allows you to quickly import active browser cookies directly into your local SessionVault. Ideal if you get logged out during execution.</p>
                 <div class="sync-list" id="sync-list-container"></div>
             </div>
             <div class="drawer-footer">

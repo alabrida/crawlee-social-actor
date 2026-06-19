@@ -92,8 +92,8 @@ test.describe('Map More Money SaaS UI - End-to-End & Routing Gateway Verificatio
 
     // 3. Verify gate page structure (Web vs Extension connect options)
     const pageText = await page.textContent('body');
-    expect(pageText).toContain('Browser Extension Sync');
-    expect(pageText).toContain('Direct Account Login');
+    expect(pageText).toContain('MapMoreMoney Sync');
+    expect(pageText).toContain('Playwright Interactive Login');
 
     // 4. Validate schema.org structured data on gateway
     await validateSchemaOrg(page, 'Gateway Page (gateway.html)');
@@ -113,9 +113,9 @@ test.describe('Map More Money SaaS UI - End-to-End & Routing Gateway Verificatio
 
     // 3. Verify simplified interface with three output options
     const pageText = await page.textContent('body');
-    expect(pageText).toContain('JSON payload');
-    expect(pageText).toContain('Email report');
-    expect(pageText).toContain('Dashboard');
+    expect(pageText).toContain('Footprint JSON Payload');
+    expect(pageText).toContain('HTML Executive Summary');
+    expect(pageText).toContain('RJD Analytics Console');
 
     // 4. Verify affiliate advertising element is rendered
     const affiliateAds = page.locator('.affiliate-ad, .affiliate-advertising, [data-affiliate-ad]');

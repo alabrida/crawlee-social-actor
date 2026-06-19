@@ -103,6 +103,32 @@
         const classConfidenceFill = document.getElementById('class-confidence-fill');
         if (classConfidenceFill) classConfidenceFill.style.width = "94%";
 
+        // NAICS and Maturity Mapping
+        const naicsMap = {
+            'Local Business': { code: '722511', title: 'Full-Service Restaurants' },
+            'SaaS Platform': { code: '513210', title: 'Software Publishers' },
+            'E-Commerce': { code: '454110', title: 'Electronic Shopping and Mail-Order Houses' },
+            'Professional Services': { code: '541611', title: 'Administrative and General Management Consulting Services' },
+            'Content Creator': { code: '711510', title: 'Independent Artists, Writers, and Performers' }
+        };
+
+        const maturityMap = {
+            'Local Business': 'Maturity Tier 2 (Validated Brand)',
+            'SaaS Platform': 'Maturity Tier 3 (Scale / Growth)',
+            'E-Commerce': 'Maturity Tier 2 (Validated Brand)',
+            'Professional Services': 'Maturity Tier 3 (Scale / Growth)',
+            'Content Creator': 'Maturity Tier 1 (Emerging Creator)'
+        };
+
+        const naicsVal = naicsMap[detectedClassStr] || { code: '541611', title: 'Administrative and General Management Consulting Services' };
+        const maturityVal = maturityMap[detectedClassStr] || 'Maturity Tier 3 (Scale / Growth)';
+
+        const maturityEl = document.getElementById('maturity-tier-val');
+        if (maturityEl) maturityEl.textContent = maturityVal;
+        
+        const naicsEl = document.getElementById('naics-code-val');
+        if (naicsEl) naicsEl.textContent = `${naicsVal.code} (${naicsVal.title})`;
+
         updateClassificationBreakdown(detectedClassStr);
 
         // Stages Update
