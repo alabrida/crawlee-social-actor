@@ -179,6 +179,20 @@ export function collapsePlatforms(platforms: Record<string, any[]>): Record<stri
             merged.photo_count = maxPhotos;
         }
 
+        // Google Business Profile fields
+        if (platform === 'google_business_profile' || platform === 'google_maps') {
+            const withCat = profiles.find(p => p && p.gbp_category);
+            if (withCat) merged.gbp_category = withCat.gbp_category;
+            const withName = profiles.find(p => p && p.gbp_business_name);
+            if (withName) merged.gbp_business_name = withName.gbp_business_name;
+            const withAddr = profiles.find(p => p && p.gbp_address);
+            if (withAddr) merged.gbp_address = withAddr.gbp_address;
+            const withPhone = profiles.find(p => p && p.gbp_phone);
+            if (withPhone) merged.gbp_phone = withPhone.gbp_phone;
+            const withWeb = profiles.find(p => p && p.gbp_website);
+            if (withWeb) merged.gbp_website = withWeb.gbp_website;
+        }
+
         collapsed[platform] = merged;
     }
 

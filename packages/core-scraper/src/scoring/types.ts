@@ -69,6 +69,11 @@ export interface AssessmentResult {
             confidence: number;
             signals: string[];
             override: string | null;
+            local_archetype: string;
+            naics_code: string;
+            naics_title: string;
+            maturity_tier: 'Foundational' | 'Established' | 'Market Leader';
+            primary_bottleneck: string;
         };
         current_keywords?: string[];
         serp_results?: any[];

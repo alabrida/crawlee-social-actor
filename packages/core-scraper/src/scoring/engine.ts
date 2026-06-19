@@ -130,6 +130,22 @@ export function calculateAssessment(
         }
     });
 
+    let maturity_tier: 'Foundational' | 'Established' | 'Market Leader' = 'Foundational';
+    if (overallScore > 7.5) {
+        maturity_tier = 'Market Leader';
+    } else if (overallScore >= 4.0) {
+        maturity_tier = 'Established';
+    }
+
+    const bottleneckMap: Record<string, string> = {
+        awareness: 'Awareness',
+        consideration: 'Consideration',
+        decision: 'Decision',
+        conversion: 'Conversion',
+        retention: 'Retention'
+    };
+    const primary_bottleneck = bottleneckMap[weakestStage] || weakestStage;
+
     const result: AssessmentResult = {
         assessment_id: randomUUID(),
         business_url: businessUrl,
@@ -163,7 +179,12 @@ export function calculateAssessment(
                 detected_class: bizClass,
                 confidence: classification.confidence,
                 signals: classification.signals,
-                override: classOverride
+                override: classOverride,
+                local_archetype: classification.local_archetype,
+                naics_code: classification.naics_code,
+                naics_title: classification.naics_title,
+                maturity_tier,
+                primary_bottleneck
             }
         }
     };

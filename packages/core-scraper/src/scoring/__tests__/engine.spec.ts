@@ -194,4 +194,45 @@ describe('Scoring Engine', () => {
         const localKeywords = generateRecommendedKeywords('local', 'BurgerShop');
         expect(localKeywords).toContain('BurgerShop near me');
     });
+
+    it('should assign accurate NAICS code lookup for a restaurant category', () => {
+        const platforms = {
+            google_business_profile: {
+                url: 'https://maps.google.com/123',
+                gbp_category: 'Restaurant'
+            }
+        };
+        const hubForensics = { scrapeSuccess: true };
+        const serpData = null;
+
+        const result = calculateAssessment(
+            platforms,
+            hubForensics,
+            serpData,
+            'Yummy Pizza',
+            'https://yummy.com'
+        );
+
+        expect(result.assessment_detail.classification.naics_code).toBe('722511');
+        expect(result.assessment_detail.classification.naics_title).toBe('Full-Service Restaurants');
+        expect(result.assessment_detail.classification.local_archetype).toBe('Local Storefront');
+    });
+
+    it('should assign correct maturity tier and bottleneck based on scoring thresholds', () => {
+        const platforms = {};
+        const hubForensics = { scrapeSuccess: false };
+        const serpData = null;
+
+        const result = calculateAssessment(
+            platforms,
+            hubForensics,
+            serpData,
+            'Poor Business',
+            'https://poor.com'
+        );
+
+        expect(result.overall_score).toBeLessThan(4.0);
+        expect(result.assessment_detail.classification.maturity_tier).toBe('Foundational');
+        expect(result.assessment_detail.classification.primary_bottleneck).toBeDefined();
+    });
 });
