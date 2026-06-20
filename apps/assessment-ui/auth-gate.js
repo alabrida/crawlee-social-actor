@@ -1,25 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     const $ = id => document.getElementById(id);
-    const oauthPopup = $('oauth-popup'), btnCancel = $('btn-cancel'), btnCloseDot = $('btn-close-dot');
-    const modalBrowserTitle = $('modal-browser-title'), tabLogin = $('tab-login'), tabCookie = $('tab-cookie');
-    const contentLogin = $('content-login'), contentCookie = $('content-cookie'), loginFormView = $('login-form-view');
-    const loginProgressView = $('login-progress-view'), loginSuccessView = $('login-success-view'), consoleOutput = $('console-output');
-    const loginUsername = $('login-username'), loginPassword = $('login-password'), labelUsername = $('label-username');
-    const cookieFieldsContainer = $('cookie-fields-container'), cookieInstructions = $('cookie-instructions');
-    const toast = $('toast-notification'), toastMessage = $('toast-message');
-    const connectionsCountEl = $('connections-count'), generateAuditBtn = $('generate-audit');
-
-    let currentPlatform = null, connectedPlatforms = new Map(), vncTimeouts = [];
-    const platformsMetadata = window.AuthGateData ? window.AuthGateData.platformsMetadata : {};
-
     const supabaseUrl = 'https://wraqaqyqqeswufbarhcz.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyYXFhcXlxcWVzd3VmYmFyaGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNDYxNTcsImV4cCI6MjA4ODkyMjE1N30.8MME9AjR7jupsIkaUvFAuz3VFMiYRXvhNDyk8d4DDLY';
     const supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
-    const token = new URLSearchParams(window.location.search).get('token');
+    const generateAuditBtn = $('generate-audit');
 
-    if (!token) {
+    const state = window.AuthGateState;
+    const ui = window.AuthGateUI;
+    const platformsMetadata = window.AuthGateData ? window.AuthGateData.platformsMetadata : {};
+
+    if (!state || !state.token) {
         setTimeout(() => {
-            showToast("Invalid Access Token. Please check your email.");
+            if (ui) ui.showToast("Invalid Access Token. Please check your email.");
             const subtitle = document.querySelector('.gate-subtitle');
             if (subtitle) {
                 subtitle.innerHTML = `<span style="color: var(--color-error); font-weight: bold;">⚠️ Access Restricted:</span> Please use the unique link sent via email to configure credentials.`;
@@ -27,143 +19,115 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     }
 
-    const sleep = ms => new Promise(r => vncTimeouts.push(setTimeout(r, ms)));
-    const clearTimeouts = () => { vncTimeouts.forEach(clearTimeout); vncTimeouts = []; };
-
-    function updateConnectionsState() {
-        const count = connectedPlatforms.size;
-        connectionsCountEl.textContent = `${count} Platform${count === 1 ? '' : 's'} Connected`;
-        generateAuditBtn.classList.toggle('active', count > 0);
-        generateAuditBtn.disabled = count === 0 || !token;
-    }
-
-    document.querySelectorAll('.auth-card').forEach(card => {
-        const btn = card.querySelector('.oauth-toggle-btn');
-        const statusEl = card.querySelector('.oauth-status');
-        const platform = btn.getAttribute('data-platform');
-        
-        btn.addEventListener('click', () => {
-            if (connectedPlatforms.has(platform)) {
-                connectedPlatforms.delete(platform);
-                const req = platformsMetadata[platform].requiresAuth;
-                statusEl.setAttribute('data-connected', 'false');
-                statusEl.textContent = req ? 'Not Connected' : 'Not Configured';
-                statusEl.className = 'oauth-status';
-                card.classList.remove('connected');
-                btn.textContent = req ? 'Connect Account' : 'Configure Profile';
-                btn.classList.add('btn-highlight');
-                showToast(`Removed config for ${platformsMetadata[platform].name}.`);
-                updateConnectionsState();
-            } else {
-                openAuthModal(platform);
-            }
-        });
-    });
-
-    function openAuthModal(platformId) {
-        currentPlatform = platformId;
-        const meta = platformsMetadata[platformId];
-        const modalTabsEl = document.querySelector('.modal-tabs');
-        const passwordGroup = loginPassword.closest('.form-group');
-        const submitBtn = document.querySelector('#interactive-login-form .btn-sync-action');
-
-        if (!meta.requiresAuth) {
-            modalBrowserTitle.textContent = `Configure Profile: ${meta.name}`;
-            if (modalTabsEl) modalTabsEl.style.display = 'none';
-            if (passwordGroup) passwordGroup.style.display = 'none';
-            loginPassword.required = false;
-            labelUsername.textContent = meta.publicLabel;
-            loginUsername.placeholder = meta.publicPlaceholder;
-            if (submitBtn) submitBtn.textContent = 'Save Profile Link';
-            switchTab('login');
-        } else {
-            modalBrowserTitle.textContent = `Authentication Terminal: ${meta.name}`;
-            if (modalTabsEl) modalTabsEl.style.display = 'flex';
-            if (passwordGroup) passwordGroup.style.display = 'block';
-            loginPassword.required = true;
-            labelUsername.textContent = meta.usernameLabel;
-            loginUsername.placeholder = meta.usernamePlaceholder;
-            if (submitBtn) submitBtn.textContent = 'Verify & Connect';
-            switchTab('login');
-            if (window.AuthGateData.renderCookieForm) {
-                window.AuthGateData.renderCookieForm(cookieFieldsContainer, cookieInstructions, meta);
-            }
-        }
-        loginUsername.value = '';
-        loginPassword.value = '';
-        oauthPopup.classList.remove('hidden');
-    }
-
-    window.switchTab = function(tabName) {
-        clearTimeouts();
-        loginFormView.style.display = 'block';
-        loginProgressView.style.display = 'none';
-        loginSuccessView.style.display = 'none';
-        const isLogin = tabName === 'login';
-        tabLogin.classList.toggle('active', isLogin);
-        tabCookie.classList.toggle('active', !isLogin);
-        contentLogin.classList.toggle('active', isLogin);
-        contentCookie.classList.toggle('active', !isLogin);
-    };
-
-    function hideModal() {
-        oauthPopup.classList.add('hidden');
-        clearTimeouts();
-        currentPlatform = null;
-    }
-
-    if (btnCloseDot) btnCloseDot.addEventListener('click', hideModal);
-    if (btnCancel) btnCancel.addEventListener('click', hideModal);
-
-    function appendTerminalLine(text, type = 'info') {
-        const line = document.createElement('div');
-        line.className = `console-line ${type}`;
-        line.textContent = text;
-        consoleOutput.appendChild(line);
-        consoleOutput.scrollTop = consoleOutput.scrollHeight;
-    }
+    const sleep = ms => new Promise(r => state.vncTimeouts.push(setTimeout(r, ms)));
 
     window.handleInteractiveLogin = async function(event) {
         event.preventDefault();
+        const loginUsername = $('login-username');
+        const loginPassword = $('login-password');
         const username = loginUsername.value.trim();
         const password = loginPassword.value;
-        const meta = platformsMetadata[currentPlatform];
+        const meta = platformsMetadata[state.currentPlatform];
         
-        loginFormView.style.display = 'none';
-        loginProgressView.style.display = 'block';
-        consoleOutput.innerHTML = '';
+        $('login-form-view').style.display = 'none';
+        $('login-progress-view').style.display = 'block';
+        $('console-output').innerHTML = '';
+        
+        ui.appendTerminalLine(`[System] Spawning isolated Playwright context for ${meta.name}...`, 'info');
         
         if (!meta.requiresAuth) {
-            if (window.AuthGateData.simulatePublicLogs) {
-                await window.AuthGateData.simulatePublicLogs(meta, username, appendTerminalLine, sleep);
+            ui.appendTerminalLine(`[System] Registering public target link for ${meta.name}...`, 'info');
+            await sleep(400);
+            ui.appendTerminalLine(`[System] Target URL/Username: ${username}`, 'info');
+            await sleep(400);
+            ui.appendTerminalLine(`[Validation] Checking link structure and reachability...`, 'info');
+            
+            try {
+                const res = await fetch('/api/audit/preflight', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: username })
+                });
+                if (!res.ok) throw new Error('Unreachable or invalid format.');
+                
+                await sleep(500);
+                ui.appendTerminalLine(`[Success] Target validated! Added to audit queue.`, 'success');
+                await sleep(400);
+                
+                $('login-progress-view').style.display = 'none';
+                $('login-success-view').style.display = 'block';
+                $('success-message').textContent = `Target profile connected successfully: ${username}`;
+                
+                state.connectedPlatforms.set(state.currentPlatform, { type: 'public', username: username });
+                ui.connectPlatformUI(state.currentPlatform, username);
+                await sleep(1200);
+                ui.hideModal();
+            } catch (err) {
+                ui.appendTerminalLine(`[Error] Validation failed: ${err.message}`, 'error');
+                await sleep(2000);
+                $('login-form-view').style.display = 'block';
+                $('login-progress-view').style.display = 'none';
             }
-            loginProgressView.style.display = 'none';
-            loginSuccessView.style.display = 'block';
-            $('success-message').textContent = `Target profile connected successfully: ${username}`;
-            connectedPlatforms.set(currentPlatform, { type: 'public', username: username });
-            connectPlatformUI(currentPlatform, username);
-            await sleep(1200);
-            hideModal();
             return;
         }
 
-        if (window.AuthGateData.simulateTerminalLogs) {
-            await window.AuthGateData.simulateTerminalLogs(meta, username, appendTerminalLine, sleep);
-        }
-        await sleep(500);
-        loginProgressView.style.display = 'none';
-        loginSuccessView.style.display = 'block';
-        $('success-message').textContent = `Account login completed successfully for ${username}.`;
+        ui.appendTerminalLine(`[Proxy] Routing browser context traffic through US Residential Proxy...`, 'info');
+        await sleep(300);
+        ui.appendTerminalLine(`[Playwright] Spawning clean Chromium context (stealth fingerprints active)...`, 'info');
+        await sleep(300);
+        ui.appendTerminalLine(`[Playwright] Navigating context to login page: ${meta.loginUrl}...`, 'info');
+        await sleep(300);
+        ui.appendTerminalLine(`[Playwright] Inputting credentials for user: ${username}...`, 'info');
         
-        connectedPlatforms.set(currentPlatform, { type: 'login', username: username, password: password });
-        connectPlatformUI(currentPlatform, `@${username.split('@')[0]}`);
-        await sleep(1500);
-        hideModal();
+        try {
+            const res = await fetch('/api/auth/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    platform: state.currentPlatform,
+                    username: username,
+                    password: password,
+                    token: state.token
+                })
+            });
+            const data = await res.json();
+            
+            if (data.logs && Array.isArray(data.logs)) {
+                for (const l of data.logs) {
+                    await sleep(200);
+                    ui.appendTerminalLine(l.text, l.type);
+                }
+            }
+            
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Authentication failed.');
+            }
+            
+            await sleep(500);
+            $('login-progress-view').style.display = 'none';
+            $('login-success-view').style.display = 'block';
+            $('success-message').textContent = `Account login completed successfully for ${username}.`;
+            
+            state.connectedPlatforms.set(state.currentPlatform, {
+                type: 'login',
+                username: username,
+                password: password,
+                cookies: data.cookies || null
+            });
+            ui.connectPlatformUI(state.currentPlatform, `@${username.split('@')[0]}`);
+            await sleep(1500);
+            ui.hideModal();
+        } catch (err) {
+            ui.appendTerminalLine(`[Error] ${err.message}`, 'error');
+            await sleep(2000);
+            $('login-form-view').style.display = 'block';
+            $('login-progress-view').style.display = 'none';
+        }
     };
 
     window.handleManualCookie = function(event) {
         event.preventDefault();
-        const inputs = cookieFieldsContainer.querySelectorAll('.cookie-input');
+        const inputs = $('cookie-fields-container').querySelectorAll('.cookie-input');
         const cookies = {};
         let isValid = true;
         inputs.forEach(input => {
@@ -173,94 +137,72 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (!isValid) return alert('Please fill out all cookie fields.');
 
-        connectedPlatforms.set(currentPlatform, { type: 'cookie', cookies: cookies });
-        connectPlatformUI(currentPlatform, 'Session Cookies Injected');
-        hideModal();
+        state.connectedPlatforms.set(state.currentPlatform, { type: 'cookie', cookies: cookies });
+        ui.connectPlatformUI(state.currentPlatform, 'Session Cookies Injected');
+        ui.hideModal();
     };
 
-    function connectPlatformUI(platformId, detailsText) {
-        const card = document.getElementById(`oauth-${platformId}`);
-        if (card) {
-            const statusEl = card.querySelector('.oauth-status');
-            const btn = card.querySelector('.oauth-toggle-btn');
-            statusEl.setAttribute('data-connected', 'true');
-            statusEl.textContent = `Connected: ${detailsText}`;
-            statusEl.className = 'oauth-status text-success';
-            card.classList.add('connected');
-            btn.textContent = 'Disconnect';
-            btn.classList.remove('btn-highlight');
-        }
-        showToast(`Successfully connected to ${platformsMetadata[platformId].name}!`);
-        updateConnectionsState();
-    }
+    if (generateAuditBtn) {
+        generateAuditBtn.addEventListener('click', async () => {
+            const platformsArray = Array.from(state.connectedPlatforms.keys());
+            if (platformsArray.length === 0 || !state.token || !supabaseClient) return;
 
-    function showToast(message) {
-        toastMessage.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => { toast.classList.remove('show'); }, 3000);
-    }
+            generateAuditBtn.disabled = true;
+            generateAuditBtn.textContent = "Initiating Diagnostic Scan...";
 
-    generateAuditBtn.addEventListener('click', async () => {
-        const platformsArray = Array.from(connectedPlatforms.keys());
-        if (platformsArray.length === 0 || !token || !supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('revenue_journey_assessments')
+                    .select('*')
+                    .filter('assessment_detail->>client_token', 'eq', state.token);
 
-        generateAuditBtn.disabled = true;
-        generateAuditBtn.textContent = "Initiating Diagnostic Scan...";
+                if (error) throw error;
+                if (!data || data.length === 0) throw new Error("Assessment record not found.");
 
-        try {
-            const { data, error } = await supabaseClient
-                .from('revenue_journey_assessments')
-                .select('*')
-                .filter('assessment_detail->>client_token', 'eq', token);
+                const record = data[0];
+                const authTokens = {};
+                state.connectedPlatforms.forEach((val, key) => {
+                    authTokens[key] = {
+                        type: val.type,
+                        username: val.username || null,
+                        password: val.password || null,
+                        cookies: val.cookies || null
+                    };
+                });
 
-            if (error) throw error;
-            if (!data || data.length === 0) throw new Error("Assessment record not found.");
-
-            const record = data[0];
-            const authTokens = {};
-            connectedPlatforms.forEach((val, key) => {
-                authTokens[key] = {
-                    type: val.type,
-                    username: val.username || null,
-                    password: val.password || null,
-                    cookies: val.cookies || null
+                const updatedDetail = {
+                    ...(record.assessment_detail || {}),
+                    authTokens: authTokens,
+                    status: 'auth_submitted'
                 };
-            });
 
-            const updatedDetail = {
-                ...(record.assessment_detail || {}),
-                authTokens: authTokens,
-                status: 'auth_submitted'
-            };
+                const { error: updateError } = await supabaseClient
+                    .from('revenue_journey_assessments')
+                    .update({
+                        assessment_detail: updatedDetail,
+                        overall_score: 0.0,
+                        awareness_score: 0.0,
+                        consideration_score: 0.0,
+                        decision_score: 0.0,
+                        conversion_score: 0.0,
+                        retention_score: 0.0
+                    })
+                    .eq('assessment_id', record.assessment_id);
 
-            const { error: updateError } = await supabaseClient
-                .from('revenue_journey_assessments')
-                .update({
-                    assessment_detail: updatedDetail,
-                    overall_score: 0.0,
-                    awareness_score: 0.0,
-                    consideration_score: 0.0,
-                    decision_score: 0.0,
-                    conversion_score: 0.0,
-                    retention_score: 0.0
-                })
-                .eq('assessment_id', record.assessment_id);
+                if (updateError) throw updateError;
 
-            if (updateError) throw updateError;
+                const mainGate = document.querySelector('.gate-container');
+                const initiatedView = document.getElementById('initiated-view');
+                if (mainGate) mainGate.style.display = 'none';
+                if (initiatedView) initiatedView.classList.add('show');
 
-            const mainGate = document.querySelector('.gate-container');
-            const initiatedView = document.getElementById('initiated-view');
-            if (mainGate) mainGate.style.display = 'none';
-            if (initiatedView) initiatedView.classList.add('show');
-
-            showToast("Diagnostic scan successfully started!");
-        } catch (err) {
-            console.error(err);
-            showToast(`Error: ${err.message || err}`);
-            generateAuditBtn.disabled = false;
-            generateAuditBtn.textContent = "Submit & Start Diagnostic Scan";
-        }
-    });
-
-    if (window.initStarField) window.initStarField('starfield-canvas');
+                ui.showToast("Diagnostic scan successfully started!");
+            } catch (err) {
+                console.error(err);
+                ui.showToast(`Error: ${err.message || err}`);
+                generateAuditBtn.disabled = false;
+                generateAuditBtn.textContent = "Submit & Start Diagnostic Scan";
+            }
+        });
+    }
 });

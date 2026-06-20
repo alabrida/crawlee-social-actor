@@ -15,8 +15,8 @@
 
         if (!preflightBtn || !keywordTagsContainer) return;
 
-        // Pre-flight Crawl Simulation
-        preflightBtn.addEventListener('click', () => {
+        // Pre-flight Crawl via Backend
+        preflightBtn.addEventListener('click', async () => {
             const url = targetUrlInput.value.trim();
             if (!url) return;
 
@@ -24,38 +24,37 @@
             preflightSuccessBlock.classList.add('hidden');
             preflightBtn.disabled = true;
 
-            setTimeout(() => {
-                preflightStatus.classList.add('hidden');
-                preflightSuccessBlock.classList.remove('hidden');
-                preflightBtn.disabled = false;
+            try {
+                const res = await fetch('/api/audit/preflight', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                if (!res.ok) throw new Error('Preflight request failed');
 
-                if (url.includes('saas') || url.includes('app') || url.includes('software')) {
-                    preflightClassVal.textContent = 'SaaS Platform';
-                    preflightJsonLdVal.textContent = 'Found (SoftwareApplication)';
+                const data = await res.json();
+                preflightClassVal.textContent = data.detectedClass;
+                preflightJsonLdVal.textContent = data.jsonLdStatus;
+                
+                if (data.jsonLdStatus.includes('Found')) {
                     preflightJsonLdVal.className = 'val text-success';
-                    updateSuggestedKeywords(['Subscription Billing', 'Cloud Analytics', 'SaaS App Dashboard']);
-                } else if (url.includes('store') || url.includes('shop') || url.includes('ecommerce')) {
-                    preflightClassVal.textContent = 'E-Commerce';
-                    preflightJsonLdVal.textContent = 'Found (Store / Product)';
-                    preflightJsonLdVal.className = 'val text-success';
-                    updateSuggestedKeywords(['Free Shipping Checkout', 'Buy Online Store', 'Retail Goods Store']);
-                } else if (url.includes('consult') || url.includes('agency') || url.includes('advisory')) {
-                    preflightClassVal.textContent = 'Professional Services';
-                    preflightJsonLdVal.textContent = 'Found (ProfessionalService)';
-                    preflightJsonLdVal.className = 'val text-success';
-                    updateSuggestedKeywords(['Business Consulting Firm', 'Strategy Advisory', 'Consultant Services']);
-                } else if (url.includes('milos') || url.includes('burger') || url.includes('pizza') || url.includes('restaurant')) {
-                    preflightClassVal.textContent = 'Local Business';
-                    preflightJsonLdVal.textContent = 'Found (Restaurant)';
-                    preflightJsonLdVal.className = 'val text-success';
-                    updateSuggestedKeywords(["Milo's Original Burger Shop", "Birmingham Burgers", "Hamburgers in Alabama"]);
                 } else {
-                    preflightClassVal.textContent = 'Content Creator';
-                    preflightJsonLdVal.textContent = 'None Found (Fallback)';
                     preflightJsonLdVal.className = 'val text-meta';
-                    updateSuggestedKeywords(['Creator Portfolio', 'Blog Hub', 'Online Influencer Bio']);
                 }
-            }, 1500);
+                updateSuggestedKeywords(data.suggestedKeywords);
+                preflightSuccessBlock.classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                // Fallback to local default classification
+                preflightClassVal.textContent = 'Local Business';
+                preflightJsonLdVal.textContent = 'None Found (Fallback)';
+                preflightJsonLdVal.className = 'val text-meta';
+                updateSuggestedKeywords(["Birmingham Burgers", "Milo's Original Burger Shop", "Hamburgers in Alabama"]);
+                preflightSuccessBlock.classList.remove('hidden');
+            } finally {
+                preflightStatus.classList.add('hidden');
+                preflightBtn.disabled = false;
+            }
         });
 
         function updateSuggestedKeywords(keywordsList) {
