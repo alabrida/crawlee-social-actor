@@ -12,8 +12,9 @@ try {
     // dotenv not installed (CI environment); relying on environment variables
 }
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Trim any trailing/leading spaces or newlines from environment variables to prevent malformed URLs
+const supabaseUrl = process.env.SUPABASE_URL ? process.env.SUPABASE_URL.trim() : null;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.trim() : null;
 
 async function pingSupabase() {
     if (!supabaseUrl || !supabaseKey) {
