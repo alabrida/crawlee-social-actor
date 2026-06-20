@@ -146,6 +146,16 @@
             if (barEl) barEl.style.width = st.w;
         });
 
+        if (window.UIRenderer && window.UIRenderer.drawLineChart) {
+            window.UIRenderer.drawLineChart({
+                awareness: 8.5,
+                consideration: 7.2,
+                decision: 6.8,
+                conversion: 5.5,
+                retention: 5.8
+            });
+        }
+
         // Weakest stage
         const weakestStageDisplay = document.getElementById('weakest-stage-display');
         if (weakestStageDisplay) {

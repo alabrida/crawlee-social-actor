@@ -139,6 +139,15 @@ document.addEventListener('DOMContentLoaded', () => {
             window.UIRenderer.updateClassificationBreakdown(record.business_class || 'Content Creator');
             window.UIRenderer.updateWeakestStageBreakdown(record.weakest_stage || 'Awareness');
             window.UIRenderer.updateOverallScoreBreakdown(score);
+            if (window.UIRenderer.drawLineChart) {
+                window.UIRenderer.drawLineChart({
+                    awareness: parseFloat(record.awareness_score || 0),
+                    consideration: parseFloat(record.consideration_score || 0),
+                    decision: parseFloat(record.decision_score || 0),
+                    conversion: parseFloat(record.conversion_score || 0),
+                    retention: parseFloat(record.retention_score || 0)
+                });
+            }
             if (window.UIRenderer.renderLeaksAndSolutions) {
                 window.UIRenderer.renderLeaksAndSolutions(record);
             }

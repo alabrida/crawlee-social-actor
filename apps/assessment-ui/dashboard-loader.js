@@ -34,18 +34,25 @@
     function init() {
         const stagesContainer = document.getElementById('stages-container');
         if (stagesContainer) {
-            stagesContainer.innerHTML = stages.map(st => `
-                <div class="stage-item" data-stage="${st.id}">
-                    <div class="stage-metric">
-                        <span class="stage-name">${st.name}</span>
-                        <span id="score-${st.id}" class="stage-score">0.0 / 10</span>
-                    </div>
-                    <div class="progress-bar-track">
-                        <div id="bar-${st.id}" class="progress-bar-fill fill-${st.id}" style="width: 0%;"></div>
-                    </div>
-                    <p class="stage-desc">${st.desc}</p>
+            stagesContainer.innerHTML = `
+                <div id="stages-bar-view" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                    ${stages.map(st => `
+                        <div class="stage-item" data-stage="${st.id}">
+                            <div class="stage-metric">
+                                <span class="stage-name">${st.name}</span>
+                                <span id="score-${st.id}" class="stage-score">0.0 / 10</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="bar-${st.id}" class="progress-bar-fill fill-${st.id}" style="width: 0%;"></div>
+                            </div>
+                            <p class="stage-desc">${st.desc}</p>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('');
+                <div id="stages-line-view" class="hidden" style="position: relative; width: 100%; height: 260px; padding: 10px 0; box-sizing: border-box;">
+                    <!-- Line chart SVG will be drawn here -->
+                </div>
+            `;
         }
 
         const leaksSolutions = document.getElementById('leaks-solutions-container');
