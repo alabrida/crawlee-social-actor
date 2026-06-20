@@ -82,69 +82,98 @@
             const isLeak = stageScore < 8.0 || isWeakest;
             const config = stageSolutions[st.id];
 
-            if (isLeak) {
-                const platformsHtml = config.platforms.map(p => {
-                    const isFound = record.platforms_found?.some(pf => pf.toLowerCase().includes(p.id)) || 
-                                    (p.id === 'website' && record.business_url) || 
-                                    (p.id === 'google' && record.platforms_found?.some(pf => pf.includes('google') || pf.includes('maps')));
-                    
-                    return `
-                        <div class="detail-row" style="padding: 0.35rem 0; font-size: 0.78rem;">
-                            <span>${p.icon} <strong>${p.name}</strong></span>
-                            <span class="${isFound ? 'text-success' : 'text-error'}" style="font-weight: 600;">
-                                ${isFound ? '✓ Connected' : '⚠️ Remediation: ' + p.fix}
-                            </span>
-                        </div>
-                    `;
-                }).join('');
-
-                const gapsHtml = config.gaps.map(g => `
-                    <div class="gap-item" style="margin-bottom: 0.25rem;">
-                        <span class="gap-bullet text-error">&bull;</span>
-                        <span class="gap-text">${g}</span>
+            const platformsHtml = config.platforms.map(p => {
+                const isFound = record.platforms_found?.some(pf => pf.toLowerCase().includes(p.id)) || 
+                                (p.id === 'website' && record.business_url) || 
+                                (p.id === 'google' && record.platforms_found?.some(pf => pf.includes('google') || pf.includes('maps')));
+                
+                return `
+                    <div class="detail-row" style="padding: 0.35rem 0; font-size: 0.78rem;">
+                        <span>${p.icon} <strong>${p.name}</strong></span>
+                        <span class="${isFound ? 'text-success' : 'text-error'}" style="font-weight: 600;">
+                            ${isFound ? '✓ Connected' : '⚠️ Remediation: ' + p.fix}
+                        </span>
                     </div>
-                `).join('');
+                `;
+            }).join('');
 
-                html += `
-                    <div class="channel-card active-channel" style="border-color: ${isWeakest ? '#ffc014' : 'var(--color-border)'}; box-shadow: 0 0 10px rgba(240, 180, 41, 0.05); grid-column: span 3; margin-bottom: 0.75rem;">
-                        <div class="channel-header" style="justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span class="channel-icon">${config.icon}</span>
-                                <span class="channel-title" style="font-size: 1.1rem; color: #fff;">${config.name} Leak ${isWeakest ? '(Critical bottleneck)' : 'identified'}</span>
-                            </div>
-                            <span class="channel-status ${isWeakest ? 'badge-warning' : 'badge-inactive'}" style="font-size: 0.75rem;">Score: ${stageScore.toFixed(1)}/10</span>
-                        </div>
-                        <div class="channel-body" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem;">
+            const gapsHtml = config.gaps.map(g => `
+                <div class="gap-item" style="margin-bottom: 0.25rem;">
+                    <span class="gap-bullet ${isLeak ? 'text-error' : 'text-success'}">${isLeak ? '&bull;' : '✓'}</span>
+                    <span class="gap-text" style="${isLeak ? '' : 'color: var(--color-text-muted);'}">${g}</span>
+                </div>
+            `).join('');
+
+            const headerBorderColor = isWeakest ? '#ffc014' : (isLeak ? 'var(--color-border)' : 'rgba(32, 201, 151, 0.3)');
+            const bgGradient = isLeak 
+                ? 'rgba(255, 255, 255, 0.02)' 
+                : 'linear-gradient(135deg, rgba(32, 201, 151, 0.02) 0%, rgba(15, 26, 46, 0.6) 100%)';
+
+            html += `
+                <div class="channel-card pathway-card" data-stage="${st.id}" style="grid-column: span 3; margin-bottom: 0.75rem; border-color: ${headerBorderColor}; background: ${bgGradient}; box-shadow: 0 0 10px rgba(240, 180, 41, 0.02); transition: all 0.25s ease;">
+                    <div class="pathway-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.25rem 0; user-select: none;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="channel-icon" style="${isLeak ? '' : 'filter: drop-shadow(0 0 4px rgba(32,201,151,0.4));'}">${config.icon}</span>
                             <div>
-                                <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.5rem; letter-spacing: 0.5px;">Identified Rubric Gaps</h4>
-                                <div class="gap-list">${gapsHtml}</div>
-                            </div>
-                            <div style="border-left: 1px solid rgba(255, 255, 255, 0.05); padding-left: 1.5rem;">
-                                <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.5rem; letter-spacing: 0.5px;">Platform Solution Remediation</h4>
-                                <div>${platformsHtml}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                html += `
-                    <div class="channel-card" style="opacity: 0.85; grid-column: span 3; margin-bottom: 0.5rem; padding: 0.75rem 1.25rem; border-color: rgba(32, 201, 151, 0.15); background: rgba(32, 201, 151, 0.01);">
-                        <div class="channel-header" style="justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span class="channel-icon" style="filter: grayscale(1);">${config.icon}</span>
-                                <span class="channel-title" style="font-size: 0.95rem; color: var(--color-text-muted); font-weight: 500;">${config.name} Pathway</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <span class="text-success" style="font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">✓ Sealed</span>
-                                <span class="channel-status badge-success" style="background: rgba(32, 201, 151, 0.15); color: var(--color-success); font-size: 0.75rem;">Score: ${stageScore.toFixed(1)}/10</span>
+                                <span class="channel-title" style="font-size: 1.05rem; font-weight: 600; color: #fff;">
+                                    ${config.name} Pathway
+                                </span>
+                                <span style="font-size: 0.75rem; color: var(--color-text-muted); margin-left: 8px;">
+                                    ${isWeakest ? '— Critical Bottleneck' : (isLeak ? '— Leak Identified' : '— Pathway Sealed')}
+                                </span>
                             </div>
                         </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            ${isLeak 
+                                ? `<span class="badge badge-warning" style="font-size: 0.72rem; background: rgba(240, 180, 41, 0.1); color: var(--color-secondary-light); border: 1px solid rgba(240, 180, 41, 0.2);">⚠️ Needs Work</span>`
+                                : `<span class="badge badge-success" style="font-size: 0.72rem; background: rgba(32, 201, 151, 0.15); color: var(--color-success); border: 1px solid rgba(32, 201, 151, 0.3);">✓ Sealed</span>`
+                            }
+                            <span class="channel-status ${isLeak ? 'badge-warning' : 'badge-success'}" style="font-size: 0.75rem; font-weight: 600;">Score: ${stageScore.toFixed(1)}/10</span>
+                            <span class="expand-chevron" style="transition: transform 0.25s ease; transform: ${isLeak ? 'rotate(180deg)' : 'rotate(0deg)'}; color: var(--color-text-muted); font-size: 0.85rem;">▼</span>
+                        </div>
                     </div>
-                `;
-            }
+                    
+                    <div class="pathway-details-body" style="display: ${isLeak ? 'grid' : 'none'}; grid-template-columns: 1fr 1.2fr; gap: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 0.75rem; padding-top: 0.75rem;">
+                        <div>
+                            <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.5rem; letter-spacing: 0.5px;">Diagnostic Rubric Gaps</h4>
+                            <div class="gap-list">${gapsHtml}</div>
+                        </div>
+                        <div style="border-left: 1px solid rgba(255, 255, 255, 0.05); padding-left: 1.5rem;">
+                            <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.5rem; letter-spacing: 0.5px;">Platform Solution Remediation</h4>
+                            <div>${platformsHtml}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
         container.innerHTML = html;
+
+        // Attach click listeners to expand/collapse details dynamically
+        const cards = container.querySelectorAll('.pathway-card');
+        cards.forEach(card => {
+            const header = card.querySelector('.pathway-header');
+            const body = card.querySelector('.pathway-details-body');
+            const chevron = card.querySelector('.expand-chevron');
+
+            header.addEventListener('click', () => {
+                const isCollapsed = body.style.display === 'none';
+                if (isCollapsed) {
+                    body.style.display = 'grid';
+                    chevron.style.transform = 'rotate(180deg)';
+                    card.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                } else {
+                    body.style.display = 'none';
+                    chevron.style.transform = 'rotate(0deg)';
+                    
+                    const stageId = card.getAttribute('data-stage');
+                    const isWeakest = record.weakest_stage && record.weakest_stage.toLowerCase() === stageId;
+                    const stageScore = parseFloat(stages.find(s => s.id === stageId)?.score || 0);
+                    const isLeak = stageScore < 8.0 || isWeakest;
+                    card.style.borderColor = isWeakest ? '#ffc014' : (isLeak ? 'var(--color-border)' : 'rgba(32, 201, 151, 0.3)');
+                }
+            });
+        });
     }
 
     if (window.UIRenderer) {
