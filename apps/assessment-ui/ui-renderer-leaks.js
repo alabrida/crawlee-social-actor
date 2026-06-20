@@ -87,22 +87,47 @@
                                 (p.id === 'website' && record.business_url) || 
                                 (p.id === 'google' && record.platforms_found?.some(pf => pf.includes('google') || pf.includes('maps')));
                 
+                let statusColorClass = 'text-error';
+                let statusLabel = '⚠️ Remediation: ' + p.fix;
+                
+                if (isFound) {
+                    statusColorClass = 'text-success';
+                    statusLabel = '✓ Connected';
+                } else if (!isLeak) {
+                    statusColorClass = 'text-warning';
+                    statusLabel = '⚠️ Optimization: ' + p.fix;
+                }
+
                 return `
                     <div class="detail-row" style="padding: 0.35rem 0; font-size: 0.78rem;">
                         <span>${p.icon} <strong>${p.name}</strong></span>
-                        <span class="${isFound ? 'text-success' : 'text-error'}" style="font-weight: 600;">
-                            ${isFound ? '✓ Connected' : '⚠️ Remediation: ' + p.fix}
+                        <span class="${statusColorClass}" style="font-weight: 600;">
+                            ${statusLabel}
                         </span>
                     </div>
                 `;
             }).join('');
 
-            const gapsHtml = config.gaps.map(g => `
-                <div class="gap-item" style="margin-bottom: 0.25rem;">
-                    <span class="gap-bullet ${isLeak ? 'text-error' : 'text-success'}">${isLeak ? '&bull;' : '✓'}</span>
-                    <span class="gap-text" style="${isLeak ? '' : 'color: var(--color-text-muted);'}">${g}</span>
-                </div>
-            `).join('');
+            let gapsHtml = '';
+            if (stageScore >= 10.0) {
+                gapsHtml = `
+                    <div class="gap-item" style="margin-bottom: 0.25rem;">
+                        <span class="gap-bullet text-success">✓</span>
+                        <span class="gap-text" style="color: var(--color-success); font-weight: 500;">All rubric standards met. No outstanding gaps.</span>
+                    </div>
+                `;
+            } else {
+                gapsHtml = config.gaps.map(g => {
+                    const bulletColor = isLeak ? 'text-error' : 'text-warning';
+                    const prefix = isLeak ? 'Critical Gap' : 'Optimization Opportunity';
+                    return `
+                        <div class="gap-item" style="margin-bottom: 0.25rem;">
+                            <span class="gap-bullet ${bulletColor}">&bull;</span>
+                            <span class="gap-text" style="${isLeak ? '' : 'color: var(--color-text-muted);'}"><strong>${prefix}</strong>: ${g}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
 
             const headerBorderColor = isWeakest ? '#ffc014' : (isLeak ? 'var(--color-border)' : 'rgba(32, 201, 151, 0.3)');
             const bgGradient = isLeak 

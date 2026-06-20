@@ -141,6 +141,7 @@
 
 /* Text helpers */
 .text-success { color: var(--accent-success); }
+.text-warning { color: var(--accent-warning); }
 .text-error { color: var(--accent-error); }
 .text-highlight { color: #f7d070; }
 .text-meta { color: var(--text-meta); }
