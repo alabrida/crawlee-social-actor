@@ -6,9 +6,15 @@ export { log } from './utils/logger.js';
  * This can be imported by different wrapper apps to execute the scraping pipeline
  * with specific configurations.
  */
-export async function executeScraper(_configOverrides: Record<string, any> = {}) {
-    // In a more advanced version, we would pass _configOverrides to runActor
-    // For now, it pulls from the local storage/key_value_stores/default/INPUT.json
-    // as per the current implementation in main.ts
+export async function executeScraper(configOverrides: Record<string, any> = {}) {
+    if (configOverrides.mode) {
+        let mappedMode = configOverrides.mode.toUpperCase();
+        if (mappedMode === 'AGENCY') {
+            mappedMode = 'INTERNAL';
+        } else if (mappedMode === 'MARKETPLACE') {
+            mappedMode = 'PUBLIC';
+        }
+        process.env.ACTOR_MODE = mappedMode;
+    }
     await runActor();
 }

@@ -59,6 +59,9 @@
     .sidebar-panel {
         width: 100%;
     }
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Utility Hidden state */

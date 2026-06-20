@@ -64,4 +64,12 @@
 .grid-col-span-3 {
     grid-column: span 3;
 }
+
+/* Stats Row (Always 3 columns on tablet/desktop) */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
 

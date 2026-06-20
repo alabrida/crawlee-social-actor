@@ -55,7 +55,7 @@
                     <button id="logout-btn" class="btn btn-secondary" style="padding: 0.5rem 1.25rem; border-radius: 9999px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.8rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;">Sign Out</button>
                 </div>
             </header>
-            <section class="dashboard-grid">
+            <div class="stats-row">
                 <div class="dashboard-card stat-card">
                     <h3>Weakest Stage</h3>
                     <div class="value-display" id="weakest-stage-display" style="background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-meta) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Pending</div>
@@ -106,6 +106,8 @@
                         <div class="factor-list" id="overall-factor-list"></div>
                     </div>
                 </div>
+            </div>
+            <section class="dashboard-grid">
                 <div class="dashboard-card grid-col-span-3 journey-card">
                     <div class="card-header"><h3>5-Stage Revenue Journey Analytics</h3><span class="card-header-badge">22-Point Structural Diagnostic</span></div>
                     <div class="stages-container" id="stages-container"></div>
