@@ -49,7 +49,7 @@
                         </div>
                     `).join('')}
                 </div>
-                <div id="stages-line-view" class="hidden" style="position: relative; width: 100%; height: 260px; padding: 10px 0; box-sizing: border-box;">
+                <div id="stages-line-view" class="hidden" style="position: relative; width: 100%; height: auto; padding: 10px 0; box-sizing: border-box;">
                     <!-- Line chart SVG will be drawn here -->
                 </div>
             `;
