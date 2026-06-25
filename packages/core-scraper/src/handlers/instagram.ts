@@ -118,6 +118,22 @@ export async function handle(
             const followingText = await page.locator('header section ul li:nth-child(3) span').first().textContent().catch(() => null);
             if (followingText) followingCount = parseCount(followingText);
 
+            // Robust fallback: Instagram embeds the counts in the description meta, which is
+            // far more stable than the header DOM (whose class names churn constantly and were
+            // returning null). Format: "1,234 Followers, 567 Following, 89 Posts - See Instagram
+            // photos and videos from Name (@handle)". Passive read — no extra automation.
+            if (followerCount === null || postsCount === null || followingCount === null) {
+                const metaDesc = (await page.locator('meta[property="og:description"]').first().getAttribute('content').catch(() => null))
+                    || (await page.locator('meta[name="description"]').first().getAttribute('content').catch(() => null))
+                    || '';
+                const fMatch = metaDesc.match(/([\d.,]+\s*[KMB]?)\s+Followers/i);
+                const flMatch = metaDesc.match(/([\d.,]+\s*[KMB]?)\s+Following/i);
+                const pMatch = metaDesc.match(/([\d.,]+\s*[KMB]?)\s+Posts/i);
+                if (followerCount === null && fMatch) followerCount = parseCount(fMatch[1]);
+                if (followingCount === null && flMatch) followingCount = parseCount(flMatch[1]);
+                if (postsCount === null && pMatch) postsCount = parseCount(pMatch[1]);
+            }
+
             // Verified
             verified = await page.locator('header section span[title="Verified"], header section svg[aria-label="Verified"]').count() > 0;
 

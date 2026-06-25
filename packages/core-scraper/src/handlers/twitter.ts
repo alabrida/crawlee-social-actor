@@ -116,6 +116,36 @@ export async function handle(
                     const flLoc = page.locator('a[href$="/following"] span span').first();
                     if (await flLoc.count() > 0) followingCount = parseCount(await flLoc.textContent());
                 }
+
+                // Followers — X renamed the profile link to /verified_followers, so the
+                // legacy a[href$="/followers"] selector silently missed (the cause of the
+                // null follower count). Try both, and parse the number out of the link text.
+                if (followerCount === null) {
+                    for (const sel of ['a[href$="/verified_followers"]', 'a[href$="/followers"]']) {
+                        const loc = page.locator(sel).first();
+                        if (await loc.count() > 0) {
+                            const t = await loc.innerText().catch(() => null);
+                            const m = t && t.match(/([\d.,]+\s*[KMB]?)/);
+                            if (m) { followerCount = parseCount(m[1]); break; }
+                        }
+                    }
+                }
+
+                // Bio / name — X exposes these in og: meta even when the testid DOM shifts.
+                // Passive read, no extra automation.
+                if (!biography) {
+                    const og = await page.locator('meta[property="og:description"]').first().getAttribute('content').catch(() => null);
+                    if (og && og.trim()) biography = og.trim();
+                }
+                if (!fullName) {
+                    const ogt = await page.locator('meta[property="og:title"]').first().getAttribute('content').catch(() => null);
+                    if (ogt) fullName = ogt.replace(/\s*\(@[^)]+\).*$/, '').replace(/\s*\/\s*X$/, '').trim() || null;
+                }
+
+                // Verified (newer testid in addition to the aria-label svg)
+                if (!verified) {
+                    verified = await page.locator('[data-testid="icon-verified"]').first().count() > 0;
+                }
             } catch (e) {
                 log.warning('[Twitter] Browser extraction encountered errors.');
             }

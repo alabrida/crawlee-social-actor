@@ -84,6 +84,20 @@ export async function handle(
                     videoCount = parseCount(txt);
                 }
 
+                // Robust fallback: YouTube embeds these in ytInitialData, far more stable than
+                // the rendered chips (which lazy-load and were returning null for subscribers).
+                // Passive read of the HTML the page already served — no extra automation.
+                if (subscribersCount === null) {
+                    const subMatch = content.match(/"subscriberCountText":\{(?:[^{}]*"simpleText":"([^"]+)"|[^{}]*"label":"([^"]+subscribers?[^"]*)")/i)
+                        || content.match(/"metadataParts":\[\{"text":\{"content":"([\d.,]+[KMB]?\s+subscribers?)"/i);
+                    if (subMatch) subscribersCount = parseCount(subMatch[1] || subMatch[2]);
+                }
+                if (videoCount === null) {
+                    const vidMatch = content.match(/"videosCountText".*?"simpleText":"([\d.,]+[KMB]?)"/i)
+                        || content.match(/"([\d.,]+[KMB]?)\s+videos?"/i);
+                    if (vidMatch) videoCount = parseCount(vidMatch[1]);
+                }
+
                 // Description / Bio
                 const descEl = page.locator('meta[name="description"]').first();
                 if (await descEl.count() > 0) {
