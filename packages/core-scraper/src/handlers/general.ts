@@ -148,6 +148,7 @@ export async function handle(
                 if (kw && kw.trim()) {
                     await crawler.addRequests([{
                         url: `https://www.google.com/search?q=${encodeURIComponent(kw.trim())}`,
+                        label: 'seo_serp',
                         userData: { ...request.userData, platform: 'seo_serp' }
                     }]);
                 }
@@ -157,9 +158,18 @@ export async function handle(
         log.info(`[General] Analyzing homepage links for key pages: ${url}`);
         const keyPages = identifyKeyPages(anchors, url);
 
-        // Filter and enqueue top 5-7 highest-scoring unique key pages
+        // Enqueue the highest-scoring page PER TYPE for signal diversity. keyPages is
+        // already sorted by score desc, so the first occurrence of each type is its
+        // best. Without this, link-heavy footers (e.g. BestBuy) enqueued 7 near-identical
+        // "contact" pages and never reached pricing/about/case-study signals.
+        const seenTypes = new Set<string>();
         const toEnqueue = keyPages
             .filter(p => p.type !== 'other' && trackerInstance && !trackerInstance.isEnqueued(p.url))
+            .filter(p => {
+                if (seenTypes.has(p.type)) return false;
+                seenTypes.add(p.type);
+                return true;
+            })
             .slice(0, 7);
 
         if (toEnqueue.length > 0) {
@@ -168,6 +178,7 @@ export async function handle(
                 trackerInstance.trackEnqueued(p.url);
                 await crawler.addRequests([{
                     url: p.url,
+                    label: 'general_hub',
                     userData: { ...request.userData, isSubPage: true }
                 }]);
             }

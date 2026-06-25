@@ -25,10 +25,3 @@ export function getRandomUserAgent(): string {
     return USER_AGENTS[index];
 }
 
-/**
- * Get the full list of curated User-Agent strings.
- * @returns The complete UA list.
- */
-export function getUserAgentList(): readonly string[] {
-    return USER_AGENTS;
-}

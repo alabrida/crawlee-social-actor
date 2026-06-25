@@ -1,20 +1,38 @@
+import { ProxyAgent } from 'undici';
 import { log } from './logger.js';
 import type { Platform } from '../types.js';
 import { getCookieHeaderString } from './auth.js';
+import { getRandomUserAgent } from './ua-rotation.js';
 
 export interface HealthCheckResult {
     ok: boolean;
     error?: string;
+    /**
+     * True when the failure is conclusive (no cookie, or the server explicitly
+     * redirected to a login/checkpoint). False for heuristic guesses (page *looks*
+     * like a login wall) — those are unreliable for browser-gated platforms like
+     * Facebook's mbasic, which walls bare fetches even with a valid session, and
+     * should fall through to the real browser crawl rather than skip the platform.
+     */
+    definitive?: boolean;
 }
 
 /**
  * Validates the health of session cookies for a given platform.
+ *
+ * @param proxyUrl - Optional proxy URL. The check MUST share the scrape's network
+ *   path: IP-sensitive platforms (notably Meta) serve a login wall to a valid session
+ *   cookie replayed from an unfamiliar/datacenter IP, producing false "expired"
+ *   verdicts. Routing through the same residential proxy fixes that and is gentler on
+ *   a freshly-issued session.
  */
 export async function checkSessionHealth(
     platform: Platform,
-    cookieStr: string | undefined
+    cookieStr: string | undefined,
+    proxyUrl?: string
 ): Promise<HealthCheckResult> {
-    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    const userAgent = getRandomUserAgent();
+    const dispatcher = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
 
     try {
         let url = '';
@@ -35,26 +53,28 @@ export async function checkSessionHealth(
         }
 
         if (!cookieStr) {
-            return { ok: false, error: 'No authentication tokens found in environment or input.' };
+            return { ok: false, error: 'No authentication tokens found in environment or input.', definitive: true };
         }
 
-        log.info(`[Pre-flight] Checking session health for platform: ${platform}`);
+        log.info(`[Pre-flight] Checking session health for platform: ${platform}${proxyUrl ? ' (via proxy)' : ''}`);
         const cookieHeader = getCookieHeaderString(cookieStr);
         const res = await fetch(url, {
             headers: {
                 'User-Agent': userAgent,
                 'Cookie': cookieHeader
             },
-            redirect: 'manual'
-        });
+            redirect: 'manual',
+            // `dispatcher` is an undici (Node fetch) extension not in the DOM types.
+            ...(dispatcher ? { dispatcher } : {}),
+        } as RequestInit);
 
         const redirectUrl = res.headers.get('location');
-        const isRedirect = res.status === 301 || res.status === 302 || res.status === 303 || res.status === 307 || res.status === 308;
+        const isRedirect = res.status >= 300 && res.status < 400;
 
         if (isRedirect && redirectUrl) {
             const lowerRedirect = redirectUrl.toLowerCase();
             if (lowerRedirect.includes('login') || lowerRedirect.includes('checkpoint') || lowerRedirect.includes('signup') || lowerRedirect.includes('challenge')) {
-                return { ok: false, error: `Session expired. Redirected to login wall: ${redirectUrl}` };
+                return { ok: false, error: `Session expired. Redirected to login wall: ${redirectUrl}`, definitive: true };
             }
         }
 
@@ -66,13 +86,16 @@ export async function checkSessionHealth(
 
             const lowerText = text.toLowerCase();
             if (lowerText.includes('login') && lowerText.includes('password') && text.length < 15000) {
-                return { ok: false, error: 'Login wall detected in page body.' };
+                // Heuristic only — browser-gated platforms (FB mbasic) wall bare fetches
+                // even with a valid session. Not conclusive; let the browser crawl decide.
+                return { ok: false, error: 'Login wall heuristic matched in page body (non-conclusive).', definitive: false };
             }
         }
 
         log.info(`[Pre-flight] Session for ${platform} is healthy.`);
         return { ok: true };
     } catch (e: any) {
-        return { ok: false, error: `Connection failed during pre-flight check: ${e.message}` };
+        // Network/proxy hiccup — not a verdict on the session. Let the crawl proceed.
+        return { ok: false, error: `Connection failed during pre-flight check: ${e.message}`, definitive: false };
     }
 }

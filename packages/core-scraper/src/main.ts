@@ -7,109 +7,19 @@
 
 import { Actor } from 'apify';
 import { log } from './utils/logger.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import { createProxyConfig } from './utils/proxy.js';
 import { calculateAssessment } from './scoring/engine.js';
-import { upsertAssessment } from './utils/supabase.js';
+import { upsertAssessment, getExistingAssessment } from './utils/supabase.js';
 import { cleanAssessmentPayload } from './utils/data-cleaner.js';
-import { FEATURES } from './utils/mode-gate.js';
-import { SessionVault } from './utils/session-vault.js';
+import { FEATURES, getSiloName } from './utils/mode-gate.js';
 import { runCheerioCrawler, runPlaywrightCrawler } from './runner.js';
-import { checkSessionHealth } from './utils/health-check.js';
-import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
+import type { ActorInput, HandlerContext, UrlEntry } from './types.js';
 import { prepareUrls } from './utils/url-helper.js';
 import { resolveBestSerp, generateRecommendedKeywords } from './scoring/keyword-helper.js';
-
-/**
- * Sets up the Session Vault, handling interactive authentication flows
- * or pulling existing session cookies into the input.
- */
-export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
-    const sessionVault = new SessionVault();
-    await sessionVault.initialize();
-
-    const needsRefresh = sessionVault.needsRefresh();
-    if (needsRefresh) {
-        log.warning('Session Vault is approaching or past the 20-day limit. Hard refresh recommended.');
-    }
-
-    if (input.interactiveSessionSetup) {
-        log.info('Interactive Session Setup is requested. Launching Apify Live View flow...');
-        await sessionVault.runInteractiveSetup(input.proxy);
-        log.info('Interactive setup complete. Sessions saved to vault.');
-    }
-
-    if (!input.authTokens) {
-        const vaultTokens = await sessionVault.getTokens();
-        if (vaultTokens) {
-             input.authTokens = vaultTokens;
-             log.info('Loaded auth tokens from Session Vault.');
-        }
-    }
-
-    input.authTokens = {
-        linkedin: input.authTokens?.linkedin || process.env.AUTH_TOKENS_LINKEDIN,
-        facebook: input.authTokens?.facebook || process.env.AUTH_TOKENS_FACEBOOK,
-        instagram: input.authTokens?.instagram || process.env.AUTH_TOKENS_INSTAGRAM,
-        twitter: input.authTokens?.twitter || process.env.AUTH_TOKENS_X,
-        youtube: input.authTokens?.youtube || process.env.AUTH_TOKENS_YOUTUBE,
-        tiktok: input.authTokens?.tiktok || process.env.AUTH_TOKENS_TIKTOK,
-        pinterest: input.authTokens?.pinterest || process.env.AUTH_TOKENS_PINTEREST,
-        reddit: input.authTokens?.reddit || process.env.AUTH_TOKENS_REDDIT,
-        google: input.authTokens?.google || process.env.AUTH_TOKENS_GOOGLE,
-        ...input.authTokens,
-    };
-
-    const activePlatforms = new Set<Platform>();
-    if (input.platforms) {
-        input.platforms.forEach(p => activePlatforms.add(p));
-    }
-    if (input.urls) {
-        input.urls.forEach(u => activePlatforms.add(u.platform));
-    }
-    if (input.businessUrl) {
-        activePlatforms.add('general_hub');
-    }
-
-    const validatedTokenKeys = new Set<string>();
-
-    if (input.urls) {
-        for (const entry of input.urls) {
-            const platform = entry.platform;
-            if (['linkedin', 'facebook', 'instagram', 'twitter'].includes(platform)) {
-                const slot = entry.sessionSlot;
-                const tokenKey = slot || (platform === 'twitter' ? 'twitter' : platform);
-
-                if (validatedTokenKeys.has(tokenKey)) continue;
-                validatedTokenKeys.add(tokenKey);
-
-                const token = input.authTokens?.[tokenKey];
-                const check = await checkSessionHealth(platform, token);
-                if (!check.ok) {
-                    log.error(`[Pre-flight Validation Failed] ${platform.toUpperCase()} (${tokenKey}): ${check.error}`);
-                    throw new Error(`Authentication token for ${platform} (${tokenKey}) is invalid or expired. Please run interactiveSessionSetup to re-authenticate.`);
-                }
-            }
-        }
-    }
-
-    if (input.platforms) {
-        for (const platform of input.platforms) {
-            if (['linkedin', 'facebook', 'instagram', 'twitter'].includes(platform)) {
-                const tokenKey = platform === 'twitter' ? 'twitter' : platform;
-                if (validatedTokenKeys.has(tokenKey)) continue;
-                validatedTokenKeys.add(tokenKey);
-
-                const token = input.authTokens?.[tokenKey];
-                const check = await checkSessionHealth(platform, token);
-                if (!check.ok) {
-                    log.error(`[Pre-flight Validation Failed] ${platform.toUpperCase()}: ${check.error}`);
-                    throw new Error(`Authentication token for ${platform} is invalid or expired. Please run interactiveSessionSetup to re-authenticate.`);
-                }
-            }
-        }
-    }
-}
-
+import { aggregateHubItem } from './utils/hub-aggregator.js';
+import { setupSessionAndAuth } from './utils/session-setup.js';
 
 
 /**
@@ -132,7 +42,7 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
         if (!p) return;
 
         if (p === 'general' || p === 'general_hub') {
-            hubForensics = item.data;
+            hubForensics = aggregateHubItem(hubForensics, item, input.businessUrl);
         } else if (p === 'seo_serp') {
             if (item.data) {
                 serpResults.push(item.data);
@@ -151,14 +61,35 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
         }
     });
 
-    const brandName = input.brandName || hubForensics?.seo?.title || (input.businessUrl ? new URL(input.businessUrl).hostname : 'Unknown Business');
     const businessUrl = input.businessUrl || hubForensics?.seo?.canonical || '';
+
+    // Fetch existing assessment from Supabase and merge platforms/signals not scraped in this run
+    const supabaseUrl = process.env.SUPABASE_URL || input.supabaseUrl;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || input.supabaseServiceKey;
+    if (supabaseUrl && supabaseKey && businessUrl) {
+        const existing = await getExistingAssessment(businessUrl, supabaseUrl, supabaseKey);
+        if (existing && existing.assessment_detail?.platforms) {
+            log.info(`[Aggregator] Found existing assessment in Supabase. Merging history...`);
+            const existingPlats = existing.assessment_detail.platforms;
+            for (const p of Object.keys(existingPlats)) {
+                if (!platforms[p] || platforms[p].length === 0) {
+                    platforms[p] = existingPlats[p];
+                    log.info(`  -> Restored platform: ${p}`);
+                }
+            }
+            if (!hubForensics && existing.assessment_detail.hub_forensics) {
+                hubForensics = existing.assessment_detail.hub_forensics;
+                log.info(`  -> Restored hub forensics`);
+            }
+        }
+    }
+
+    const brandName = input.brandName || hubForensics?.seo?.title || (businessUrl ? new URL(businessUrl).hostname : 'Unknown Business');
     const classOverride = input.businessClass || null;
 
     // Pick the best SERP ranking result for stage score calculation
     const bestSerpData = resolveBestSerp(serpResults);
 
-    // Calculate score using v2 Scoring Engine
     const scoreResult = calculateAssessment(
         platforms,
         hubForensics,
@@ -203,11 +134,9 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
     }
 }
 
-
 /**
  * Main actor function. Initializes the Apify Actor, creates crawlers,
  * enqueues URLs, and runs scrapers per crawler type.
- * @returns Promise that resolves when all URLs have been processed.
  */
 export async function runActor(): Promise<void> {
     await Actor.init();
@@ -217,6 +146,8 @@ export async function runActor(): Promise<void> {
         throw new Error('Actor input is required.');
     }
 
+    input.detailLevel = (process.env.DETAIL_LEVEL as ActorInput['detailLevel']) || input.detailLevel || 'STANDARD';
+
     await setupSessionAndAuth(input);
 
     const handlerContext: HandlerContext = { input };
@@ -224,10 +155,11 @@ export async function runActor(): Promise<void> {
 
     const { cheerioUrls, playwrightUrls, finalUrls } = prepareUrls(input);
 
-    log.info(`Actor started in mode: ${FEATURES.getSiloName()}`, {
+    log.info(`Actor started in mode: ${getSiloName()}`, {
         platforms: input.platforms,
         urlCount: finalUrls.length,
         maxConcurrency: input.maxConcurrency,
+        detailLevel: input.detailLevel,
     });
 
     await runCheerioCrawler(input, handlerContext, proxyConfiguration, cheerioUrls);
@@ -237,4 +169,15 @@ export async function runActor(): Promise<void> {
     await aggregateAndUpsertData(input, finalUrls);
 
     await Actor.exit();
+}
+
+const isDirect = process.argv[1] && (
+    path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) ||
+    path.resolve(process.argv[1]) === fileURLToPath(import.meta.url).replace(/\.ts$/, '.js')
+);
+if (isDirect) {
+    runActor().catch((err) => {
+        log.error('Actor failed to execute', err);
+        process.exit(1);
+    });
 }

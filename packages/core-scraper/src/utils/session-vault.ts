@@ -40,26 +40,41 @@ export class SessionVault {
         }
     }
 
+    /** True when the vault holds no tokens at all (distinct from aged tokens). */
+    isEmpty(): boolean {
+        return !this.vaultData?.tokens || Object.keys(this.vaultData.tokens).length === 0;
+    }
+
+    /** Age of the vault tokens in whole days, or null when empty/unknown. */
+    ageDays(): number | null {
+        if (this.isEmpty() || !this.vaultData?.updatedAt) return null;
+        const diffMs = Date.now() - new Date(this.vaultData.updatedAt).getTime();
+        return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    }
+
     /**
      * Check if the vault requires a "Hard Refresh" (older than 20 days) or is empty.
      */
     needsRefresh(): boolean {
-        if (!this.vaultData?.updatedAt) return true;
-        if (!this.vaultData.tokens || Object.keys(this.vaultData.tokens).length === 0) return true;
-
-        const updatedDate = new Date(this.vaultData.updatedAt);
-        const today = new Date();
-        const diffTime = Math.abs(today.getTime() - updatedDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays >= MAX_AGE_DAYS;
+        if (this.isEmpty()) return true;
+        const age = this.ageDays();
+        return age === null || age >= MAX_AGE_DAYS;
     }
 
     /**
      * Get the currently valid tokens.
      */
     async getTokens() {
-        if (this.needsRefresh()) {
-            log.warning('[SessionVault] Tokens are older than 20 days and may be expired.');
+        // Only warn about expiry when tokens actually exist and are genuinely aged.
+        // An empty vault is not "expired" — it just means the run will fall back to
+        // env-provided AUTH_TOKENS_* (e.g. local runs whose storage was wiped).
+        if (this.isEmpty()) {
+            log.info('[SessionVault] Vault is empty; falling back to env-provided auth tokens.');
+        } else {
+            const age = this.ageDays();
+            if (age !== null && age >= MAX_AGE_DAYS) {
+                log.warning(`[SessionVault] Tokens are ${age} days old (>= ${MAX_AGE_DAYS}) and may be expired. Hard refresh recommended.`);
+            }
         }
         return this.vaultData?.tokens || null;
     }

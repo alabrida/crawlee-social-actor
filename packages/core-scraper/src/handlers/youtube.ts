@@ -9,6 +9,7 @@ import { fetchYoutubeChannel } from '../api/youtube.js';
 import { blockResources } from '../utils/resources.js';
 import { parseCount } from '../utils/parse-count.js';
 import { analyzeBio } from '../utils/bio-analyzer.js';
+import { officialApisEnabled } from '../utils/mode-gate.js';
 
 export async function handle(
     context: PlaywrightCrawlingContext,
@@ -25,7 +26,7 @@ export async function handle(
     const identifier = handleMatch ? `@${handleMatch[1]}` : (idMatch ? idMatch[1] : null);
 
     let apiData = null;
-    if (identifier && process.env.GOOGLE_CLOUD_API_KEY) {
+    if (identifier && officialApisEnabled() && process.env.GOOGLE_CLOUD_API_KEY) {
         log.info(`[YouTube] Running Data API v3 query for: ${identifier}`);
         apiData = await fetchYoutubeChannel(identifier);
     }

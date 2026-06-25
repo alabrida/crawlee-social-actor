@@ -65,6 +65,17 @@ export async function handle(
                 // Company / Business Page selectors
                 const nameLoc = page.locator('h1.org-top-card-summary__title, h1').first();
                 if (await nameLoc.isVisible()) companyName = (await nameLoc.innerText()).trim();
+
+                // Fallback: LinkedIn renders the org name into the document title and
+                // og:title even when the top-card markup shifts (the BestBuy regression
+                // returned an empty fullName -> "unexpected data shape"). Recover it.
+                if (!companyName) {
+                    const ogTitle = await page.locator('meta[property="og:title"]').getAttribute('content').catch(() => null);
+                    const docTitle = ogTitle || await page.title().catch(() => '');
+                    if (docTitle) {
+                        companyName = docTitle.replace(/\s*[|\-–]\s*LinkedIn.*$/i, '').trim() || null;
+                    }
+                }
                 fullName = companyName; // Normalize to fullName for validation
 
                 const taglineLoc = page.locator('.org-top-card-summary__tagline, h2').first();
@@ -203,7 +214,10 @@ export async function handle(
 }
 
 export function validate(data: Record<string, unknown>): boolean {
-    return !!data && typeof data.fullName === 'string';
+    // Company pages normalize their name into companyName (and fullName); personal
+    // profiles set fullName. Accept either so company audits don't false-flag as
+    // "unexpected data shape".
+    return !!data && (typeof data.fullName === 'string' || typeof data.companyName === 'string');
 }
 
 export function detectBlock(responseBody: string): boolean {

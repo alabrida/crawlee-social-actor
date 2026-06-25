@@ -54,6 +54,34 @@ export interface AssessmentResult {
     weakest_stage: string;
     strongest_stage: string;
     screenshots: Record<string, string>;
+    gbp_rating?: number | null;
+    gbp_category?: string | null;
+    gbp_address?: string | null;
+    gbp_phone?: string | null;
+    gbp_claimed?: boolean | null;
+    tiktok_verified?: boolean | null;
+    tiktok_followers?: number | null;
+    tiktok_likes?: number | null;
+    tiktok_videos?: number | null;
+    tiktok_bio?: string | null;
+    tiktok_link?: string | null;
+    twitter_verified?: boolean | null;
+    twitter_followers?: number | null;
+    twitter_tweets?: number | null;
+    twitter_bio?: string | null;
+    pinterest_followers?: number | null;
+    pinterest_pins?: number | null;
+    pinterest_boards?: number | null;
+    youtube_subscribers?: number | null;
+    youtube_channel_name?: string | null;
+    youtube_description?: string | null;
+    linkedin_followers?: number | null;
+    linkedin_company_name?: string | null;
+    linkedin_website?: string | null;
+    facebook_followers?: number | null;
+    facebook_likes?: number | null;
+    instagram_followers?: number | null;
+    instagram_posts?: number | null;
     assessment_detail: {
         stages: {
             awareness: StageScore;

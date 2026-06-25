@@ -112,31 +112,9 @@ describe('mode-gate utility', () => {
             expect(FEATURES.deepLinkAudit()).toBe(false);
         });
 
-        it('should enable fullSchemaParity in INTERNAL and SAAS, but not PUBLIC', () => {
-            process.env.ACTOR_MODE = 'INTERNAL';
-            expect(FEATURES.fullSchemaParity()).toBe(true);
-
+        it('should report the silo name for the current mode', () => {
             process.env.ACTOR_MODE = 'SAAS';
-            expect(FEATURES.fullSchemaParity()).toBe(true);
-
-            process.env.ACTOR_MODE = 'PUBLIC';
-            expect(FEATURES.fullSchemaParity()).toBe(false);
-        });
-
-        it('should enable tierGating only in SAAS mode', () => {
-            process.env.ACTOR_MODE = 'INTERNAL';
-            expect(FEATURES.tierGating()).toBe(false);
-
-            process.env.ACTOR_MODE = 'SAAS';
-            expect(FEATURES.tierGating()).toBe(true);
-
-            process.env.ACTOR_MODE = 'PUBLIC';
-            expect(FEATURES.tierGating()).toBe(false);
-        });
-
-        it('should correctly proxy getSiloName', () => {
-            process.env.ACTOR_MODE = 'SAAS';
-            expect(FEATURES.getSiloName()).toBe('Revenue Journey SaaS Engine');
+            expect(getSiloName()).toBe('Revenue Journey SaaS Engine');
         });
     });
 });

@@ -1,18 +1,18 @@
 {
-  "businessUrl": "https://www.eatpdq.com/",
-  "brandName": "PDQ Fresh Food",
-  "platforms": ["tiktok", "youtube", "reddit", "google_maps", "linkedin", "pinterest", "facebook", "instagram", "twitter", "general_hub"],
+  "businessUrl": "https://www.bestbuy.com/",
+  "brandName": "Best Buy",
+  "platforms": ["tiktok", "youtube", "reddit", "google_maps", "linkedin", "pinterest", "twitter", "facebook", "instagram", "general_hub"],
   "urls": [
-    { "platform": "general_hub", "url": "https://www.eatpdq.com/" },
-    { "platform": "instagram", "url": "https://www.instagram.com/pdqfreshfood" },
-    { "platform": "tiktok", "url": "https://www.tiktok.com/@pdq_chicken" },
-    { "platform": "facebook", "url": "https://www.facebook.com/pdqchicken/" },
-    { "platform": "twitter", "url": "https://twitter.com/PdqChicken" },
-    { "platform": "youtube", "url": "https://www.youtube.com/@OshayDukeJackson" },
-    { "platform": "reddit", "url": "https://www.reddit.com/r/Damnthatsinteresting/" },
-    { "platform": "google_maps", "url": "https://maps.app.goo.gl/j993HmW5CgoXExQC7" },
-    { "platform": "linkedin", "url": "https://www.linkedin.com/company/jacksonville-daily-record/" },
-    { "platform": "pinterest", "url": "https://www.pinterest.com/alwaysdwell/" }
+    { "platform": "general_hub", "url": "https://www.bestbuy.com/" },
+    { "platform": "tiktok", "url": "https://www.tiktok.com/@bestbuy" },
+    { "platform": "twitter", "url": "https://twitter.com/bestbuy" },
+    { "platform": "youtube", "url": "https://www.youtube.com/@BestBuy" },
+    { "platform": "reddit", "url": "https://www.reddit.com/r/Bestbuy/" },
+    { "platform": "google_maps", "url": "https://maps.app.goo.gl/zxetCgVaxghjm6T7A" },
+    { "platform": "linkedin", "url": "https://www.linkedin.com/company/best-buy/" },
+    { "platform": "pinterest", "url": "https://www.pinterest.com/bestbuy/" },
+    { "platform": "facebook", "url": "https://www.facebook.com/bestbuy" },
+    { "platform": "instagram", "url": "https://www.instagram.com/bestbuy/" }
   ],
   "proxy": {
     "useApifyProxy": true,

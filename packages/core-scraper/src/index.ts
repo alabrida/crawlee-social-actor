@@ -16,5 +16,8 @@ export async function executeScraper(configOverrides: Record<string, any> = {}) 
         }
         process.env.ACTOR_MODE = mappedMode;
     }
+    if (configOverrides.detailLevel) {
+        process.env.DETAIL_LEVEL = String(configOverrides.detailLevel).toUpperCase();
+    }
     await runActor();
 }

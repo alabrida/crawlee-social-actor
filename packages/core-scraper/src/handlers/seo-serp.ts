@@ -98,18 +98,21 @@ export async function handle(
         conversionMarkers = apiData.conversionMarkers;
     }
 
-    // Always navigate with Playwright for screenshot parity
+    // Navigate with Playwright for screenshot parity. When SerpApi already returned
+    // results we only need the page rendered for the screenshot — skip the 15s
+    // wait-for-selector + DOM extraction (Google's result selectors routinely fail
+    // on residential IPs and just burn time). Only fall back to DOM when the API
+    // produced nothing.
     await blockResources(page, ['image', 'media', 'font']);
 
     try {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForSelector('#search, #res, #main, [role="main"]', { timeout: 15000 }).catch((e: unknown) => {
-            const msg = e instanceof Error ? e.message : String(e);
-            log.warning(`[SEO-SERP] Main result container not found during fallback: ${url} - ${msg}`);
-        });
 
-        // If API didn't provide links (or failed), try scraping from DOM
         if (links.length === 0) {
+            await page.waitForSelector('#search, #res, #main, [role="main"]', { timeout: 15000 }).catch((e: unknown) => {
+                const msg = e instanceof Error ? e.message : String(e);
+                log.warning(`[SEO-SERP] Main result container not found during fallback: ${url} - ${msg}`);
+            });
             const domData = await extractFromDom(page, log);
             links = domData.links;
             ctas = domData.ctas;

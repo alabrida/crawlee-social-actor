@@ -91,7 +91,9 @@ describe('health-check.ts', () => {
 
         const result = await checkSessionHealth('linkedin', 'li_at=expired-cookie');
         expect(result.ok).toBe(false);
-        expect(result.error).toContain('Login wall detected in page body');
+        // Body-heuristic match is non-conclusive (browser-gated platforms wall bare fetches).
+        expect(result.error).toContain('heuristic');
+        expect(result.definitive).toBe(false);
     });
 
     it('should handle network/connection errors gracefully', async () => {

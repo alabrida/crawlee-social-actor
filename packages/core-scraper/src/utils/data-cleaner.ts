@@ -41,7 +41,7 @@ export function cleanAssessmentPayload(masterItem: Record<string, any>): Record<
     const cleaned: Record<string, any> = {};
     let removedCount = 0;
 
-const VALID_SUPABASE_COLUMNS = new Set([
+    const VALID_SUPABASE_COLUMNS = new Set([
         "assessment_id",
         "business_url",
         "brand_name",
@@ -60,7 +60,51 @@ const VALID_SUPABASE_COLUMNS = new Set([
         "weakest_stage",
         "strongest_stage",
         "screenshots",
-        "assessment_detail"
+        "assessment_detail",
+        
+        // GBP Metrics
+        "gbp_rating",
+        "gbp_category",
+        "gbp_address",
+        "gbp_phone",
+        "gbp_claimed",
+        
+        // TikTok Metrics
+        "tiktok_verified",
+        "tiktok_followers",
+        "tiktok_likes",
+        "tiktok_videos",
+        "tiktok_bio",
+        "tiktok_link",
+        
+        // Twitter Metrics
+        "twitter_verified",
+        "twitter_followers",
+        "twitter_tweets",
+        "twitter_bio",
+        
+        // Pinterest Metrics
+        "pinterest_followers",
+        "pinterest_pins",
+        "pinterest_boards",
+        
+        // YouTube Metrics
+        "youtube_subscribers",
+        "youtube_channel_name",
+        "youtube_description",
+        
+        // LinkedIn Metrics
+        "linkedin_followers",
+        "linkedin_company_name",
+        "linkedin_website",
+        
+        // Facebook Metrics
+        "facebook_followers",
+        "facebook_likes",
+        
+        // Instagram Metrics
+        "instagram_followers",
+        "instagram_posts"
     ]);
 
     for (const [key, value] of Object.entries(masterItem)) {

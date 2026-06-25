@@ -9,6 +9,7 @@ import { fetchTwitterUser } from '../api/twitter.js';
 import { blockResources } from '../utils/resources.js';
 import { parseCount } from '../utils/parse-count.js';
 import { analyzeBio } from '../utils/bio-analyzer.js';
+import { officialApisEnabled } from '../utils/mode-gate.js';
 
 export async function handle(
     context: PlaywrightCrawlingContext,
@@ -24,7 +25,7 @@ export async function handle(
     const username = usernameMatch && !['home', 'search', 'explore', 'notifications'].includes(usernameMatch[1]) ? usernameMatch[1] : null;
 
     let apiData = null;
-    if (username && (process.env.X_BEARER_TOKEN || process.env.TWITTER_BEARER_TOKEN)) {
+    if (username && officialApisEnabled() && (process.env.X_BEARER_TOKEN || process.env.TWITTER_BEARER_TOKEN)) {
         log.info(`[Twitter] Querying X API v2 for: ${username}`);
         apiData = await fetchTwitterUser(username);
     }

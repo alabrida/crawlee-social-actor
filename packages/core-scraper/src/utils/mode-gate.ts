@@ -30,16 +30,18 @@ export const FEATURES = {
     
     /** Whether to perform deep-link strategy audits. */
     deepLinkAudit: () => getActorMode() !== 'PUBLIC',
-    
-    /** Whether to include all 250+ Supabase parity columns in output. */
-    fullSchemaParity: () => getActorMode() !== 'PUBLIC',
-    
-    /** Whether to allow Tier Gating (SaaS mode). */
-    tierGating: () => getActorMode() === 'SAAS',
-
-    /** Returns the human-readable silo name. */
-    getSiloName: () => getSiloName(),
 };
+
+/**
+ * Whether to use registered-app official platform APIs (X API v2, YouTube Data API,
+ * Facebook Graph, Reddit OAuth). These require platform app approvals that are not yet
+ * in place, so the default interim path relies on operator-provided session tokens +
+ * browser scraping. Flip OFFICIAL_APIS_ENABLED=true per-platform-approval to light them up.
+ * NOTE: Google Places/Maps is provisioned and is intentionally NOT gated by this flag.
+ */
+export function officialApisEnabled(): boolean {
+    return process.env.OFFICIAL_APIS_ENABLED === 'true';
+}
 
 /**
  * Returns a human-readable name for the current silo.

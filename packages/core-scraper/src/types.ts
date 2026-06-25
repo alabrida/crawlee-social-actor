@@ -94,6 +94,8 @@ export interface ActorInput {
     urls: UrlEntry[];
     /** Single business URL for discovery. */
     businessUrl?: string;
+    /** Output detail level, set per deployment (HIGH = agency, STANDARD = saas, PUBLIC = marketplace). */
+    detailLevel?: 'HIGH' | 'STANDARD' | 'PUBLIC';
     /** Brand name/Business title. */
     brandName?: string;
     /** Target keywords to check SERP ranking. */

@@ -2,9 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const SCRAPER_DIR = path.resolve(__dirname, '..');
 const STORAGE_DIR = path.resolve(SCRAPER_DIR, 'storage');

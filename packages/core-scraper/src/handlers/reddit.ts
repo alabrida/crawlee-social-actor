@@ -6,6 +6,7 @@
 import type { CheerioCrawlingContext } from 'crawlee';
 import type { CheerioHandler, HandlerContext, ScrapedItem } from '../types.js';
 import { analyzeBio } from '../utils/bio-analyzer.js';
+import { getRedditAccessToken, redditRequestHeaders, toOauthUrls } from '../api/reddit.js';
 
 const URL_REGEX = /https?:\/\/[^\s)\]>"]+/gi;
 
@@ -91,12 +92,24 @@ export async function handle(
         conversionMarkers.push('Website Click');
     }
 
-    // Inline feed query for posts details
+    // Inline feed query for posts details. In OAuth mode the request URL is an
+    // oauth.reddit.com `about` endpoint, so derive the authenticated listing URL and
+    // attach the bearer token; otherwise fall back to the public `.json` feed.
     let postsCount: number | null = null;
     let latestPostDate: string | null = null;
     try {
-        const feedUrl = url.replace('/about.json', '.json');
-        const feedResp = await context.sendRequest({ url: feedUrl });
+        const isOauth = url.includes('oauth.reddit.com');
+        let feedUrl = url.replace('/about.json', '.json');
+        let feedHeaders: Record<string, string> | undefined;
+        if (isOauth) {
+            const oauth = toOauthUrls(url);
+            const token = await getRedditAccessToken();
+            if (oauth && token) {
+                feedUrl = oauth.listingUrl;
+                feedHeaders = redditRequestHeaders(token);
+            }
+        }
+        const feedResp = await context.sendRequest({ url: feedUrl, headers: feedHeaders });
         const feedJson = JSON.parse(feedResp.body);
         if (feedJson?.data?.children) {
             const posts = feedJson.data.children;

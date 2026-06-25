@@ -44,3 +44,32 @@ export async function upsertAssessment(data: any, url: string, key: string) {
         return { success: false, error: msg };
     }
 }
+
+/**
+ * Fetches the latest existing assessment for a business from Supabase.
+ * @param businessUrl - The business URL to query.
+ * @param url - Supabase project URL.
+ * @param key - Supabase service role key.
+ * @returns Promise resolving to the assessment data, or null.
+ */
+export async function getExistingAssessment(businessUrl: string, url: string, key: string): Promise<any | null> {
+    try {
+        const supabase = createClient(url, key);
+        const { data, error } = await supabase
+            .from('revenue_journey_assessments')
+            .select('*')
+            .eq('business_url', businessUrl)
+            .order('assessment_date', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) {
+            log.warning(`[Supabase] Failed to fetch existing assessment: ${error.message}`);
+            return null;
+        }
+        return data;
+    } catch (e: any) {
+        log.warning(`[Supabase] Error fetching existing assessment: ${e.message}`);
+        return null;
+    }
+}

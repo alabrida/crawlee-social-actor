@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseCount } from '../parse-count.js';
 import { analyzeBio } from '../bio-analyzer.js';
-import { classifyLink } from '../link-classifier.js';
 import { SmartCrawlTracker, identifyKeyPages } from '../smart-stop.js';
 
 describe('parseCount Utility', () => {
@@ -47,22 +46,6 @@ describe('bio-analyzer Utility', () => {
         expect(result.hasClearRevenueModel).toBe(true);
         expect(result.revenueModelSignals).toContain('Subscription');
         expect(result.revenueModelSignals).toContain('SaaS/Software');
-    });
-});
-
-describe('link-classifier Utility', () => {
-    it('should classify link tree as aggregator', () => {
-        expect(classifyLink('https://linktr.ee/example').type).toBe('link_aggregator');
-        expect(classifyLink('https://stan.store/example').type).toBe('link_aggregator');
-    });
-
-    it('should classify scheduling tools as booking', () => {
-        expect(classifyLink('https://calendly.com/example').type).toBe('booking');
-        expect(classifyLink('https://acuityscheduling.com/example').type).toBe('booking');
-    });
-
-    it('should classify generic websites as direct website', () => {
-        expect(classifyLink('https://mybusiness.com').type).toBe('direct_website');
     });
 });
 

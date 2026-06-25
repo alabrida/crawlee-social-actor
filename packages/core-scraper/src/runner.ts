@@ -7,9 +7,11 @@ import { CheerioCrawler, PlaywrightCrawler } from 'crawlee';
 import { Actor } from 'apify';
 import { log } from './utils/logger.js';
 import { getRandomUserAgent } from './utils/ua-rotation.js';
-import { buildCheerioRouter, buildPlaywrightRouter } from './routes.js';
-import { injectCookies } from './utils/auth.js';
+import { buildCheerioRouter } from './routes/cheerio.js';
+import { buildPlaywrightRouter } from './routes/playwright.js';
+import { injectCookies, getCookieHeaderString } from './utils/auth.js';
 import { createProxyConfig } from './utils/proxy.js';
+import { isRedditApiEnabled, getRedditAccessToken, redditRequestHeaders, toOauthUrls } from './api/reddit.js';
 import { handleScreenshotCollection } from './screenshot.js';
 import type { ActorInput, Platform, HandlerContext, UrlEntry } from './types.js';
 
@@ -21,7 +23,8 @@ function createPlaywrightCrawler(
     requestQueue: any,
     playwrightRouter: any,
     proxyConfig: any,
-    input: ActorInput
+    input: ActorInput,
+    options?: { maxConcurrency?: number; gentle?: boolean }
 ): PlaywrightCrawler {
     return new PlaywrightCrawler({
         requestQueue,
@@ -37,15 +40,28 @@ function createPlaywrightCrawler(
         browserPoolOptions: {
             useFingerprints: true,
         },
-        maxConcurrency: Math.min(input.maxConcurrency, 5),
+        maxConcurrency: options?.maxConcurrency ?? Math.min(input.maxConcurrency, 5),
         maxRequestRetries: input.maxRequestRetries,
         requestHandlerTimeoutSecs: 180,
+        // Heavy JS sites (BestBuy, LinkedIn, Google SERP) frequently never fire the
+        // `load` event, so wait only for `domcontentloaded` (set in the hook below).
+        // Keep the 60s ceiling: bot-detected retail homepages (BestBuy) on datacenter
+        // proxy can be slow to even reach domcontentloaded and need the headroom.
+        navigationTimeoutSecs: 60,
         launchContext: {
             launchOptions: {
                 args: ['--disable-blink-features=AutomationControlled'],
             },
         },
         preNavigationHooks: [
+            // Make `domcontentloaded` the default waitUntil for the framework's own
+            // navigation (handlers may still re-navigate with their own options).
+            async (_ctx, gotoOptions) => {
+                if (gotoOptions) {
+                    gotoOptions.waitUntil = 'domcontentloaded';
+                    gotoOptions.timeout = 60000;
+                }
+            },
             async ({ page, request }) => {
                 const platform = request.userData.platform as Platform;
                 const slot = request.userData.sessionSlot;
@@ -63,6 +79,14 @@ function createPlaywrightCrawler(
 
                 if (tokenString) {
                     await injectCookies(page, platform, tokenString, request.url);
+                }
+
+                // Gentle mode: human-like jitter before navigating. Combined with serial
+                // (concurrency 1) execution, this avoids hammering anti-bot-sensitive
+                // platforms (Meta especially) and protects freshly-issued sessions from
+                // tripping a security checkpoint.
+                if (options?.gentle) {
+                    await page.waitForTimeout(1500 + Math.floor(Math.random() * 2500));
                 }
             },
         ],
@@ -116,6 +140,11 @@ export async function runPlaywrightCrawler(
         if (!targetUrl.startsWith('http')) {
             targetUrl = `https://www.google.com/search?q=${encodeURIComponent(targetUrl)}`;
         }
+        // Navigate X on its canonical host so injected auth_token/ct0 cookies apply
+        // without a twitter.com -> x.com redirect that drops the session into a login wall.
+        if (entry.platform === 'twitter') {
+            targetUrl = targetUrl.replace(/(?:www\.)?twitter\.com/i, 'x.com');
+        }
         return {
             url: targetUrl,
             label: entry.platform,
@@ -141,7 +170,9 @@ export async function runPlaywrightCrawler(
         await resQueue.addRequests(resRequests);
 
         const resProxy = input.proxy ? await createProxyConfig(input.proxy, 'residential') : proxyConfiguration;
-        const resCrawler = createPlaywrightCrawler(resQueue, playwrightRouter, resProxy, input);
+        // Sensitive platforms (LinkedIn/Meta/X/TikTok): run serially with jitter to stay
+        // under anti-bot radar and protect freshly-issued sessions.
+        const resCrawler = createPlaywrightCrawler(resQueue, playwrightRouter, resProxy, input, { maxConcurrency: 1, gentle: true });
         await resCrawler.run();
     }
 }
@@ -159,13 +190,23 @@ export async function runCheerioCrawler(
 
     log.info(`Running CheerioCrawler for ${cheerioUrls.length} URLs`);
 
+    // Reddit (2026): unauthenticated/no-OAuth traffic is rejected with 403, so use the
+    // official OAuth2 API on oauth.reddit.com when credentials are configured. Falls
+    // back to the public .json endpoint otherwise (best-effort, will likely 403).
+    const redditToken = isRedditApiEnabled() ? await getRedditAccessToken() : null;
+
     const cheerioQueue = await Actor.openRequestQueue();
     for (const entry of cheerioUrls) {
         let targetUrl = entry.url;
         if (entry.platform === 'reddit') {
-            targetUrl = targetUrl.replace(/\/$/, '');
-            if (!targetUrl.endsWith('.json')) {
-                targetUrl += '/about.json';
+            const oauth = redditToken ? toOauthUrls(entry.url) : null;
+            if (oauth) {
+                targetUrl = oauth.aboutUrl;
+            } else {
+                targetUrl = targetUrl.replace(/\/$/, '');
+                if (!targetUrl.endsWith('.json')) {
+                    targetUrl += '/about.json';
+                }
             }
         }
         await cheerioQueue.addRequest({
@@ -193,7 +234,31 @@ export async function runCheerioCrawler(
         maxRequestRetries: input.maxRequestRetries,
         additionalMimeTypes: ['application/json'],
         preNavigationHooks: [
-            (_context, options) => {
+            (context, options) => {
+                const reqUrl = context.request.url;
+
+                // Authenticated Reddit API requests need the bearer token + descriptive UA.
+                if (redditToken && reqUrl.includes('oauth.reddit.com')) {
+                    options.headers = {
+                        ...options.headers,
+                        ...redditRequestHeaders(redditToken),
+                    };
+                    return;
+                }
+
+                // Interim Reddit path: inject the operator's Reddit session cookie so the
+                // public endpoints don't 403. Reddit rejects generic/bot agents, so pair
+                // it with a real browser UA rather than the descriptive API agent.
+                if (reqUrl.includes('reddit.com')) {
+                    const redditCookie = input.authTokens?.reddit;
+                    options.headers = {
+                        ...options.headers,
+                        'User-Agent': getRandomUserAgent(),
+                        ...(redditCookie ? { 'Cookie': getCookieHeaderString(redditCookie) } : {}),
+                    };
+                    return;
+                }
+
                 options.headers = {
                     ...options.headers,
                     'User-Agent': getRandomUserAgent(),

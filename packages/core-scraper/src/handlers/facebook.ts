@@ -9,6 +9,7 @@ import { fetchFacebookPage } from '../api/facebook.js';
 import { blockResources } from '../utils/resources.js';
 import { parseCount } from '../utils/parse-count.js';
 import { analyzeBio } from '../utils/bio-analyzer.js';
+import { officialApisEnabled } from '../utils/mode-gate.js';
 
 export async function handle(
     context: PlaywrightCrawlingContext,
@@ -27,8 +28,8 @@ export async function handle(
     }
 
     let apiData = null;
-    // Attempt Graph API primary
-    if (process.env.FACEBOOK_ACCESS_TOKEN) {
+    // Attempt Graph API primary (only when official APIs are enabled and approved)
+    if (officialApisEnabled() && process.env.FACEBOOK_ACCESS_TOKEN) {
         log.info(`[Facebook] Running Graph API query for: ${username}`);
         apiData = await fetchFacebookPage(username);
     }

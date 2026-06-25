@@ -6,6 +6,7 @@
 
 import { log } from './logger.js';
 import { validateSafeUrl } from './security.js';
+import { getRandomUserAgent } from './ua-rotation.js';
 
 export interface LinkAudit {
     originalUrl: string;
@@ -48,7 +49,7 @@ export async function auditLink(url: string): Promise<LinkAudit> {
                 method: 'GET',
                 redirect: 'manual', // Prevent automatic following to intercept and validate redirects
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'User-Agent': getRandomUserAgent(),
                 }
             });
 
