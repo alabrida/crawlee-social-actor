@@ -46,3 +46,6 @@ test-results/
 
 
 
+
+# Stray RTK tool binary (not part of the project)
+rtk.exe
