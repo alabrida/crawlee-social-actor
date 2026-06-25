@@ -117,20 +117,6 @@
         }
     };
 
-    const getInteractiveSteps = function(platformName, loginUrl, username) {
-        return [
-            { text: `[Proxy] Routing browser context traffic through US Residential Proxy...`, type: 'info', delay: 400 },
-            { text: `[Playwright] Spawning clean Chromium context (stealth fingerprints active)...`, type: 'info', delay: 400 },
-            { text: `[Playwright] Navigating context to login page: ${loginUrl}...`, type: 'info', delay: 500 },
-            { text: `[Playwright] Inputting credentials for user: ${username}...`, type: 'info', delay: 500 },
-            { text: `[System] Awaiting security/2FA checks from active session...`, type: 'warn', delay: 600 },
-            { text: `[SessionVault] Intercepted authentication state successfully!`, type: 'success', delay: 600 },
-            { text: `[Health Check] Running pre-flight request with captured storageState...`, type: 'info', delay: 400 },
-            { text: `[Health Check] GET validation request -> Status 200 OK (Auth Valid)`, type: 'success', delay: 400 },
-            { text: `[SessionVault] Saving credentials for ${platformName} to local database...`, type: 'info', delay: 400 }
-        ];
-    };
-
     const renderCookieForm = function(container, instructionsContainer, meta) {
         container.innerHTML = '';
         meta.cookies.forEach(c => {
@@ -151,27 +137,8 @@
         });
     };
 
-    const simulateTerminalLogs = async function(meta, username, appendFn, sleepFn) {
-        appendFn(`[System] Spawning isolated Playwright context for ${meta.name}...`, 'info');
-        const steps = getInteractiveSteps(meta.name, meta.loginUrl, username);
-        for (const s of steps) {
-            await sleepFn(s.delay);
-            appendFn(s.text, s.type);
-        }
-    };
-
-    const simulatePublicLogs = async function(meta, username, appendFn, sleepFn) {
-        appendFn(`[System] Registering public target link for ${meta.name}...`, 'info');
-        await sleepFn(400); appendFn(`[System] Target URL/Username: ${username}`, 'info');
-        await sleepFn(400); appendFn(`[Validation] Checking link structure and reachability...`, 'info');
-        await sleepFn(500); appendFn(`[Success] Target validated! Added to audit queue.`, 'success');
-    };
-
     window.AuthGateData = {
         platformsMetadata,
-        getInteractiveSteps,
-        renderCookieForm,
-        simulateTerminalLogs,
-        simulatePublicLogs
+        renderCookieForm
     };
 })();

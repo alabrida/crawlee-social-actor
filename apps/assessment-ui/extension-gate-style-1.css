@@ -210,11 +210,3 @@
             font-size: 0.8rem;
             line-height: 1.4;
         }
-
-        /* Console Stream styles for sync progress */
-        .console-stream {
-            background: #090d16;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 12px;
-            font-family: monospace;
