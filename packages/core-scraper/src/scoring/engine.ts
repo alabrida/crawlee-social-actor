@@ -190,7 +190,6 @@ export function calculateAssessment(
         linkedin_company_name: collapsedPlatforms.linkedin?.companyName || collapsedPlatforms.linkedin?.fullName || null,
         linkedin_website: collapsedPlatforms.linkedin?.websiteUrl || null,
         facebook_followers: collapsedPlatforms.facebook?.followers || collapsedPlatforms.facebook?.followerCount || null,
-        facebook_likes: collapsedPlatforms.facebook?.likes || collapsedPlatforms.facebook?.likesCount || null,
         instagram_followers: collapsedPlatforms.instagram?.followers || collapsedPlatforms.instagram?.followerCount || null,
         instagram_posts: collapsedPlatforms.instagram?.postsCount || null,
         assessment_detail: {

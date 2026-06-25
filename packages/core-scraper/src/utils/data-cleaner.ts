@@ -100,8 +100,7 @@ export function cleanAssessmentPayload(masterItem: Record<string, any>): Record<
         
         // Facebook Metrics
         "facebook_followers",
-        "facebook_likes",
-        
+
         // Instagram Metrics
         "instagram_followers",
         "instagram_posts"

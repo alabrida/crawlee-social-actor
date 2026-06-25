@@ -38,7 +38,6 @@ export async function handle(
     let biography: string | null = null;
     let category: string | null = null;
     let followerCount: number | null = null;
-    let likesCount: number | null = null;
     let verified = false;
     let rating: number | null = null;
     let reviewsCount: number | null = null;
@@ -88,23 +87,14 @@ export async function handle(
                     followerCount = parseCount(txt);
                 }
 
-                // Likes
-                const likesLink = page.locator('a[href*="likes"]').first();
-                if (await likesLink.count() > 0) {
-                    const txt = await likesLink.textContent();
-                    likesCount = parseCount(txt);
-                }
-
-                // Robust fallback: FB pages embed counts in the description meta, e.g.
-                // "1,234,567 likes · 12,345 talking about this · 678 were here". Passive read.
-                if (likesCount === null || followerCount === null) {
+                // Robust followers fallback: FB embeds the count in the description meta
+                // ("... 7,900,000 followers ..."), more stable than the header DOM. Passive read.
+                if (followerCount === null) {
                     const og = (await page.locator('meta[property="og:description"]').first().getAttribute('content').catch(() => null))
                         || (await page.locator('meta[name="description"]').first().getAttribute('content').catch(() => null))
                         || '';
-                    const likesM = og.match(/([\d.,]+\s*[KMB]?)\s+likes/i);
                     const followM = og.match(/([\d.,]+\s*[KMB]?)\s+followers/i);
-                    if (likesCount === null && likesM) likesCount = parseCount(likesM[1]);
-                    if (followerCount === null && followM) followerCount = parseCount(followM[1]);
+                    if (followM) followerCount = parseCount(followM[1]);
                 }
 
                 // Ratings & Reviews
@@ -159,7 +149,6 @@ export async function handle(
             biography,
             category,
             followerCount,
-            likesCount,
             verified,
             rating,
             reviewsCount,

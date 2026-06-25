@@ -79,7 +79,6 @@ export interface AssessmentResult {
     linkedin_company_name?: string | null;
     linkedin_website?: string | null;
     facebook_followers?: number | null;
-    facebook_likes?: number | null;
     instagram_followers?: number | null;
     instagram_posts?: number | null;
     assessment_detail: {
