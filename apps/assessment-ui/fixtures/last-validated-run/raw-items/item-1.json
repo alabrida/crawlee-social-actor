@@ -1,0 +1,34 @@
+{
+	"platform": "youtube",
+	"url": "https://www.youtube.com/@BestBuy",
+	"crawlerUsed": "playwright",
+	"scrapedAt": "2026-06-25T19:00:57.858Z",
+	"data": {
+		"channelName": "Best Buy",
+		"description": "Take what you love to the next level with the right tech. Subscribe for new product videos, inspiration, tech tips and more.",
+		"subscribers": 837000,
+		"followers": 837000,
+		"videoCount": 1,
+		"viewsCount": null,
+		"verified": false,
+		"latestVideoDate": null,
+		"hasMembership": false,
+		"playlistCount": 0,
+		"contentTabs": [],
+		"bio_analysis": {
+			"bioText": "Take what you love to the next level with the right tech. Subscribe for new product videos, inspiration, tech tips and more.",
+			"conversionSignals": [],
+			"authoritySignals": [],
+			"revenueModelSignals": [
+				"Subscription"
+			],
+			"hasConversionCta": false,
+			"hasAuthorityProof": false,
+			"hasClearRevenueModel": true
+		},
+		"screenshotUrl": "https://api.apify.com/v2/key-value-stores/default/records/screenshot_2QMgHbC0We5fqop.png",
+		"scrapeDate": "2026-06-25T19:00:57.858Z",
+		"humanAssessment": null
+	},
+	"errors": []
+}

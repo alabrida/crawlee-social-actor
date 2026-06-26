@@ -1,0 +1,33 @@
+{
+	"platform": "facebook",
+	"url": "https://www.facebook.com/bestbuy",
+	"crawlerUsed": "playwright",
+	"scrapedAt": "2026-06-25T19:04:27.200Z",
+	"data": {
+		"username": "bestbuy",
+		"isPersonalProfile": false,
+		"fullName": "(20+) Facebook",
+		"biography": null,
+		"category": "Privacy  · Consumer Health Privacy  · Terms  · Advertising  · Ad Choices   · Cookies  · More",
+		"followerCount": 7900000,
+		"likesCount": null,
+		"verified": false,
+		"rating": null,
+		"reviewsCount": null,
+		"hasReviews": false,
+		"ctaButtonType": "Shop now",
+		"bio_analysis": {
+			"bioText": "",
+			"conversionSignals": [],
+			"authoritySignals": [],
+			"revenueModelSignals": [],
+			"hasConversionCta": false,
+			"hasAuthorityProof": false,
+			"hasClearRevenueModel": false
+		},
+		"screenshotUrl": "https://api.apify.com/v2/key-value-stores/default/records/screenshot_R66oDnEW7FU1mv6.png",
+		"scrapeDate": "2026-06-25T19:04:27.200Z",
+		"humanAssessment": null
+	},
+	"errors": []
+}

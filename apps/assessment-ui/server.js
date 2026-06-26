@@ -241,6 +241,37 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Dashboard data source. Resolves the assessment server-side so the service-role key
+    // never reaches the browser (the hardened token path), or serves the last validated
+    // run fixture for offline dashboard finalization.
+    if (req.method === 'GET' && reqUrl === '/api/assessment') {
+        const params = new URL(req.url, `http://${req.headers.host}`).searchParams;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+
+        if (params.get('demo') === '1' || params.get('fixture') === '1') {
+            try {
+                const fixturePath = path.join(__dirname, 'fixtures', 'last-validated-run', 'assessment.json');
+                return res.end(fs.readFileSync(fixturePath, 'utf-8'));
+            } catch (e) {
+                return res.end(JSON.stringify({ error: 'Fixture not found' }));
+            }
+        }
+
+        const token = params.get('token');
+        if (!token) return res.end(JSON.stringify({ error: 'token or demo=1 required' }));
+        try {
+            const queryUrl = `${process.env.SUPABASE_URL}/rest/v1/revenue_journey_assessments?assessment_detail->>client_token=eq.${encodeURIComponent(token)}&limit=1`;
+            const r = await fetch(queryUrl, {
+                headers: { 'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY, 'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` }
+            });
+            const rows = await r.json();
+            if (!Array.isArray(rows) || rows.length === 0) return res.end(JSON.stringify({ error: 'Assessment not found for token' }));
+            return res.end(JSON.stringify(rows[0]));
+        } catch (e) {
+            return res.end(JSON.stringify({ error: 'Lookup failed: ' + e.message }));
+        }
+    }
+
     let filePath = path.join(__dirname, reqUrl === '/' ? 'index.html' : reqUrl);
     if (!filePath.startsWith(__dirname)) {
         res.statusCode = 403;

@@ -1,0 +1,34 @@
+{
+	"platform": "instagram",
+	"url": "https://www.instagram.com/bestbuy/",
+	"crawlerUsed": "playwright",
+	"scrapedAt": "2026-06-25T19:06:15.380Z",
+	"data": {
+		"username": "bestbuy",
+		"fullName": "bestbuy",
+		"biography": "594K Followers, 158 Following, 1,503 Posts - Best Buy (@bestbuy) on Instagram: \"Take what you love to the next level with the right tech.\"",
+		"externalUrl": null,
+		"verified": true,
+		"isPrivate": false,
+		"followerCount": 594000,
+		"followingCount": 158,
+		"postsCount": 1503,
+		"latestPostDate": null,
+		"hasShop": false,
+		"bio_analysis": {
+			"bioText": "594K Followers, 158 Following, 1,503 Posts - Best Buy (@bestbuy) on Instagram: \"Take what you love to the next level with the right tech.\"",
+			"conversionSignals": [
+				"Shop/Store"
+			],
+			"authoritySignals": [],
+			"revenueModelSignals": [],
+			"hasConversionCta": true,
+			"hasAuthorityProof": false,
+			"hasClearRevenueModel": false
+		},
+		"screenshotUrl": "https://api.apify.com/v2/key-value-stores/default/records/screenshot_bUrN6pqTrNlLZkb.png",
+		"scrapeDate": "2026-06-25T19:06:15.380Z",
+		"humanAssessment": null
+	},
+	"errors": []
+}

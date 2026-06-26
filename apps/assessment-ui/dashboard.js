@@ -77,9 +77,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.GlowCards && window.GlowCards.init) window.GlowCards.init();
     if (window.initStarField) window.initStarField('starfield-canvas');
     if (window.PreflightController && window.PreflightController.init) window.PreflightController.init();
-    if (window.UIRenderer && window.UIRenderer.updateDashboardWithNewAudit) {
-        window.UIRenderer.updateDashboardWithNewAudit();
-    }
+    // Load a REAL assessment when ?demo=1 (last validated run fixture) or ?token=... (live
+    // Supabase row, resolved server-side) is present. Otherwise keep the demo/pending state.
+    (function loadRealAssessment() {
+        const params = window.DashboardApp.urlParams;
+        const demo = params.get('demo') === '1' || params.get('fixture') === '1';
+        const token = window.DashboardApp.token;
+        const fallback = () => {
+            if (window.UIRenderer && window.UIRenderer.updateDashboardWithNewAudit) {
+                window.UIRenderer.updateDashboardWithNewAudit();
+            }
+        };
+        if (!demo && !token) return fallback();
+
+        const qs = demo ? 'demo=1' : `token=${encodeURIComponent(token)}`;
+        fetch(`/api/assessment?${qs}`)
+            .then(r => r.json())
+            .then(record => {
+                if (record && !record.error && window.UIRenderer && window.UIRenderer.renderAssessment) {
+                    window.UIRenderer.renderAssessment(record);
+                } else {
+                    console.warn('[Dashboard] No assessment loaded:', record && record.error);
+                    fallback();
+                }
+            })
+            .catch(err => { console.error('[Dashboard] Assessment load failed', err); fallback(); });
+    })();
 
     // Bind public API namespace
     window.Dashboard = {

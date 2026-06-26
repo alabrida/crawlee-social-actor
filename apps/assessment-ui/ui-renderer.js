@@ -191,10 +191,153 @@
         }
     }
 
+    // Map the core scraper's business_class enum to the dashboard display label.
+    const CLASS_LABEL = {
+        local: 'Local Business',
+        professional_services: 'Professional Services',
+        ecommerce: 'E-Commerce',
+        saas: 'SaaS Platform',
+        content_creator: 'Content Creator',
+        influencer: 'Content Creator'
+    };
+
+    const NAICS_MAP = {
+        'Local Business': { code: '722511', title: 'Full-Service Restaurants' },
+        'SaaS Platform': { code: '513210', title: 'Software Publishers' },
+        'E-Commerce': { code: '454110', title: 'Electronic Shopping and Mail-Order Houses' },
+        'Professional Services': { code: '541611', title: 'Administrative and General Management Consulting Services' },
+        'Content Creator': { code: '711510', title: 'Independent Artists, Writers, and Performers' }
+    };
+    const MATURITY_MAP = {
+        'Local Business': 'Maturity Tier 2 (Validated Brand)',
+        'SaaS Platform': 'Maturity Tier 3 (Scale / Growth)',
+        'E-Commerce': 'Maturity Tier 2 (Validated Brand)',
+        'Professional Services': 'Maturity Tier 3 (Scale / Growth)',
+        'Content Creator': 'Maturity Tier 1 (Emerging Creator)'
+    };
+
+    function cap(s) { return s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : ''; }
+    function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
+    // Compact a follower/subscriber count for KPI tiles: 837000 -> "837K", 7900000 -> "7.9M".
+    function compactNum(n) {
+        if (n == null || isNaN(n)) return '—';
+        if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+        if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (n >= 1e3) return Math.round(n / 1e3) + 'K';
+        return String(n);
+    }
+
+    // One headline metric per platform for the scan row, in the platform's brand color.
+    const PLATFORM_KPIS = [
+        { name: 'Google', icon: 'G', accent: '#4285F4', label: 'GBP Rating', get: r => r.gbp_rating, fmt: v => (v != null ? Number(v).toFixed(1) + '★' : '—') },
+        { name: 'YouTube', icon: 'YT', accent: '#FF0000', label: 'Subscribers', get: r => r.youtube_subscribers },
+        { name: 'Facebook', icon: 'f', accent: '#1877F2', label: 'Followers', get: r => r.facebook_followers },
+        { name: 'Instagram', icon: 'IG', accent: '#E4405F', label: 'Followers', get: r => r.instagram_followers },
+        { name: 'TikTok', icon: 'TT', accent: '#25F4EE', label: 'Followers', get: r => r.tiktok_followers },
+        { name: 'LinkedIn', icon: 'in', accent: '#0A66C2', label: 'Followers', get: r => r.linkedin_followers },
+        { name: 'Pinterest', icon: 'P', accent: '#E60023', label: 'Followers', get: r => r.pinterest_followers },
+        { name: 'X', icon: '𝕏', accent: '#1d9bf0', label: 'Followers', get: r => r.twitter_followers }
+    ];
+
+    function renderPlatformKpis(record) {
+        const el = document.getElementById('platform-kpi-row');
+        if (!el) return;
+        el.innerHTML = PLATFORM_KPIS.map(p => {
+            const raw = p.get(record);
+            const has = raw != null && raw !== 0;
+            const valStr = p.fmt ? p.fmt(raw) : compactNum(raw);
+            const verified = (p.name === 'TikTok' && record.tiktok_verified) || (p.name === 'X' && record.twitter_verified);
+            return `<div class="platform-kpi ${has ? '' : 'is-empty'}" style="--kpi-accent:${p.accent}">
+                <div class="platform-kpi-head">
+                    <div class="platform-kpi-icon">${p.icon}</div>
+                    <span class="platform-kpi-name">${p.name}</span>
+                    ${verified ? '<span class="platform-kpi-verified" title="Verified">✓</span>' : ''}
+                </div>
+                <div class="platform-kpi-value">${valStr}</div>
+                <div class="platform-kpi-label">${p.label}</div>
+            </div>`;
+        }).join('');
+    }
+    function scoreBadge(score) {
+        if (score >= 7) return { text: 'Strong Presence', cls: 'badge badge-success' };
+        if (score >= 4) return { text: 'Growing Presence', cls: 'badge badge-success' };
+        return { text: 'Critical Leaks', cls: 'badge badge-error' };
+    }
+
+    /**
+     * Bind a REAL assessment record (the core scraper's 41-column row + assessment_detail)
+     * to the dashboard DOM. Replaces updateDashboardWithNewAudit's hardcoded demo values.
+     */
+    function renderAssessment(record) {
+        if (!record) return;
+
+        const url = record.business_url || '';
+        setText('scraped-url-indicator', `Target: ${url}`);
+        const urlInput = document.getElementById('target-url');
+        if (urlInput && !urlInput.value) urlInput.value = url;
+
+        // Overall score + badge
+        const overall = Number(record.overall_score) || 0;
+        const ov = document.getElementById('overall-score-val');
+        if (ov) { ov.textContent = overall.toFixed(1); ov.style.animation = 'scaleIn 0.5s ease'; }
+        const badge = scoreBadge(overall);
+        const badgeEl = document.getElementById('overall-badge-display');
+        if (badgeEl) { badgeEl.textContent = badge.text; badgeEl.className = badge.cls; badgeEl.style.background = ''; badgeEl.style.color = ''; }
+        updateOverallScoreBreakdown(overall);
+
+        // Business class + confidence + NAICS + maturity
+        const displayClass = CLASS_LABEL[record.business_class] || 'Professional Services';
+        setText('business-class-display', displayClass);
+        const conf = Math.round((Number(record.business_class_confidence) || 0) * 100);
+        setText('class-confidence-val', conf + '%');
+        const cf = document.getElementById('class-confidence-fill'); if (cf) cf.style.width = conf + '%';
+
+        const detailCls = (record.assessment_detail && record.assessment_detail.classification) || {};
+        const naics = (detailCls.naics_code && detailCls.naics_title)
+            ? { code: detailCls.naics_code, title: detailCls.naics_title }
+            : (NAICS_MAP[displayClass] || NAICS_MAP['Professional Services']);
+        setText('naics-code-val', `${naics.code} (${naics.title})`);
+        setText('maturity-tier-val', MATURITY_MAP[displayClass] || 'Maturity Tier 3 (Scale / Growth)');
+
+        updateClassificationBreakdown(displayClass);
+
+        // Platform KPI scan row (YouTube subs, IG/FB/TikTok/Pinterest/LinkedIn followers, GBP rating)
+        renderPlatformKpis(record);
+
+        // Stage scores (0-10) -> labels, bars, line chart
+        const stageScores = {
+            awareness: Number(record.awareness_score) || 0,
+            consideration: Number(record.consideration_score) || 0,
+            decision: Number(record.decision_score) || 0,
+            conversion: Number(record.conversion_score) || 0,
+            retention: Number(record.retention_score) || 0
+        };
+        Object.keys(stageScores).forEach(id => {
+            const s = stageScores[id];
+            setText(`score-${id}`, `${s.toFixed(1)} / 10`);
+            const barEl = document.getElementById(`bar-${id}`);
+            if (barEl) barEl.style.width = `${Math.max(0, Math.min(100, s * 10))}%`;
+        });
+        if (window.UIRenderer && window.UIRenderer.drawLineChart) window.UIRenderer.drawLineChart(stageScores);
+
+        // Weakest stage
+        const weakest = cap(record.weakest_stage);
+        const wd = document.getElementById('weakest-stage-display');
+        if (wd) { wd.textContent = weakest; wd.className = 'value-display text-warning'; wd.style.background = ''; wd.style.webkitTextFillColor = ''; }
+        updateWeakestStageBreakdown(weakest);
+
+        // Leaks + per-platform solutions (real record drives platforms_found + metrics)
+        if (window.UIRenderer && window.UIRenderer.renderLeaksAndSolutions) {
+            window.UIRenderer.renderLeaksAndSolutions(record);
+        }
+    }
+
     window.UIRenderer = {
         updateClassificationBreakdown,
         updateWeakestStageBreakdown,
         updateOverallScoreBreakdown,
-        updateDashboardWithNewAudit
+        updateDashboardWithNewAudit,
+        renderAssessment
     };
 })();
