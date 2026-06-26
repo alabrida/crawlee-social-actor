@@ -107,6 +107,20 @@ export async function aggregateAndUpsertData(input: ActorInput, _finalUrls: UrlE
     scoreResult.assessment_detail.serp_results = serpResults;
     scoreResult.assessment_detail.recommended_keywords = recommendedKeywords;
 
+    // Surface data-trust warnings so a degraded crawl / low-confidence classification is
+    // obvious in the run logs instead of being silently scored.
+    const cq = scoreResult.assessment_detail.crawl_quality;
+    const audit = scoreResult.assessment_detail.audit;
+    if (cq && cq.status !== 'ok') {
+        log.warning(`[Audit] Crawl quality ${cq.status} — scores may be understated: ${(cq.reasons || []).join('; ')}`);
+    }
+    if (audit?.needs_review_count > 0) {
+        log.warning(`[Audit] ${audit.needs_review_count} mechanism(s) flagged needs_review.`);
+    }
+    if (audit?.low_confidence_classification) {
+        log.warning(`[Audit] Low-confidence classification: ${scoreResult.business_class} @ ${(audit.classifier_confidence * 100).toFixed(0)}% — verify business_class.`);
+    }
+
     // Clean the payload: remove nulls/undefined while preserving valid 0 and false
     const cleanedItem = cleanAssessmentPayload(scoreResult);
 

@@ -8,6 +8,7 @@ import { BusinessClass, AssessmentResult, StageScore, ScoredMechanism } from './
 import { MECHANISMS, STAGE_WEIGHTS } from './rubric.js';
 import { classifyBusiness } from './classifier.js';
 import { collapsePlatforms } from './profile-aggregator.js';
+import { buildAuditReport } from './audit-report.js';
 
 /**
  * Pure function to calculate a complete assessment score.
@@ -55,6 +56,7 @@ export function calculateAssessment(
     };
 
     // 2. Evaluate all mechanisms
+    const allScored: ScoredMechanism[] = [];
     for (const mech of MECHANISMS) {
         const { score, evidence } = mech.evaluate(collapsedPlatforms, hubForensics, serpData);
         const weight = mech.weights[bizClass] || 0;
@@ -71,6 +73,8 @@ export function calculateAssessment(
             recommendation
         };
 
+        allScored.push(scoredMech);
+
         const stageData = stages[mech.stage];
         if (stageData) {
             stageData.actualWeightSum += score * weight;
@@ -78,6 +82,10 @@ export function calculateAssessment(
             stageData.mechanisms.push(scoredMech);
         }
     }
+
+    // Audit report: crawl-quality + per-mechanism provenance + needs_review flags, so a
+    // degraded crawl or low-confidence classification is visible rather than silently scored.
+    const audit = buildAuditReport(allScored, hubForensics, collapsedPlatforms, classification.confidence);
 
     // 3. Compute stage scores (0.0 to 10.0 scale)
     const stageScores: Record<string, StageScore> = {};
@@ -202,6 +210,8 @@ export function calculateAssessment(
             },
             platforms: normalizedPlatforms,
             hub_forensics: hubForensics,
+            crawl_quality: audit.crawl_quality,
+            audit,
             classification: {
                 detected_class: bizClass,
                 confidence: classification.confidence,

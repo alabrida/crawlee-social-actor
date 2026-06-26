@@ -91,6 +91,8 @@ export interface AssessmentResult {
         };
         platforms: Record<string, any[]>;
         hub_forensics: any;
+        crawl_quality?: any;
+        audit?: any;
         classification: {
             detected_class: BusinessClass;
             confidence: number;

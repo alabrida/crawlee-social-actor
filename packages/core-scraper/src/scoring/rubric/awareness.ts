@@ -168,6 +168,10 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
             if (!blog || !blog.detected) {
                 return { score: 0, evidence: 'No blog or article section detected' };
             }
+            // post_count null = blog present but depth not countable -> "present, unknown depth".
+            if (blog.post_count == null) {
+                return { score: 1, evidence: 'Blog/article section present (post count not determinable)' };
+            }
             if (blog.post_count < 5 || (blog.days_since_post && blog.days_since_post > 180)) {
                 return { score: 1, evidence: `Blog exists but inactive (< 5 posts or last post > 6 months ago)` };
             }

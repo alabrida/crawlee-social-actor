@@ -109,7 +109,10 @@ export async function runPlaywrightCrawler(
     const playwrightRouter = buildPlaywrightRouter(handlerContext);
     playwrightRouter.addHandler('screenshot-collector', handleScreenshotCollection);
 
-    const residentialPlatforms = new Set(['linkedin', 'instagram', 'tiktok', 'twitter', 'facebook']);
+    // The general hub + its subpages go residential: heavy retail/brand sites (e.g.
+    // BestBuy) bot-block datacenter IPs, yielding ~30s TTFB and a thin page that hides
+    // forms/checkout/chat — which collapses the conversion + classification scoring.
+    const residentialPlatforms = new Set(['linkedin', 'instagram', 'tiktok', 'twitter', 'facebook', 'general', 'general_hub']);
     const residentialUrls = playwrightUrls.filter(entry => residentialPlatforms.has(entry.platform));
     const datacenterUrls = playwrightUrls.filter(entry => !residentialPlatforms.has(entry.platform));
 

@@ -70,6 +70,18 @@ function mergeSignals(base: any, incoming: any): void {
         base.chat.provider = base.chat.provider || incoming.chat.provider;
     }
 
+    // E-commerce (OR-merge signals; a product/cart page may surface what the homepage hid)
+    if (incoming.ecommerce) {
+        base.ecommerce = base.ecommerce || { detected: false, platform: null, has_cart: false, has_checkout: false };
+        base.ecommerce.detected = base.ecommerce.detected || incoming.ecommerce.detected;
+        base.ecommerce.platform = base.ecommerce.platform || incoming.ecommerce.platform;
+        base.ecommerce.has_cart = base.ecommerce.has_cart || incoming.ecommerce.has_cart;
+        base.ecommerce.has_checkout = base.ecommerce.has_checkout || incoming.ecommerce.has_checkout;
+    }
+
+    // Any successfully crawled page marks the hub as scraped.
+    if (incoming.scrapeSuccess) base.scrapeSuccess = true;
+
     // Performance (Keep the best TTFB)
     if (base.performance && incoming.performance?.ttfb_ms) {
         base.performance.ttfb_ms = base.performance.ttfb_ms 

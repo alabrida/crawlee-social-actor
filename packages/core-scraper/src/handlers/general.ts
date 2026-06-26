@@ -7,6 +7,7 @@ import type { PlaywrightCrawlingContext } from 'crawlee';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 import { blockResources } from '../utils/resources.js';
 import { identifyKeyPages, SmartCrawlTracker } from '../utils/smart-stop.js';
+import { detectChatProvider, detectEcommercePlatform, sectionCount, BLOG_LINK_RE, CASE_STUDY_LINK_RE } from './general-forensics.js';
 
 let trackerInstance: SmartCrawlTracker | null = null;
 
@@ -55,7 +56,8 @@ export async function handle(
     const hasPricing = url.includes('/pricing') || content.toLowerCase().includes('pricing');
     if (hasPricing) signals.push('pricing');
 
-    const hasCaseStudies = url.includes('/case-study') || content.includes('/case-study') || content.includes('testimonials');
+    const hasCaseStudies = url.includes('/case-study') || content.includes('/case-stud')
+        || content.includes('/portfolio') || content.includes('/success-stor') || content.includes('/customer-stor');
     if (hasCaseStudies) signals.push('case_studies');
 
     const formCount = await page.locator('form').count().catch(() => 0);
@@ -134,7 +136,33 @@ export async function handle(
 
     // Dynamic signals (chat widget, responsive, forms info)
     const viewportMeta = await page.locator('meta[name="viewport"]').count().catch(() => 0) > 0;
-    const chatWidget = content.includes('hubspot') || content.includes('intercom') || content.includes('livechat');
+    const lcContent = content.toLowerCase();
+
+    // Chat: name the real provider (not always 'intercom'). See general-forensics.ts.
+    const chatProvider = detectChatProvider(content);
+    const chatWidget = chatProvider !== null;
+
+    // E-commerce platform fingerprint, scoped to URL/meta contexts (fixes "Best Buy=Magento").
+    const ecomPlatform = detectEcommercePlatform(content);
+    const hasProductSchema = /"@type"\s*:\s*"(product|offer|aggregateoffer)"/i.test(content);
+    const hasCart = lcContent.includes('add to cart') || lcContent.includes('add-to-cart') || lcContent.includes('addtocart')
+        || lcContent.includes('/cart') || lcContent.includes('shopping cart') || lcContent.includes('data-cart') || hasProductSchema;
+    const hasCheckout = lcContent.includes('/checkout') || lcContent.includes('proceed to checkout')
+        || lcContent.includes('proceed to payment') || lcContent.includes('secure checkout');
+    const ecomDetected = !!ecomPlatform || hasCart || hasProductSchema;
+
+    // Newsletter / email capture
+    const hasNewsletter = lcContent.includes('newsletter') || lcContent.includes('subscribe to our')
+        || lcContent.includes('email updates') || (lcContent.includes('sign up') && lcContent.includes('email'));
+
+    const formTypes: string[] = [];
+    if (formCount > 0) formTypes.push('contact');
+    if (hasNewsletter) formTypes.push('newsletter');
+
+    // Real article / case-study counts from on-page links (null when present-but-uncountable);
+    // never the old fabricated 5 / 2. See general-forensics.ts.
+    const blogPostCount = sectionCount(hasBlog, anchors, BLOG_LINK_RE);
+    const caseStudiesCount = sectionCount(hasCaseStudies, anchors, CASE_STUDY_LINK_RE);
 
     // Smart-Crawl enqueuing: homepage enqueues key pages only
     if (!isSubPage && !isBlocked && !shouldStop) {
@@ -204,14 +232,18 @@ export async function handle(
                 suggested_keywords: suggestedKeywords
             },
             analytics: { google_analytics: ga, tag_manager: content.includes('gtm.js') },
-            blog: { detected: hasBlog, post_count: hasBlog ? 5 : 0 },
+            blog: { detected: hasBlog, post_count: blogPostCount },
             pricing: { detected: hasPricing, has_tiers: hasPricing },
-            case_studies: { detected: hasCaseStudies, count: hasCaseStudies ? 2 : 0 },
-            forms: { count: formCount, types: formCount > 0 ? ['contact'] : [] },
+            case_studies: { detected: hasCaseStudies, count: caseStudiesCount },
+            forms: { count: formCount, types: formTypes },
+            ecommerce: { detected: ecomDetected, platform: ecomPlatform, has_cart: hasCart, has_checkout: hasCheckout },
             social_links: socialLinks,
             mobile: { viewport_meta: viewportMeta, responsive: viewportMeta },
-            chat: { detected: chatWidget, provider: chatWidget ? 'intercom' : null },
+            chat: { detected: chatWidget, provider: chatProvider },
             performance: { ttfb_ms: ttfb },
+            // Truthy success flag so the classifier/rubric know the hub actually crawled
+            // (distinct from a blocked/empty crawl, which the classifier penalizes).
+            scrapeSuccess: !isBlocked,
             pages_crawled: summary.pagesCrawled,
             smart_stop_reason: summary.stopReason,
             screenshotUrl: ''
