@@ -58,16 +58,16 @@ export const AWARENESS_MECHANISMS: MechanismConfig[] = [
             const gtm = hub.analytics?.tag_manager;
             const pixel = hub.analytics?.intent_pixels?.length > 0 || hub.analytics?.facebook_pixel || hub.analytics?.hubspot;
 
-            if (!ga && !gtm && !pixel) {
-                return { score: 0, evidence: 'No analytics detected' };
+            if (ga && gtm && pixel) {
+                return { score: 3, evidence: 'GA + GTM + intent tracking pixel(s) detected' };
             }
-            if ((ga || gtm) && !pixel) {
-                return { score: 1, evidence: `${ga ? 'GA' : 'GTM'} detected` };
-            }
-            if (ga && gtm && !pixel) {
+            if (ga && gtm) {
                 return { score: 2, evidence: 'GA and GTM both detected' };
             }
-            return { score: 3, evidence: 'GA + GTM + intent tracking pixel(s) detected' };
+            if (ga || gtm || pixel) {
+                return { score: 1, evidence: `${ga ? 'GA' : gtm ? 'GTM' : 'Pixel'} detected` };
+            }
+            return { score: 0, evidence: 'No analytics detected' };
         }
     },
     {

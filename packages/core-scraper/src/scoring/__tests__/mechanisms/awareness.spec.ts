@@ -47,11 +47,8 @@ describe('awareness mechanisms', () => {
         it('GA only -> 1', () => {
             expect(run('analytics_tracking', { hub: buildHub({ analytics: { tag_manager: false, intent_pixels: [], facebook_pixel: false, hubspot: false } }) }).score).toBe(1);
         });
-        // LATENT BUG (locked, not fixed in this scope): the `(ga||gtm) && !pixel -> 1`
-        // branch shadows `ga && gtm && !pixel -> 2`, so score 2 is unreachable. GA+GTM
-        // without a pixel actually returns 1.
-        it('GA + GTM, no pixel -> 1 (score-2 branch is dead code)', () => {
-            expect(run('analytics_tracking', { hub: buildHub({ analytics: { intent_pixels: [], facebook_pixel: false, hubspot: false } }) }).score).toBe(1);
+        it('GA + GTM, no pixel -> 2', () => {
+            expect(run('analytics_tracking', { hub: buildHub({ analytics: { intent_pixels: [], facebook_pixel: false, hubspot: false } }) }).score).toBe(2);
         });
         it('GA + GTM + pixel -> 3', () => {
             expect(run('analytics_tracking', { hub: buildHub() }).score).toBe(3);

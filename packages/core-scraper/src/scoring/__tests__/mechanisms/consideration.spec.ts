@@ -41,8 +41,8 @@ describe('consideration mechanisms', () => {
         const p = (o: any) => ({ instagram: buildPlatform('instagram', o) });
         it('none -> 0', () => expect(run('authority_signals', { platforms: p({ verified: false, bio_analysis: { hasAuthorityProof: false } }) }).score).toBe(0));
         it('bio authority only -> 1', () => expect(run('authority_signals', { platforms: p({ verified: false, bio_analysis: { hasAuthorityProof: true } }) }).score).toBe(1));
-        // LATENT BUG (locked): any verified hits the score-2 branch, so score 3 is unreachable.
-        it('verified -> 2 (score-3 branch is dead code)', () => expect(run('authority_signals', { platforms: p({ verified: true, bio_analysis: { hasAuthorityProof: true } }) }).score).toBe(2));
+        it('verified only (no bio authority) -> 2', () => expect(run('authority_signals', { platforms: p({ verified: true, bio_analysis: { hasAuthorityProof: false } }) }).score).toBe(2));
+        it('verified + bio authority -> 3', () => expect(run('authority_signals', { platforms: p({ verified: true, bio_analysis: { hasAuthorityProof: true } }) }).score).toBe(3));
     });
 
     describe('external_link_quality', () => {

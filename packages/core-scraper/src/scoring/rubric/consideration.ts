@@ -133,10 +133,11 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
             if (verifiedCount === 0 && bioAuthorityCount >= 1) {
                 return { score: 1, evidence: 'Authority keywords in bio detected on 1 platform' };
             }
-            if (verifiedCount >= 1 || bioAuthorityCount >= 2) {
-                return { score: 2, evidence: 'Verified badge or authority proof across 1-2 platforms' };
+            // Strong authority requires a verified badge AND consistent bio authority signals.
+            if (verifiedCount >= 1 && bioAuthorityCount >= 1) {
+                return { score: 3, evidence: `Strong authority: Verified on ${verifiedCount} platform(s) with consistent authority indicators` };
             }
-            return { score: 3, evidence: `Strong authority: Verified on ${verifiedCount} platforms, consistent authority indicators` };
+            return { score: 2, evidence: 'Verified badge or authority proof across 1-2 platforms' };
         }
     },
     {

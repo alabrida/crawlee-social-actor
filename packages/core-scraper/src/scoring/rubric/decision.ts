@@ -99,6 +99,7 @@ export const DECISION_MECHANISMS: MechanismConfig[] = [
             if (!hub || hub.scrapeSuccess === false) return { score: 0, evidence: 'No hub forensics available' };
             const priv = hub.privacy || {};
             const cookie = hub.cookie_consent || {};
+            const terms = hub.terms || {};
 
             if (!priv.detected && !cookie.detected) {
                 return { score: 0, evidence: 'No privacy policy or cookie banner found' };
@@ -106,10 +107,11 @@ export const DECISION_MECHANISMS: MechanismConfig[] = [
             if (priv.detected && !cookie.detected) {
                 return { score: 1, evidence: 'Privacy policy page exists' };
             }
-            if (priv.detected && cookie.detected) {
-                return { score: 2, evidence: 'Privacy policy and cookie banner detected' };
+            // Full compliance also requires a terms-of-service page.
+            if (priv.detected && cookie.detected && terms.detected) {
+                return { score: 3, evidence: 'Compliant: Privacy policy, terms of service, and cookie consent detected' };
             }
-            return { score: 3, evidence: 'Compliant: Privacy policy, terms of service, and cookie consent detected' };
+            return { score: 2, evidence: 'Privacy policy and cookie banner detected' };
         }
     },
     {

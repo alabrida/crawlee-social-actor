@@ -29,8 +29,8 @@ describe('decision mechanisms', () => {
     describe('privacy_compliance', () => {
         it('neither -> 0', () => expect(run('privacy_compliance', { hub: buildHub({ privacy: { detected: false }, cookie_consent: { detected: false } }) }).score).toBe(0));
         it('privacy only -> 1', () => expect(run('privacy_compliance', { hub: buildHub({ privacy: { detected: true }, cookie_consent: { detected: false } }) }).score).toBe(1));
-        // LATENT BUG (locked): privacy+cookie hits the score-2 branch, so score 3 is unreachable.
-        it('privacy + cookie -> 2 (score-3 branch is dead code)', () => expect(run('privacy_compliance', { hub: buildHub({ privacy: { detected: true }, cookie_consent: { detected: true } }) }).score).toBe(2));
+        it('privacy + cookie, no terms -> 2', () => expect(run('privacy_compliance', { hub: buildHub({ privacy: { detected: true }, cookie_consent: { detected: true }, terms: { detected: false } }) }).score).toBe(2));
+        it('privacy + cookie + terms -> 3', () => expect(run('privacy_compliance', { hub: buildHub({ privacy: { detected: true }, cookie_consent: { detected: true }, terms: { detected: true } }) }).score).toBe(3));
     });
 
     describe('platform_decision_signals', () => {
