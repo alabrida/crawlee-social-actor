@@ -16,6 +16,7 @@ describe('consideration mechanisms', () => {
     describe('case_studies', () => {
         it('degraded -> 0', () => expect(run('case_studies', { hub: buildDegradedHub() }).score).toBe(0));
         it('not detected -> 0', () => expect(run('case_studies', { hub: buildHub({ case_studies: { detected: false } }) }).score).toBe(0));
+        it('detected but uncountable (null) -> 1 (not a fabricated high score)', () => expect(run('case_studies', { hub: buildHub({ case_studies: { detected: true, type: null, count: null } }) }).score).toBe(1));
         it('logo wall / single -> 1', () => expect(run('case_studies', { hub: buildHub({ case_studies: { detected: true, type: 'logo_wall', count: 1 } }) }).score).toBe(1));
         it('2 entries -> 2', () => expect(run('case_studies', { hub: buildHub({ case_studies: { detected: true, type: 'case_study', count: 2 } }) }).score).toBe(2));
         it('3+ rich -> 3', () => expect(run('case_studies', { hub: buildHub({ case_studies: { detected: true, type: 'case_study', count: 4 } }) }).score).toBe(3));

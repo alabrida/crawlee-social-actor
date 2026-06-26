@@ -51,6 +51,10 @@ export const CONSIDERATION_MECHANISMS: MechanismConfig[] = [
             if (!caseStudies.detected) {
                 return { score: 0, evidence: 'No case studies or portfolio pages detected' };
             }
+            // Detected but count not determinable -> "present, depth unknown" (never a fabricated high score).
+            if (caseStudies.count == null && !caseStudies.type) {
+                return { score: 1, evidence: 'Case study / portfolio section present (entry count not determinable)' };
+            }
             if (caseStudies.type === 'logo_wall' || (caseStudies.count && caseStudies.count <= 1)) {
                 return { score: 1, evidence: 'Logo wall or single customer reference detected' };
             }

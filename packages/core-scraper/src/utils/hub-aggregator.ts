@@ -33,10 +33,13 @@ function mergeSignals(base: any, incoming: any): void {
         base.ssl = { present: true };
     }
 
-    // Analytics
+    // Analytics (incl. marketing/intent pixels)
     if (base.analytics && incoming.analytics) {
         base.analytics.google_analytics = base.analytics.google_analytics || incoming.analytics.google_analytics;
         base.analytics.tag_manager = base.analytics.tag_manager || incoming.analytics.tag_manager;
+        base.analytics.facebook_pixel = base.analytics.facebook_pixel || incoming.analytics.facebook_pixel;
+        base.analytics.hubspot = base.analytics.hubspot || incoming.analytics.hubspot;
+        base.analytics.intent_pixels = Array.from(new Set([...(base.analytics.intent_pixels || []), ...(incoming.analytics.intent_pixels || [])]));
     }
 
     // Blog
@@ -77,6 +80,21 @@ function mergeSignals(base: any, incoming: any): void {
         base.ecommerce.platform = base.ecommerce.platform || incoming.ecommerce.platform;
         base.ecommerce.has_cart = base.ecommerce.has_cart || incoming.ecommerce.has_cart;
         base.ecommerce.has_checkout = base.ecommerce.has_checkout || incoming.ecommerce.has_checkout;
+    }
+
+    // Compliance / contact / booking / testimonials (OR-merge; sub-pages — /contact,
+    // /privacy, /terms — typically carry these even when the homepage does not).
+    for (const key of ['privacy', 'cookie_consent', 'terms', 'testimonials'] as const) {
+        if (incoming[key]?.detected && base[key]) base[key].detected = true;
+    }
+    if (incoming.booking?.detected && base.booking) {
+        base.booking.detected = true;
+        base.booking.provider = base.booking.provider || incoming.booking.provider;
+    }
+    if (incoming.contact_info && base.contact_info) {
+        base.contact_info.phone = base.contact_info.phone || incoming.contact_info.phone;
+        base.contact_info.email = base.contact_info.email || incoming.contact_info.email;
+        base.contact_info.has_address = base.contact_info.has_address || incoming.contact_info.has_address;
     }
 
     // Any successfully crawled page marks the hub as scraped.

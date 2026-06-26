@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { detectChatProvider, detectEcommercePlatform, sectionCount, BLOG_LINK_RE, CASE_STUDY_LINK_RE } from '../general-forensics.js';
+import {
+    detectChatProvider, detectEcommercePlatform, sectionCount, BLOG_LINK_RE, CASE_STUDY_LINK_RE,
+    detectComplianceSignals, detectContactInfo, detectBooking, detectAnalyticsPixels, detectTestimonials,
+} from '../general-forensics.js';
 
 describe('detectChatProvider', () => {
     it('names the real provider, not always intercom', () => {
@@ -47,5 +50,67 @@ describe('sectionCount (no fabricated counts)', () => {
     });
     it('case-study links are counted from real portfolio/case-study paths', () => {
         expect(sectionCount(true, ['https://x.com/case-studies/acme', 'https://x.com/portfolio/widget'], CASE_STUDY_LINK_RE)).toBe(2);
+    });
+});
+
+describe('detectComplianceSignals', () => {
+    it('detects privacy / cookie / terms', () => {
+        const r = detectComplianceSignals('We use cookies. <a href="/terms">Terms of Service</a>', ['https://x.com/privacy-policy', 'https://x.com/terms']);
+        expect(r.privacy.detected).toBe(true);
+        expect(r.terms.detected).toBe(true);
+        expect(r.cookie_consent.detected).toBe(true);
+    });
+    it('returns all false when absent', () => {
+        const r = detectComplianceSignals('<p>Welcome</p>', ['https://x.com/about']);
+        expect(r.privacy.detected).toBe(false);
+        expect(r.terms.detected).toBe(false);
+        expect(r.cookie_consent.detected).toBe(false);
+    });
+});
+
+describe('detectContactInfo', () => {
+    it('detects tel/mailto links', () => {
+        const r = detectContactInfo('<html></html>', ['tel:+15551234567', 'mailto:hi@x.com']);
+        expect(r.phone).toBe(true);
+        expect(r.email).toBe(true);
+    });
+    it('detects a phone pattern and email in body', () => {
+        const r = detectContactInfo('Call (555) 123-4567 or email hi@example.com', []);
+        expect(r.phone).toBe(true);
+        expect(r.email).toBe(true);
+    });
+});
+
+describe('detectBooking', () => {
+    it('names Calendly and marks instant', () => {
+        const r = detectBooking('<iframe src="https://calendly.com/acme/intro"></iframe>');
+        expect(r.detected).toBe(true);
+        expect(r.provider).toBe('Calendly');
+    });
+    it('detects a generic "book a call" CTA without a provider', () => {
+        const r = detectBooking('<a>Book a call with us</a>');
+        expect(r.detected).toBe(true);
+        expect(r.provider).toBeNull();
+    });
+});
+
+describe('detectAnalyticsPixels', () => {
+    it('detects Meta pixel + HubSpot', () => {
+        const r = detectAnalyticsPixels('<script src="https://connect.facebook.net/en_US/fbevents.js"></script><script src="//js.hs-scripts.com/123.js"></script>');
+        expect(r.facebook_pixel).toBe(true);
+        expect(r.hubspot).toBe(true);
+        expect(r.intent_pixels).toContain('meta');
+    });
+    it('returns empty when no pixels', () => {
+        expect(detectAnalyticsPixels('<p>Hi</p>').intent_pixels).toEqual([]);
+    });
+});
+
+describe('detectTestimonials', () => {
+    it('detects the section without fabricating attribution', () => {
+        const r = detectTestimonials('<h2>What our clients say</h2>');
+        expect(r.detected).toBe(true);
+        expect(r.has_named_source).toBe(false);
+        expect(r.count).toBeNull();
     });
 });

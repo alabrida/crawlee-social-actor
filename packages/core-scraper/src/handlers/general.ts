@@ -7,7 +7,10 @@ import type { PlaywrightCrawlingContext } from 'crawlee';
 import type { PlaywrightHandler, HandlerContext, ScrapedItem } from '../types.js';
 import { blockResources } from '../utils/resources.js';
 import { identifyKeyPages, SmartCrawlTracker } from '../utils/smart-stop.js';
-import { detectChatProvider, detectEcommercePlatform, sectionCount, BLOG_LINK_RE, CASE_STUDY_LINK_RE } from './general-forensics.js';
+import {
+    detectChatProvider, detectEcommercePlatform, sectionCount, BLOG_LINK_RE, CASE_STUDY_LINK_RE,
+    detectComplianceSignals, detectContactInfo, detectBooking, detectAnalyticsPixels, detectTestimonials,
+} from './general-forensics.js';
 
 let trackerInstance: SmartCrawlTracker | null = null;
 
@@ -164,6 +167,15 @@ export async function handle(
     const blogPostCount = sectionCount(hasBlog, anchors, BLOG_LINK_RE);
     const caseStudiesCount = sectionCount(hasCaseStudies, anchors, CASE_STUDY_LINK_RE);
 
+    // Compliance, contact, booking, pixels, testimonials — signals several mechanisms grade
+    // that were previously never emitted (structural false-negatives → always scored 0).
+    const compliance = detectComplianceSignals(content, anchors);
+    const contactInfo = detectContactInfo(content, anchors);
+    const booking = detectBooking(content);
+    const pixels = detectAnalyticsPixels(content);
+    const testimonials = detectTestimonials(content);
+    const hubAddress = (jsonLdSchema && (jsonLdSchema.address || (jsonLdSchema as any).telephone)) ? true : false;
+
     // Smart-Crawl enqueuing: homepage enqueues key pages only
     if (!isSubPage && !isBlocked && !shouldStop) {
         const { crawler } = context;
@@ -231,12 +243,18 @@ export async function handle(
                 hero_headings: heroHeadings,
                 suggested_keywords: suggestedKeywords
             },
-            analytics: { google_analytics: ga, tag_manager: content.includes('gtm.js') },
+            analytics: { google_analytics: ga, tag_manager: content.includes('gtm.js'), facebook_pixel: pixels.facebook_pixel, hubspot: pixels.hubspot, intent_pixels: pixels.intent_pixels },
             blog: { detected: hasBlog, post_count: blogPostCount },
             pricing: { detected: hasPricing, has_tiers: hasPricing },
             case_studies: { detected: hasCaseStudies, count: caseStudiesCount },
+            testimonials,
             forms: { count: formCount, types: formTypes },
             ecommerce: { detected: ecomDetected, platform: ecomPlatform, has_cart: hasCart, has_checkout: hasCheckout },
+            contact_info: { phone: contactInfo.phone, email: contactInfo.email, address: hubAddress, has_address: hubAddress },
+            privacy: compliance.privacy,
+            cookie_consent: compliance.cookie_consent,
+            terms: compliance.terms,
+            booking,
             social_links: socialLinks,
             mobile: { viewport_meta: viewportMeta, responsive: viewportMeta },
             chat: { detected: chatWidget, provider: chatProvider },
