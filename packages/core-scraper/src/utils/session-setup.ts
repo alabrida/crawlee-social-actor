@@ -2,7 +2,6 @@ import { log } from './logger.js';
 import { SessionVault } from './session-vault.js';
 import { checkSessionHealth } from './health-check.js';
 import { getExistingAssessment } from './supabase.js';
-import { createProxyConfig } from './proxy.js';
 import { isRedditApiEnabled } from '../api/reddit.js';
 import type { ActorInput, Platform, UrlEntry } from '../types.js';
 
@@ -65,26 +64,10 @@ export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
         existingAssessment = await getExistingAssessment(businessUrl, supabaseUrl, supabaseKey);
     }
 
-    // Run the pre-flight through the same residential proxy the scrape uses, so the
-    // health check shares the scrape's network path. Without this, IP-sensitive
-    // platforms (Meta) wall a valid session replayed from a raw server IP, producing
-    // false "expired" verdicts — and an unproxied hit on an account-settings page from
-    // an unfamiliar IP is itself a strong automation signal against a fresh session.
-    let healthProxy: Awaited<ReturnType<typeof createProxyConfig>> | undefined;
-    try {
-        healthProxy = await createProxyConfig(input.proxy, 'residential');
-    } catch (e) {
-        log.warning(`[Pre-flight] Could not build residential proxy for health checks; falling back to direct. ${e instanceof Error ? e.message : ''}`);
-    }
-    // Fresh residential exit per check — less IP correlation, gentler on the session.
-    const nextProxyUrl = async (): Promise<string | undefined> => {
-        try {
-            return healthProxy ? await healthProxy.newUrl() : undefined;
-        } catch {
-            return undefined;
-        }
-    };
-
+    // Pre-flight no longer makes any network request against the operator's accounts:
+    // probing account-sensitive platforms (IG/FB/X/LinkedIn) from a non-browser client is
+    // exactly what trips Meta/X "verify it's you" checkpoints. checkSessionHealth now only
+    // asserts cookie presence; real validity is decided by the browser crawl + detectBlock.
     const failedPlatforms = new Set<Platform>();
     const validatedTokenKeys = new Set<string>();
 
@@ -100,7 +83,7 @@ export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
                 if (!validatedTokenKeys.has(tokenKey)) {
                     validatedTokenKeys.add(tokenKey);
                     const token = input.authTokens?.[tokenKey];
-                    const check = await checkSessionHealth(platform, token, await nextProxyUrl());
+                    const check = await checkSessionHealth(platform, token);
                     if (!check.ok && check.definitive) {
                         // Conclusively dead (no cookie / explicit login redirect): skip it.
                         // A single stale social cookie must never abort the whole audit.
@@ -142,7 +125,7 @@ export async function setupSessionAndAuth(input: ActorInput): Promise<void> {
                 } else if (!validatedTokenKeys.has(tokenKey)) {
                     validatedTokenKeys.add(tokenKey);
                     const token = input.authTokens?.[tokenKey];
-                    const check = await checkSessionHealth(platform, token, await nextProxyUrl());
+                    const check = await checkSessionHealth(platform, token);
                     if (!check.ok && check.definitive) {
                         isOk = false;
                         log.warning(`[Pre-flight Validation] ${platform.toUpperCase()} session invalid: ${check.error}`);

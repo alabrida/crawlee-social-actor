@@ -31,12 +31,19 @@ function createPlaywrightCrawler(
         requestHandler: playwrightRouter,
         proxyConfiguration: proxyConfig as any,
         useSessionPool: true,
-        sessionPoolOptions: {
-            maxPoolSize: 100,
-            sessionOptions: {
-                maxUsageCount: 50,
+        // Gentle mode (account-sensitive residential platforms): pin ONE sticky session so
+        // the operator's cookies are always presented from a single residential exit IP.
+        // Crawlee maps a session to a sticky proxy URL, so maxPoolSize 1 = one consistent
+        // "home device" across IG/FB/X/LinkedIn, instead of the same cookie surfacing from
+        // rotating IPs (which reads as account-sharing/hijacking to Meta/X and trips checks).
+        sessionPoolOptions: options?.gentle
+            ? { maxPoolSize: 1, sessionOptions: { maxUsageCount: 200 } }
+            : {
+                maxPoolSize: 100,
+                sessionOptions: {
+                    maxUsageCount: 50,
+                },
             },
-        },
         browserPoolOptions: {
             useFingerprints: true,
         },

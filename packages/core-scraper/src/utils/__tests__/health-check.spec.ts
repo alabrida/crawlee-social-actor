@@ -11,7 +11,11 @@ vi.mock('../logger.js', () => ({
     },
 }));
 
-describe('health-check.ts', () => {
+// The rewrite's whole point: pre-flight must NOT touch the network for the operator's
+// account-sensitive platforms. A non-browser fetch carrying the session cookie to an
+// account page (e.g. instagram.com/accounts/edit) from an unfamiliar IP is exactly what
+// trips Meta/X "verify it's you" checkpoints. So the only safe signal is cookie presence.
+describe('health-check.ts (no-network, account-protection safe)', () => {
     const originalFetch = global.fetch;
 
     beforeEach(() => {
@@ -23,84 +27,31 @@ describe('health-check.ts', () => {
         global.fetch = originalFetch;
     });
 
-    it('should fail if no cookie is provided', async () => {
-        const result = await checkSessionHealth('linkedin', undefined);
+    it('NEVER performs a network request for account-sensitive platforms', async () => {
+        for (const p of ['instagram', 'facebook', 'twitter', 'linkedin'] as const) {
+            await checkSessionHealth(p, 'cookie=present');
+        }
+        expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('defers validity (ok) when a cookie is present for a sensitive platform', async () => {
+        expect(await checkSessionHealth('instagram', 'sessionid=abc')).toEqual({ ok: true });
+        expect(await checkSessionHealth('linkedin', 'li_at=valid')).toEqual({ ok: true });
+    });
+
+    it('fails conclusively when no cookie is present (cheap, no request)', async () => {
+        const result = await checkSessionHealth('instagram', undefined);
         expect(result.ok).toBe(false);
+        expect(result.definitive).toBe(true);
         expect(result.error).toContain('No authentication tokens');
+        expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('should pass for non-authenticated platforms', async () => {
-        const result = await checkSessionHealth('reddit', undefined);
-        expect(result.ok).toBe(true);
+    it('passes for non-authenticated platforms', async () => {
+        expect((await checkSessionHealth('reddit', undefined)).ok).toBe(true);
     });
 
-    it('should pass for youtube since it uses anonymous visitor cookies', async () => {
-        const result = await checkSessionHealth('youtube', 'dummy-cookie');
-        expect(result.ok).toBe(true);
-    });
-
-    it('should pass for healthy linkedin sessions', async () => {
-        const mockResponse = {
-            status: 200,
-            headers: new Map(),
-            text: vi.fn().mockResolvedValue('<html><body>Welcome User</body></html>')
-        };
-        (global.fetch as any).mockResolvedValue(mockResponse);
-
-        const result = await checkSessionHealth('linkedin', 'li_at=valid-cookie');
-        expect(result.ok).toBe(true);
-    });
-
-    it('should fail if redirected to a login wall', async () => {
-        const headers = new Map();
-        headers.set('location', 'https://www.linkedin.com/login?from=feed');
-        const mockResponse = {
-            status: 302,
-            headers,
-            text: vi.fn().mockResolvedValue('')
-        };
-        (global.fetch as any).mockResolvedValue(mockResponse);
-
-        const result = await checkSessionHealth('linkedin', 'li_at=expired-cookie');
-        expect(result.ok).toBe(false);
-        expect(result.error).toContain('Redirected to login wall');
-    });
-
-    it('should fail if redirected to a security checkpoint', async () => {
-        const headers = new Map();
-        headers.set('location', 'https://www.linkedin.com/checkpoint/challenge/verify');
-        const mockResponse = {
-            status: 302,
-            headers,
-            text: vi.fn().mockResolvedValue('')
-        };
-        (global.fetch as any).mockResolvedValue(mockResponse);
-
-        const result = await checkSessionHealth('linkedin', 'li_at=expired-cookie');
-        expect(result.ok).toBe(false);
-        expect(result.error).toContain('Redirected to login wall');
-    });
-
-    it('should fail if response has a 200 status but contains login form text', async () => {
-        const mockResponse = {
-            status: 200,
-            headers: new Map(),
-            text: vi.fn().mockResolvedValue('<html><form>Login:<input type="password" name="password"></form></html>')
-        };
-        (global.fetch as any).mockResolvedValue(mockResponse);
-
-        const result = await checkSessionHealth('linkedin', 'li_at=expired-cookie');
-        expect(result.ok).toBe(false);
-        // Body-heuristic match is non-conclusive (browser-gated platforms wall bare fetches).
-        expect(result.error).toContain('heuristic');
-        expect(result.definitive).toBe(false);
-    });
-
-    it('should handle network/connection errors gracefully', async () => {
-        (global.fetch as any).mockRejectedValue(new Error('Connection timed out'));
-
-        const result = await checkSessionHealth('linkedin', 'li_at=some-cookie');
-        expect(result.ok).toBe(false);
-        expect(result.error).toContain('Connection failed during pre-flight check: Connection timed out');
+    it('passes for youtube (anonymous visitor cookies)', async () => {
+        expect((await checkSessionHealth('youtube', 'dummy-cookie')).ok).toBe(true);
     });
 });
