@@ -10,6 +10,7 @@ import { blockResources } from '../utils/resources.js';
 import { parseCount } from '../utils/parse-count.js';
 import { analyzeBio } from '../utils/bio-analyzer.js';
 import { officialApisEnabled } from '../utils/mode-gate.js';
+import { cleanProfileName, detectYoutubeVerifiedFromHtml } from './profile-helpers.js';
 
 export async function handle(
     context: PlaywrightCrawlingContext,
@@ -66,9 +67,9 @@ export async function handle(
 
         if (!isBlocked) {
             try {
-                // Channel Name
+                // Channel Name ("Best Buy - YouTube" -> "Best Buy"; strips any badge/site noise).
                 const title = await page.title().catch(() => '');
-                channelName = title.replace(/ - YouTube$/i, '').trim();
+                channelName = cleanProfileName(title);
 
                 // Subscribers
                 const subEl = page.locator('#subscriber-count, yt-formatted-string[aria-label*="subscribers"]').first();
@@ -93,8 +94,10 @@ export async function handle(
                     if (subMatch) subscribersCount = parseCount(subMatch[1] || subMatch[2]);
                 }
                 if (videoCount === null) {
-                    const vidMatch = content.match(/"videosCountText".*?"simpleText":"([\d.,]+[KMB]?)"/i)
-                        || content.match(/"([\d.,]+[KMB]?)\s+videos?"/i);
+                    // Only the scoped videosCountText is trustworthy. The old loose
+                    // /"N videos"/ fallback matched unrelated "1 videos" text elsewhere in the
+                    // blob and fabricated videoCount=1 — drop it; null (unknown) is honest.
+                    const vidMatch = content.match(/"videosCountText".*?"simpleText":"([\d.,]+[KMB]?)"/i);
                     if (vidMatch) videoCount = parseCount(vidMatch[1]);
                 }
 
@@ -104,8 +107,10 @@ export async function handle(
                     description = await descEl.getAttribute('content');
                 }
 
-                // Verified
-                verified = await page.locator('ytd-channel-name yt-icon[aria-label="Verified"]').first().isVisible();
+                // Verified — the rendered badge is lazy/unreliable (returned false for verified
+                // brand channels); fall back to the stable ytInitialData marker in the HTML.
+                verified = await page.locator('ytd-channel-name yt-icon[aria-label="Verified"]').first().isVisible().catch(() => false)
+                    || detectYoutubeVerifiedFromHtml(content);
 
                 // Membership/Join button check
                 hasMembership = await page.locator('ytd-button-renderer:has-text("Join")').first().isVisible();

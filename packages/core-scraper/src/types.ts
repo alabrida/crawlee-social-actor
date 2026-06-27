@@ -70,6 +70,14 @@ export interface ProxyConfig {
     apifyProxyGroups: string[];
     /** Country code for Apify proxy. */
     apifyProxyCountry?: string;
+    /**
+     * Country of origin (ISO-2) the operator's social accounts normally log in from.
+     * The account-sensitive RESIDENTIAL crawl is locked to this country so the operator's
+     * session cookies always exit from a consistent, expected geography — a different exit
+     * country reads as a foreign login to Meta/X and triggers a "verify it's you" checkpoint.
+     * Falls back to apifyProxyCountry, then 'US'.
+     */
+    originCountry?: string;
     /** Third-party proxy URLs (used when useApifyProxy is false). */
     proxyUrls?: string[];
 }

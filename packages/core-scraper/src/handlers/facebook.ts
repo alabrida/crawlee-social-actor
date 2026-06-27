@@ -10,6 +10,7 @@ import { blockResources } from '../utils/resources.js';
 import { parseCount } from '../utils/parse-count.js';
 import { analyzeBio } from '../utils/bio-analyzer.js';
 import { officialApisEnabled } from '../utils/mode-gate.js';
+import { cleanProfileName } from './profile-helpers.js';
 
 export async function handle(
     context: PlaywrightCrawlingContext,
@@ -69,9 +70,12 @@ export async function handle(
         if (!isBlocked) {
             isPersonalProfile = url.includes('/profile.php') || url.includes('/people/') || content.toLowerCase().includes('add friend') || content.toLowerCase().includes('mutual friends');
             try {
-                // Page Name
+                // Page Name — prefer og:title (the clean page name, e.g. "Best Buy") over the
+                // tab title, which on a logged-in session is polluted with a notification badge
+                // and the site name ("(20+) Facebook"). cleanProfileName strips any residual noise.
+                const ogTitle = await page.locator('meta[property="og:title"]').first().getAttribute('content').catch(() => null);
                 const title = await page.title().catch(() => '');
-                if (title) fullName = title.split('|')[0].split('-')[0].trim();
+                fullName = cleanProfileName(ogTitle) || cleanProfileName(title?.split('|')[0]?.split('-')[0]);
 
                 // Category
                 const catElement = page.locator('[role="main"] a[href*="category"], [role="main"] span:has-text("·")').first();
@@ -121,8 +125,11 @@ export async function handle(
                     ctaButtonType = label ? label.trim() : 'Active CTA';
                 }
 
-                // Verified status
-                verified = await page.locator('header [title="Verified"], header [aria-label="Verified"]').count() > 0;
+                // Verified status. FB's blue check is a churn-prone SVG; match the common
+                // aria-labels anywhere in main, not just header.
+                // ponytail: best-effort DOM check — FB verification has no stable passive marker;
+                // confirm against the gentle live run.
+                verified = await page.locator('[aria-label="Verified"], [aria-label*="Verified account"], svg[aria-label*="Verified"]').first().count() > 0;
 
                 // About/Biography
                 const aboutText = await page.locator('[role="main"] span').filter({ hasText: /Page · / }).first().textContent().catch(() => null);

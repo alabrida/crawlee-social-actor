@@ -10,6 +10,7 @@ import { blockResources } from '../utils/resources.js';
 import { parseCount } from '../utils/parse-count.js';
 import { analyzeBio } from '../utils/bio-analyzer.js';
 import { officialApisEnabled } from '../utils/mode-gate.js';
+import { cleanProfileName } from './profile-helpers.js';
 
 export async function handle(
     context: PlaywrightCrawlingContext,
@@ -55,6 +56,10 @@ export async function handle(
         log.info('[Twitter] Running Playwright browser fallback...');
         await blockResources(page, ['media', 'font'], ['image']);
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        // Wait for the profile column to render before reading — the follower stats are
+        // populated late, and a fixed 3s wait was racing them (the null-follower cause).
+        // Gentle mode: there's no time pressure, so wait for the real signal, not a guess.
+        await page.waitForSelector('[data-testid="primaryColumn"], [data-testid="UserName"]', { timeout: 20000 }).catch(() => {});
         await page.waitForTimeout(3000);
 
         const content = await page.content();
@@ -153,6 +158,9 @@ export async function handle(
             log.warning('[Twitter] Blocked by login wall / anti-bot.');
         }
     }
+
+    // Strip notification-badge / handle / "/ X" noise from the name ("(21) Best Buy" -> "Best Buy").
+    fullName = cleanProfileName(fullName);
 
     const bioAnalysis = analyzeBio(biography);
 

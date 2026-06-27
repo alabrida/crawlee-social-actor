@@ -33,6 +33,14 @@
           "items": { "type": "string" },
           "default": ["RESIDENTIAL"]
         },
+        "apifyProxyCountry": {
+          "type": "string",
+          "description": "ISO-2 country code for Apify proxy exits (e.g. US, GB)."
+        },
+        "originCountry": {
+          "type": "string",
+          "description": "ISO-2 country of origin your social accounts normally log in from. Locks the account-sensitive residential crawl to this country so session cookies exit from a consistent geography and don't trip 'verify it's you' checkpoints. Falls back to apifyProxyCountry, then US."
+        },
         "proxyUrls": {
           "type": "array",
           "items": { "type": "string" },

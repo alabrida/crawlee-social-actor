@@ -10,6 +10,18 @@ import { Actor, ProxyConfiguration } from 'apify';
 import type { ProxyConfig } from '../types.js';
 import { log } from './logger.js';
 
+/** Fallback country of origin when neither originCountry nor apifyProxyCountry is set. */
+const DEFAULT_ORIGIN_COUNTRY = 'US';
+
+/**
+ * The country the account-sensitive residential crawl must exit from. Locking this keeps the
+ * operator's session cookies on a consistent geography; a foreign exit reads as a suspicious
+ * login to Meta/X. Precedence: explicit originCountry -> apifyProxyCountry -> US default.
+ */
+export function resolveOriginCountry(config: ProxyConfig): string {
+    return (config.originCountry || config.apifyProxyCountry || DEFAULT_ORIGIN_COUNTRY).toUpperCase();
+}
+
 export async function createProxyConfig(
     config: ProxyConfig,
     type: 'datacenter' | 'residential' | 'auto' = 'auto',
@@ -24,7 +36,11 @@ export async function createProxyConfig(
             log.info('Using Apify Datacenter proxy configuration');
         } else if (type === 'residential') {
             groups = ['RESIDENTIAL'];
-            log.info('Using Apify Residential proxy configuration');
+            // Lock the residential (account-authenticated) path to one country of origin so
+            // the operator's session cookies always exit from the expected geography.
+            const originCountry = resolveOriginCountry(config);
+            log.info(`Using Apify Residential proxy configuration locked to country of origin: ${originCountry}`);
+            return await Actor.createProxyConfiguration({ groups, countryCode: originCountry as any });
         } else {
             log.info('Using Apify proxy', { groups });
         }
