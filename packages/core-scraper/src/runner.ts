@@ -82,7 +82,10 @@ function createPlaywrightCrawler(
                     tokenString = input.authTokens.google;
                 }
 
-                if (tokenString) {
+                // Pinterest is a public profile AND auth breaks it: a logged-in session's
+                // initial props hold the viewer (operator), not the viewed profile, so the
+                // handler can't read the target. Always scrape Pinterest logged-out.
+                if (tokenString && platform !== 'pinterest') {
                     await injectCookies(page, platform, tokenString, request.url);
                 }
 

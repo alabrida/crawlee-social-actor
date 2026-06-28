@@ -44,13 +44,21 @@ export async function handle(
             const urlPath = new URL(url).pathname;
             const slug = urlPath.split('/').filter(Boolean).pop()?.toLowerCase();
 
+            // STRICT slug match only. Do NOT fall back to users[0]: when the scrape session is
+            // logged in, initialReduxState.users holds the VIEWER (operator), not the viewed
+            // profile, and users[0] would silently emit the operator's account data. If the slug
+            // user isn't present (logged-in case), leave fields null — Pinterest must be scraped
+            // logged-out (see runner: no cookie injected) so the viewed profile is in initial props.
             const userKey = Object.keys(users).find(k => {
                 const u = users[k];
                 if (!u) return false;
                 return slug && u.username?.toLowerCase() === slug;
-            }) || Object.keys(users)[0];
+            });
 
             const userData = userKey ? users[userKey] : null;
+            if (!userData && Object.keys(users).length > 0) {
+                log.warning(`[Pinterest] Viewed profile "${slug}" not in initial props (likely a logged-in session). Skipping JSON user data to avoid emitting the wrong account.`);
+            }
 
             if (userData) {
                 h1 = userData.full_name || '';

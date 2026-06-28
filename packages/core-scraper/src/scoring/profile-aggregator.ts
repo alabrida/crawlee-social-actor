@@ -55,6 +55,8 @@ function normalizeProfileFields(p: any): any {
     const aliasNum = (canon: string, ...c: string[]) => { const v = pick(p, ...c); if (typeof v === 'number') n[canon] = v; };
     const aliasBool = (canon: string, ...c: string[]) => { const v = pick(p, ...c); if (typeof v === 'boolean') n[canon] = v; };
     aliasNum('playlist_count', 'playlist_count', 'playlistCount');
+    aliasNum('board_count', 'board_count', 'boardsCount');
+    aliasNum('pin_count', 'pin_count', 'pinsCount');
     aliasBool('has_membership', 'has_membership', 'hasMembership');
     aliasBool('has_shop', 'has_shop', 'hasShop');
     const tabs = pick(p, 'content_tabs', 'contentTabs'); if (Array.isArray(tabs)) n.content_tabs = tabs;

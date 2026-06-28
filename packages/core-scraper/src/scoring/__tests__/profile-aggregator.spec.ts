@@ -59,6 +59,12 @@ describe('collapsePlatforms', () => {
         expect(out.instagram.has_shop).toBe(true);
     });
 
+    it('bridges Pinterest boardsCount -> board_count (retention reads board_count)', () => {
+        const out = collapsePlatforms({ pinterest: [{ url: 'p', boardsCount: 18, pinsCount: 240 }] });
+        expect(out.pinterest.board_count).toBe(18);
+        expect(out.pinterest.pin_count).toBe(240);
+    });
+
     it('computes days_since_post from a latest-activity date for single profiles (the recency bug)', () => {
         const tenDaysAgo = new Date(Date.now() - 10 * 86400000).toISOString();
         const out = collapsePlatforms({ instagram: [{ url: 'i', latestPostDate: tenDaysAgo }] });
