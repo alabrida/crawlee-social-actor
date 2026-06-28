@@ -174,6 +174,7 @@ export function calculateAssessment(
         strongest_stage: strongestStage,
         screenshots,
         gbp_rating: collapsedPlatforms.google_business_profile?.gbp_rating || collapsedPlatforms.google_business_profile?.rating || collapsedPlatforms.google_maps?.gbp_rating || collapsedPlatforms.google_maps?.rating || null,
+        gbp_reviews_count: collapsedPlatforms.google_business_profile?.gbp_reviews_count || collapsedPlatforms.google_business_profile?.reviews_count || collapsedPlatforms.google_maps?.gbp_reviews_count || collapsedPlatforms.google_maps?.reviews_count || null,
         gbp_category: collapsedPlatforms.google_business_profile?.gbp_category || collapsedPlatforms.google_maps?.gbp_category || null,
         gbp_address: collapsedPlatforms.google_business_profile?.gbp_address || collapsedPlatforms.google_maps?.gbp_address || null,
         gbp_phone: collapsedPlatforms.google_business_profile?.gbp_phone || collapsedPlatforms.google_maps?.gbp_phone || null,

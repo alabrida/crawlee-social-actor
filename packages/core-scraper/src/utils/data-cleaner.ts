@@ -64,6 +64,7 @@ export function cleanAssessmentPayload(masterItem: Record<string, any>): Record<
         
         // GBP Metrics
         "gbp_rating",
+        "gbp_reviews_count",
         "gbp_category",
         "gbp_address",
         "gbp_phone",

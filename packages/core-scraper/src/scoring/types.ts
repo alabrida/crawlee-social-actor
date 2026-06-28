@@ -55,6 +55,7 @@ export interface AssessmentResult {
     strongest_stage: string;
     screenshots: Record<string, string>;
     gbp_rating?: number | null;
+    gbp_reviews_count?: number | null;
     gbp_category?: string | null;
     gbp_address?: string | null;
     gbp_phone?: string | null;

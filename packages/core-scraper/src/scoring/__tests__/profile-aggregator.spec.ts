@@ -4,7 +4,23 @@ import { collapsePlatforms } from '../profile-aggregator.js';
 describe('collapsePlatforms', () => {
     it('passes through a single profile unchanged', () => {
         const p = { url: 'https://x.com', followers: 10 };
-        expect(collapsePlatforms({ instagram: [p] }).instagram).toBe(p);
+        expect(collapsePlatforms({ instagram: [p] }).instagram).toEqual(p);
+    });
+
+    it('normalizes the GBP handler field names so reviews reach the rubric (the real BestBuy bug)', () => {
+        // Handler emits gbp_reviews_count/gbp_rating; the reviews_ratings rubric reads
+        // reviews_count/rating. Single-profile passthrough used to leave the prefixed names,
+        // so a scraped count scored 0. Collapse must expose the canonical names.
+        const out = collapsePlatforms({
+            google_business_profile: [{ url: 'm', gbp_business_name: 'Best Buy', gbp_rating: 4.1, gbp_reviews_count: 7127 }],
+        });
+        expect(out.google_business_profile.reviews_count).toBe(7127);
+        expect(out.google_business_profile.rating).toBe(4.1);
+    });
+
+    it('normalizes Facebook reviewsCount (camelCase) to reviews_count', () => {
+        const out = collapsePlatforms({ facebook: [{ url: 'f', reviewsCount: 50, rating: 4.5 }] });
+        expect(out.facebook.reviews_count).toBe(50);
     });
 
     it('SUMs followers across profiles', () => {

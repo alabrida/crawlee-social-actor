@@ -3,13 +3,32 @@
  * @description Aggregates multiple scraped profiles of the same platform type into a single virtual profile for rubric/classifier evaluation.
  */
 
+/**
+ * Map handler-specific field names onto the canonical names the rubric/classifier read.
+ * The GBP handler emits gbp_reviews_count/gbp_rating (DB-column prefix) and Facebook emits
+ * reviewsCount (camelCase), but reviews_ratings reads reviews_count/rating — so without this
+ * a correctly-scraped review count never reached scoring (it scored 0 "No reviews found").
+ * Applied to EVERY profile before collapse so both the single-profile and merge paths see it.
+ */
+function normalizeProfileFields(p: any): any {
+    if (!p || typeof p !== 'object') return p;
+    const n = { ...p };
+    const rc = p.reviews_count ?? p.reviewsCount ?? p.gbp_reviews_count;
+    if (typeof rc === 'number') { n.reviews_count = rc; n.reviewsCount = rc; }
+    const rt = p.rating ?? p.gbp_rating;
+    if (typeof rt === 'number') n.rating = rt;
+    return n;
+}
+
 export function collapsePlatforms(platforms: Record<string, any[]>): Record<string, any> {
     const collapsed: Record<string, any> = {};
 
-    for (const [platform, profiles] of Object.entries(platforms)) {
-        if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
+    for (const [platform, rawProfiles] of Object.entries(platforms)) {
+        if (!rawProfiles || !Array.isArray(rawProfiles) || rawProfiles.length === 0) {
             continue;
         }
+
+        const profiles = rawProfiles.map(normalizeProfileFields);
 
         if (profiles.length === 1) {
             collapsed[platform] = profiles[0];
