@@ -107,6 +107,14 @@ export async function handle(
                     if (followM) followerCount = parseCount(followM[1]);
                 }
 
+                // Body-text fallback: a logged-in FB session serves an EMPTY og:description, but
+                // the count is in the visible page text ("7.9M followers"). Validated live.
+                if (followerCount === null) {
+                    const bodyText = await page.locator('body').innerText().catch(() => '');
+                    const m = bodyText.match(/([\d.,]+\s*[KMB]?)\s+followers/i);
+                    if (m) followerCount = parseCount(m[1]);
+                }
+
                 // Ratings & Reviews
                 const reviewsLocator = page.locator('a[href*="reviews"]').first();
                 if (await reviewsLocator.count() > 0) {
