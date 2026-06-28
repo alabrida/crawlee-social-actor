@@ -12,6 +12,12 @@ describe('classifyLinkInBio', () => {
     it('treats a plain website as direct_website', () => {
         expect(classifyLinkInBio('https://www.bestbuy.com')?.type).toBe('direct_website');
     });
+    it('handles protocol-less bio links (TikTok/IG store them without https)', () => {
+        const r = classifyLinkInBio('visitstore.bio/bestbuyshop');
+        expect(r?.type).toBe('direct_website');
+        expect(r?.url).toBe('https://visitstore.bio/bestbuyshop');
+        expect(classifyLinkInBio('linktr.ee/bestbuy')?.type).toBe('link_aggregator');
+    });
     it('returns null for empty/invalid input', () => {
         expect(classifyLinkInBio(null)).toBeNull();
         expect(classifyLinkInBio('not a url')).toBeNull();

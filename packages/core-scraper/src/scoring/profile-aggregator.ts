@@ -18,11 +18,15 @@ const BOOKING_HOSTS = ['calendly.com', 'cal.com', 'acuityscheduling', 'squareup.
  */
 export function classifyLinkInBio(url: any): { type: string; url: string } | null {
     if (!url || typeof url !== 'string') return null;
+    // Bio links are frequently stored without a scheme ("visitstore.bio/x", "linktr.ee/y") —
+    // TikTok/IG do this — and new URL() throws on those, silently dropping the link. Add https.
+    const withProto = /^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`;
     let host = '';
-    try { host = new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch { return null; }
-    if (LINK_AGGREGATOR_HOSTS.some(h => host.includes(h))) return { type: 'link_aggregator', url };
-    if (BOOKING_HOSTS.some(h => host.includes(h))) return { type: 'booking', url };
-    return { type: 'direct_website', url };
+    try { host = new URL(withProto).hostname.replace(/^www\./, '').toLowerCase(); } catch { return null; }
+    if (!host.includes('.')) return null;
+    if (LINK_AGGREGATOR_HOSTS.some(h => host.includes(h))) return { type: 'link_aggregator', url: withProto };
+    if (BOOKING_HOSTS.some(h => host.includes(h))) return { type: 'booking', url: withProto };
+    return { type: 'direct_website', url: withProto };
 }
 
 /**
