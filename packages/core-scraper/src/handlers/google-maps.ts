@@ -47,6 +47,7 @@ export async function handle(
     let phone: string | null = null;
     let website: string | null = null;
     let photoCount = 0;
+    let ownerResponseRate: number | null = null;
     let claimedStatus = true; // API listings are generally claimed or verified
     let isBlocked = false;
 
@@ -104,6 +105,17 @@ export async function handle(
                     }
                 }
 
+                // Owner response rate (gbp_review_engagement). Sampled from the reviews loaded in
+                // the panel — a true rate needs the full list, but the visible sample is a real,
+                // non-fabricated signal, and the score thresholds are coarse (0/<25/<75/>=75%).
+                // ponytail: panel sample of the "most relevant" reviews; null when too few to sample.
+                // Validated live: BestBuy shows ~2/29 responses -> 6.9% -> tier 1.
+                const reviewBlocks = await page.locator('[data-review-id]').count().catch(() => 0);
+                if (reviewBlocks >= 3) {
+                    const withResp = await page.locator('[data-review-id]:has-text("Response from the owner")').count().catch(() => 0);
+                    ownerResponseRate = withResp / reviewBlocks;
+                }
+
                 // Phone, Address, Website
                 const addrEl = page.locator('button[data-item-id^="address"]').first();
                 if (await addrEl.isVisible()) address = await addrEl.innerText();
@@ -137,6 +149,7 @@ export async function handle(
             gbp_website: website,
             claimed_status: claimedStatus,
             photo_count: photoCount,
+            owner_response_rate: ownerResponseRate,
             screenshotUrl: ''
         } as any,
         errors: isBlocked ? ['BLOCKED: Google Maps Consent / CAPTCHA'] : []
