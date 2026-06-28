@@ -95,10 +95,12 @@ export async function handle(
                     if (subMatch) subscribersCount = parseCount(subMatch[1] || subMatch[2]);
                 }
                 if (videoCount === null) {
-                    // Only the scoped videosCountText is trustworthy. The old loose
-                    // /"N videos"/ fallback matched unrelated "1 videos" text elsewhere in the
-                    // blob and fabricated videoCount=1 — drop it; null (unknown) is honest.
-                    const vidMatch = content.match(/"videosCountText".*?"simpleText":"([\d.,]+[KMB]?)"/i);
+                    // The channel total lives in the header metadataParts as
+                    // '"content":"1.9K videos"' (validated live), or the legacy videosCountText.
+                    // Both are scoped JSON forms — NOT the old loose /"N videos"/ that matched
+                    // unrelated "1 videos" text and fabricated videoCount=1.
+                    const vidMatch = content.match(/"videosCountText".*?"simpleText":"([\d.,]+[KMB]?)"/i)
+                        || content.match(/"content":"([\d.,]+[KMB]?)\s+videos"/i);
                     if (vidMatch) videoCount = parseCount(vidMatch[1]);
                 }
 
