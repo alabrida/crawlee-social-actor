@@ -100,6 +100,11 @@ export async function handle(
                     const aboutText = await aboutSec.innerText();
                     aboutLength = aboutText ? aboutText.replace(/About/i, '').trim().length : 0;
                 }
+                // The full About text lives on the /about/ sub-tab; the Overview shows the tagline,
+                // which is a legitimate company description. Use it so a company that HAS a
+                // description isn't scored as lacking one (linkedin_presence needs about_length>0).
+                // Validated live: BestBuy overview has no About section but a real tagline.
+                if (aboutLength === 0 && headline) aboutLength = headline.length;
 
                 // Activity check
                 hasRecentActivity = await page.locator('a[href*="/detail/recent-activity/"]').first().count() > 0;
