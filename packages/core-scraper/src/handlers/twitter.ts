@@ -56,11 +56,13 @@ export async function handle(
         log.info('[Twitter] Running Playwright browser fallback...');
         await blockResources(page, ['media', 'font'], ['image']);
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        // Wait for the profile column to render before reading — the follower stats are
-        // populated late, and a fixed 3s wait was racing them (the null-follower cause).
-        // Gentle mode: there's no time pressure, so wait for the real signal, not a guess.
-        await page.waitForSelector('[data-testid="primaryColumn"], [data-testid="UserName"]', { timeout: 20000 }).catch(() => {});
-        await page.waitForTimeout(3000);
+        // Wait for the follower STAT LINK specifically — it lazy-renders after the profile
+        // column, so waiting on primaryColumn alone still raced it (the null-follower cause,
+        // confirmed by inspecting the rendered DOM: a[href$="/verified_followers"] = "1M
+        // Followers", and JSON-LD no longer carries interactionStatistic). Gentle mode: no
+        // time pressure, so wait for the real signal.
+        await page.waitForSelector('a[href$="/verified_followers"], a[href$="/followers"]', { timeout: 25000 }).catch(() => {});
+        await page.waitForTimeout(1500);
 
         const content = await page.content();
         isBlocked = detectBlock(content);

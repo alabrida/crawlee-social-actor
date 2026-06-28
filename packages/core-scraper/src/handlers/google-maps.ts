@@ -80,17 +80,28 @@ export async function handle(
                 const catEl = page.locator('button[jsaction*="category"]').first();
                 if (await catEl.isVisible()) category = await catEl.innerText();
 
-                // Rating & Reviews
-                const ratingEl = page.locator('div.F7nice span[aria-hidden="true"]').first();
-                if (await ratingEl.isVisible()) {
-                    const txt = await ratingEl.innerText();
-                    if (txt) rating = parseFloat(txt.trim());
-                }
-
-                const revsEl = page.locator('div.F7nice button[aria-label*="reviews"]').first();
-                if (await revsEl.isVisible()) {
-                    const txt = await revsEl.innerText();
-                    reviewsCount = parseCount(txt);
+                // Rating & Reviews. Parse both out of the F7nice container's text rather than a
+                // brittle per-element selector: the rating worked but the old
+                // button[aria-label*="reviews"] selector missed (case-sensitive, and the count is
+                // not always a <button>), leaving reviews_count null. F7nice reads like
+                // "4.1(1,234)" / "4.1 ⋅ 1,234 reviews" — both numbers sit together.
+                const f7 = page.locator('div.F7nice').first();
+                if (await f7.count() > 0) {
+                    const full = (await f7.innerText().catch(() => '')) || '';
+                    const ratingM = full.match(/(\d[.,]\d)/);
+                    if (ratingM) rating = parseFloat(ratingM[1].replace(',', '.'));
+                    // reviews: the parenthetical count, or "N reviews".
+                    const revM = full.match(/\(([\d.,]+)\)/) || full.match(/([\d.,]+)\s*reviews?/i);
+                    if (revM) reviewsCount = parseCount(revM[1]);
+                    // aria fallback (case-insensitive) if the text form changes.
+                    if (reviewsCount === null) {
+                        const revsEl = page.locator('div.F7nice [aria-label*="review" i]').first();
+                        if (await revsEl.count() > 0) {
+                            const al = (await revsEl.getAttribute('aria-label').catch(() => '')) || '';
+                            const m = al.match(/([\d.,]+)/);
+                            if (m) reviewsCount = parseCount(m[1]);
+                        }
+                    }
                 }
 
                 // Phone, Address, Website

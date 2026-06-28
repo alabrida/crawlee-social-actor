@@ -62,7 +62,11 @@ export async function handle(
         log.info('[Facebook] Running Playwright browser fallback...');
         await blockResources(page, ['media', 'font'], ['image']);
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await page.waitForTimeout(4000);
+        // FB's SPA renders the page header (name h1 + verified badge) late; wait for the h1
+        // rather than a fixed sleep so we read a populated header (the null-name/false-verified
+        // cause). Gentle mode: no time pressure.
+        await page.waitForSelector('[role="main"] h1, h1', { timeout: 15000 }).catch(() => {});
+        await page.waitForTimeout(2000);
 
         const content = await page.content();
         isBlocked = detectBlock(content);
@@ -70,12 +74,14 @@ export async function handle(
         if (!isBlocked) {
             isPersonalProfile = url.includes('/profile.php') || url.includes('/people/') || content.toLowerCase().includes('add friend') || content.toLowerCase().includes('mutual friends');
             try {
-                // Page Name — prefer og:title (the clean page name, e.g. "Best Buy") over the
-                // tab title, which on a logged-in session is polluted with a notification badge
-                // and the site name ("(20+) Facebook"). cleanProfileName strips any residual noise.
+                // Page Name — the h1 is "Best Buy" in BOTH logged-in and logged-out views, so it
+                // is the reliable source. og:title is present only logged-out (null on the logged-in
+                // SPA), and the tab title is polluted with a notification badge + site name
+                // ("(20+) Facebook"); use those only as fallbacks. cleanProfileName drops residual noise.
+                const h1 = await page.locator('[role="main"] h1, h1').first().textContent().catch(() => null);
                 const ogTitle = await page.locator('meta[property="og:title"]').first().getAttribute('content').catch(() => null);
                 const title = await page.title().catch(() => '');
-                fullName = cleanProfileName(ogTitle) || cleanProfileName(title?.split('|')[0]?.split('-')[0]);
+                fullName = cleanProfileName(h1) || cleanProfileName(ogTitle) || cleanProfileName(title?.split('|')[0]);
 
                 // Category
                 const catElement = page.locator('[role="main"] a[href*="category"], [role="main"] span:has-text("·")').first();
@@ -125,11 +131,13 @@ export async function handle(
                     ctaButtonType = label ? label.trim() : 'Active CTA';
                 }
 
-                // Verified status. FB's blue check is a churn-prone SVG; match the common
-                // aria-labels anywhere in main, not just header.
-                // ponytail: best-effort DOM check — FB verification has no stable passive marker;
-                // confirm against the gentle live run.
-                verified = await page.locator('[aria-label="Verified"], [aria-label*="Verified account"], svg[aria-label*="Verified"]').first().count() > 0;
+                // Verified status. Confirmed marker (logged-in DOM inspection): an element with
+                // aria-label="Verified account" sits next to the page-name h1. The badge only
+                // renders for an authenticated session — a logged-out/unestablished session sees
+                // no badge regardless of selector.
+                // ponytail: page-wide match; the actor doesn't scroll so the header badge dominates
+                // (feed verified badges aren't loaded yet at read time).
+                verified = await page.locator('[aria-label="Verified account"], [aria-label*="Verified account"]').first().count() > 0;
 
                 // About/Biography
                 const aboutText = await page.locator('[role="main"] span').filter({ hasText: /Page · / }).first().textContent().catch(() => null);

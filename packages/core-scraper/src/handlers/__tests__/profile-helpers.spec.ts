@@ -25,9 +25,18 @@ describe('cleanProfileName', () => {
 });
 
 describe('detectYoutubeVerifiedFromHtml', () => {
-    it('detects the ytInitialData verified marker', () => {
+    it('detects the legacy BADGE_STYLE_TYPE_VERIFIED marker', () => {
         expect(detectYoutubeVerifiedFromHtml('...,"style":"BADGE_STYLE_TYPE_VERIFIED"},...')).toBe(true);
         expect(detectYoutubeVerifiedFromHtml('"BADGE_STYLE_TYPE_VERIFIED_ARTIST"')).toBe(true);
+    });
+    it('detects the current CHECK_CIRCLE_FILLED badge scoped to the channel header title', () => {
+        const html = '"pageHeaderViewModel":{"title":{"dynamicTextViewModel":{"text":{"content":"Best Buy","attachmentRuns":[{"startIndex":8,"element":{"type":{"imageType":{"image":{"sources":[{"clientResource":{"imageName":"CHECK_CIRCLE_FILLED"}}]}}}}}]}}}}';
+        expect(detectYoutubeVerifiedFromHtml(html)).toBe(true);
+    });
+    it('does NOT false-positive on CHECK_CIRCLE_FILLED outside the header (e.g. recommended channels)', () => {
+        // Badge icon present, but nowhere near a pageHeaderViewModel title — unverified channel.
+        const html = '<html>...recommended..."imageName":"CHECK_CIRCLE_FILLED"...more...content here...</html>';
+        expect(detectYoutubeVerifiedFromHtml(html)).toBe(false);
     });
     it('returns false when absent', () => {
         expect(detectYoutubeVerifiedFromHtml('<html>no badge here</html>')).toBe(false);

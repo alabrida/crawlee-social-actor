@@ -31,9 +31,13 @@ export function cleanProfileName(raw: string | null | undefined): string | null 
 
 /**
  * YouTube's verified badge is unreliable to detect from the rendered DOM (lazy-loaded icon
- * with a churn-prone aria-label). ytInitialData, already in the served HTML, carries a stable
- * marker — a passive read, no extra automation.
+ * with a churn-prone aria-label). ytInitialData, already in the served HTML, carries it — a
+ * passive read. The current marker is a CHECK_CIRCLE_FILLED image attached to the channel
+ * title inside pageHeaderViewModel; the same icon also appears for recommended channels, so
+ * the match MUST be scoped to the header title block (not a bare page-wide includes()). The
+ * legacy BADGE_STYLE_TYPE_VERIFIED marker is still accepted for older layouts.
  */
 export function detectYoutubeVerifiedFromHtml(html: string): boolean {
-    return /BADGE_STYLE_TYPE_VERIFIED(?:_ARTIST)?/.test(html);
+    if (/BADGE_STYLE_TYPE_VERIFIED(?:_ARTIST)?/.test(html)) return true;
+    return /"pageHeaderViewModel":\{"title":[\s\S]{0,1500}?CHECK_CIRCLE_FILLED/.test(html);
 }
