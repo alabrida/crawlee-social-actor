@@ -63,6 +63,7 @@ export async function handle(
     let postsCount: number | null = null;
     let latestPostDate: string | null = null;
     let hasShop = false;
+    let contentMix: { highlights: number } | null = null;
 
     if (!isBlocked) {
         try {
@@ -96,13 +97,26 @@ export async function handle(
                 if (bioText) biography = bioText.trim();
             }
 
-            // Fallback bio from meta
+            // Fallback bio from meta. Logged-out IG embeds the bio in og:description as
+            // '... on Instagram: "<bio>"'; the old DOM class (.-vDIg) is stale and returns null.
             if (!biography) {
-                const metaDesc = await page.locator('meta[name="description"]').first().getAttribute('content').catch(() => '');
-                if (metaDesc) {
+                const metaDesc = (await page.locator('meta[property="og:description"]').first().getAttribute('content').catch(() => null))
+                    || (await page.locator('meta[name="description"]').first().getAttribute('content').catch(() => null))
+                    || '';
+                const quoted = metaDesc.match(/on Instagram:\s*["“”]([\s\S]+?)["“”]\s*$/);
+                if (quoted && quoted[1].trim().length > 2) {
+                    biography = quoted[1].trim();
+                } else {
                     const cleanDesc = metaDesc.replace(/[\d.,]+ Followers, [\d.,]+ Following, [\d.,]+ Posts - See Instagram photos and videos from .*? - /, '').trim();
-                    if (cleanDesc.length > 5) biography = cleanDesc;
+                    if (cleanDesc.length > 5 && !/See Instagram photos/i.test(cleanDesc)) biography = cleanDesc;
                 }
+            }
+            // Header-span fallback (logged-in view where og:description omits the bio).
+            if (!biography) {
+                const spans = await page.locator('header span').evaluateAll(els =>
+                    els.map(e => (e.textContent || '').trim()).filter(t => t.length > 12 && !/followers|following|posts/i.test(t))
+                ).catch(() => [] as string[]);
+                if (spans.length > 0) biography = spans[0];
             }
 
             // Stats
@@ -145,26 +159,32 @@ export async function handle(
             // Shop / commerce tab presence check
             hasShop = content.toLowerCase().includes('view shop') || content.toLowerCase().includes('shop tab') || await page.locator('a[href*="/shop/"]').count() > 0;
 
-            // Latest post date (from grid)
-            const firstGridImage = page.locator('article a[href^="/p/"] img, article a[href^="/reel/"] img').first();
-            if (await firstGridImage.count() > 0) {
-                const altText = await firstGridImage.getAttribute('alt');
-                if (altText) {
-                    const dateMatch = altText.match(/on ([a-zA-Z]+ \d{1,2}, \d{4})/i);
-                    if (dateMatch) {
-                        const dateObj = new Date(dateMatch[1]);
-                        if (!isNaN(dateObj.getTime())) latestPostDate = dateObj.toISOString();
-                    }
+            // Latest post date (from grid). Post hrefs are now username-prefixed
+            // (/bestbuy/p/..., /bestbuy/reel/...) so match by *contains*, not prefix. The date
+            // lives in the photo alt ("Photo by Best Buy on June 23, 2026..."); reels carry no
+            // date, so scan the first several images and take the newest dated one.
+            const alts = await page.locator('a[href*="/p/"] img, a[href*="/reel/"] img').evaluateAll(
+                els => els.slice(0, 12).map(e => e.getAttribute('alt') || '')
+            ).catch(() => [] as string[]);
+            let newest = 0;
+            for (const alt of alts) {
+                const m = alt.match(/on ([A-Z][a-z]+ \d{1,2}, \d{4})/);
+                if (m) {
+                    const t = new Date(m[1]).getTime();
+                    if (!isNaN(t) && t > newest) newest = t;
                 }
             }
+            if (newest > 0) latestPostDate = new Date(newest).toISOString();
 
             if (!latestPostDate) {
-                const timeTag = page.locator('time').first();
-                if (await timeTag.count() > 0) {
-                    const datetime = await timeTag.getAttribute('datetime');
-                    if (datetime) latestPostDate = new Date(datetime).toISOString();
-                }
+                const datetime = await page.locator('time[datetime]').first().getAttribute('datetime').catch(() => null);
+                if (datetime) latestPostDate = new Date(datetime).toISOString();
             }
+
+            // Story highlights count -> content_mix.highlights (retention signal). The highlights
+            // tray is header section ul li (stats are no longer in a ul li).
+            const highlightCount = await page.locator('header section ul li').count().catch(() => 0);
+            if (highlightCount > 0) contentMix = { highlights: highlightCount };
         } catch (e) {
             log.warning('[Instagram] Element extraction encountered errors.');
         }
@@ -191,6 +211,7 @@ export async function handle(
             postsCount,
             latestPostDate,
             hasShop,
+            content_mix: contentMix,
             bio_analysis: bioAnalysis,
             screenshotUrl: ''
         } as any,

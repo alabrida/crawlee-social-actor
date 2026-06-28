@@ -1,5 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { collapsePlatforms } from '../profile-aggregator.js';
+import { collapsePlatforms, classifyLinkInBio } from '../profile-aggregator.js';
+
+describe('classifyLinkInBio', () => {
+    it('classifies link aggregators', () => {
+        expect(classifyLinkInBio('https://linktr.ee/bestbuy')?.type).toBe('link_aggregator');
+        expect(classifyLinkInBio('https://beacons.ai/x')?.type).toBe('link_aggregator');
+    });
+    it('classifies booking links', () => {
+        expect(classifyLinkInBio('https://calendly.com/acme/intro')?.type).toBe('booking');
+    });
+    it('treats a plain website as direct_website', () => {
+        expect(classifyLinkInBio('https://www.bestbuy.com')?.type).toBe('direct_website');
+    });
+    it('returns null for empty/invalid input', () => {
+        expect(classifyLinkInBio(null)).toBeNull();
+        expect(classifyLinkInBio('not a url')).toBeNull();
+    });
+});
 
 describe('collapsePlatforms', () => {
     it('passes through a single profile unchanged', () => {
@@ -41,6 +58,11 @@ describe('collapsePlatforms', () => {
         const out = collapsePlatforms({ instagram: [{ url: 'i', latestPostDate: tenDaysAgo }] });
         expect(out.instagram.days_since_post).toBeGreaterThanOrEqual(9);
         expect(out.instagram.days_since_post).toBeLessThanOrEqual(11);
+    });
+
+    it('structures a raw externalUrl into link_in_bio for the link mechanisms', () => {
+        const out = collapsePlatforms({ instagram: [{ url: 'i', externalUrl: 'https://linktr.ee/bestbuy' }] });
+        expect(out.instagram.link_in_bio).toEqual({ type: 'link_aggregator', url: 'https://linktr.ee/bestbuy' });
     });
 
     it('SUMs followers across profiles', () => {

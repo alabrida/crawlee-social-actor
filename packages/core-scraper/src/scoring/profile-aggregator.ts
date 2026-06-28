@@ -8,6 +8,23 @@ function pick(p: any, ...names: string[]): any {
     return undefined;
 }
 
+const LINK_AGGREGATOR_HOSTS = ['linktr.ee', 'beacons.ai', 'lnk.bio', 'linkin.bio', 'bio.link', 'linktree', 'milkshake', 'tap.bio', 'komi.io', 'snipfeed', 'flowpage', 'liinks.co', 'solo.to', 'carrd.co', 'shorby', 'campsite.bio'];
+const BOOKING_HOSTS = ['calendly.com', 'cal.com', 'acuityscheduling', 'squareup.com/appointments', 'setmore', 'calendar.app.goo', 'youcanbook', 'simplybook'];
+
+/**
+ * Classify a raw bio/external URL into the {type,url} shape the rubric reads
+ * (external_link_quality, booking-decision, retention). Handlers emit a raw externalUrl
+ * string; without this the link-in-bio mechanisms always scored 0.
+ */
+export function classifyLinkInBio(url: any): { type: string; url: string } | null {
+    if (!url || typeof url !== 'string') return null;
+    let host = '';
+    try { host = new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch { return null; }
+    if (LINK_AGGREGATOR_HOSTS.some(h => host.includes(h))) return { type: 'link_aggregator', url };
+    if (BOOKING_HOSTS.some(h => host.includes(h))) return { type: 'booking', url };
+    return { type: 'direct_website', url };
+}
+
 /**
  * Map handler-specific field names onto the canonical names the rubric/classifier read.
  * Handlers emit a mix of prefixed (gbp_reviews_count), camelCase (reviewsCount, playlistCount,
@@ -38,6 +55,12 @@ function normalizeProfileFields(p: any): any {
     aliasBool('has_shop', 'has_shop', 'hasShop');
     const tabs = pick(p, 'content_tabs', 'contentTabs'); if (Array.isArray(tabs)) n.content_tabs = tabs;
     const cta = pick(p, 'cta_button_type', 'ctaButtonType'); if (cta) n.cta_button_type = cta;
+
+    // link-in-bio: structure the raw external URL into {type,url} the rubric reads.
+    if (!n.link_in_bio) {
+        const lib = classifyLinkInBio(pick(p, 'link_in_bio_url', 'externalUrl', 'external_url', 'website', 'websiteUrl'));
+        if (lib) n.link_in_bio = lib;
+    }
 
     // Recency: the rubric reads days_since_post, but most handlers emit a latest-activity date.
     // Compute it here so content_recency / posting_frequency see recency for single profiles too.
