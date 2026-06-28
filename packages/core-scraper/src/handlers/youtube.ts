@@ -40,6 +40,7 @@ export async function handle(
     let verified = false;
     let latestVideoDate: string | null = null;
     let hasMembership = false;
+    let hasMerch = false;
     let playlistCount = 0;
     let contentTabs: string[] = ['videos'];
     let isBlocked = false;
@@ -116,10 +117,15 @@ export async function handle(
                 hasMembership = await page.locator('ytd-button-renderer:has-text("Join")').first().isVisible();
 
                 // Content tabs
-                const tabs = await page.locator('tp-yt-paper-tab .tab-content').evaluateAll(els => 
+                const tabs = await page.locator('tp-yt-paper-tab .tab-content').evaluateAll(els =>
                     els.map(el => el.textContent?.trim().toLowerCase() || '')
                 );
                 contentTabs = tabs.filter(Boolean);
+
+                // Merch: a Store tab or a merch shelf in ytInitialData. has_merch feeds the same
+                // monetization decision mechanism as has_membership (an OR).
+                // ponytail: content heuristic — validate against the YouTube live session.
+                hasMerch = contentTabs.some(t => /store|shop|merch/i.test(t)) || /merchShelfRenderer|"sellerName"/.test(content);
             } catch (e) {
                 log.warning('[YouTube] Browser extraction encountered errors.');
             }
@@ -143,6 +149,7 @@ export async function handle(
             verified,
             latestVideoDate,
             hasMembership,
+            has_merch: hasMerch,
             playlistCount,
             contentTabs,
             bio_analysis: bioAnalysis,

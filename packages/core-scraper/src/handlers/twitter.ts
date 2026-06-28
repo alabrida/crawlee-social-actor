@@ -153,6 +153,15 @@ export async function handle(
                 if (!verified) {
                     verified = await page.locator('[data-testid="icon-verified"]').first().count() > 0;
                 }
+
+                // Latest tweet date — max of the visible timeline timestamps so a pinned older
+                // tweet doesn't skew it. Drives recency; a dormant account (last tweet years ago)
+                // correctly reads as stale. Validated live: BestBuy's last tweet is 2022-11-18.
+                const tweetTimes = await page.locator('article time[datetime]').evaluateAll(
+                    els => els.map(e => e.getAttribute('datetime') || '')
+                ).catch(() => [] as string[]);
+                const tweetMs = tweetTimes.map(t => new Date(t).getTime()).filter(n => !isNaN(n));
+                if (tweetMs.length) latestTweetDate = new Date(Math.max(...tweetMs)).toISOString();
             } catch (e) {
                 log.warning('[Twitter] Browser extraction encountered errors.');
             }
