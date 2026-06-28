@@ -23,6 +23,26 @@ describe('collapsePlatforms', () => {
         expect(out.facebook.reviews_count).toBe(50);
     });
 
+    it('bridges camelCase handler fields to the snake_case the rubric reads', () => {
+        const out = collapsePlatforms({
+            youtube: [{ url: 'y', playlistCount: 12, hasMembership: true, contentTabs: ['videos', 'shorts'] }],
+            facebook: [{ url: 'f', ctaButtonType: 'Shop Now' }],
+            instagram: [{ url: 'i', hasShop: true }],
+        });
+        expect(out.youtube.playlist_count).toBe(12);
+        expect(out.youtube.has_membership).toBe(true);
+        expect(out.youtube.content_tabs).toEqual(['videos', 'shorts']);
+        expect(out.facebook.cta_button_type).toBe('Shop Now');
+        expect(out.instagram.has_shop).toBe(true);
+    });
+
+    it('computes days_since_post from a latest-activity date for single profiles (the recency bug)', () => {
+        const tenDaysAgo = new Date(Date.now() - 10 * 86400000).toISOString();
+        const out = collapsePlatforms({ instagram: [{ url: 'i', latestPostDate: tenDaysAgo }] });
+        expect(out.instagram.days_since_post).toBeGreaterThanOrEqual(9);
+        expect(out.instagram.days_since_post).toBeLessThanOrEqual(11);
+    });
+
     it('SUMs followers across profiles', () => {
         const out = collapsePlatforms({ instagram: [{ url: 'a', followers: 100 }, { url: 'b', followers: 200 }] });
         expect(out.instagram.followers).toBe(300);

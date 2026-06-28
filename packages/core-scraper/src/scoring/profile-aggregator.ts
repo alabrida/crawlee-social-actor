@@ -3,20 +3,57 @@
  * @description Aggregates multiple scraped profiles of the same platform type into a single virtual profile for rubric/classifier evaluation.
  */
 
+function pick(p: any, ...names: string[]): any {
+    for (const nm of names) if (p[nm] !== undefined && p[nm] !== null) return p[nm];
+    return undefined;
+}
+
 /**
  * Map handler-specific field names onto the canonical names the rubric/classifier read.
- * The GBP handler emits gbp_reviews_count/gbp_rating (DB-column prefix) and Facebook emits
- * reviewsCount (camelCase), but reviews_ratings reads reviews_count/rating — so without this
- * a correctly-scraped review count never reached scoring (it scored 0 "No reviews found").
- * Applied to EVERY profile before collapse so both the single-profile and merge paths see it.
+ * Handlers emit a mix of prefixed (gbp_reviews_count), camelCase (reviewsCount, playlistCount,
+ * hasShop) and raw date strings (latestPostDate), but the rubric reads snake_case canonical
+ * fields (reviews_count, playlist_count, has_shop, days_since_post). The single-profile collapse
+ * path passed profiles through verbatim, so these never matched and the mechanisms silently
+ * scored 0 (reviews, content_recency, posting_frequency, etc.). Applied to EVERY profile before
+ * collapse so both the single-profile and merge paths see canonical names.
+ *
+ * NOTE: the mechanism unit-test fixtures use canonical names, which is exactly why this class of
+ * bug went undetected — production handler output and the fixtures disagreed.
  */
 function normalizeProfileFields(p: any): any {
     if (!p || typeof p !== 'object') return p;
     const n = { ...p };
-    const rc = p.reviews_count ?? p.reviewsCount ?? p.gbp_reviews_count;
+
+    // Reviews + rating (GBP prefix / FB camelCase -> canonical).
+    const rc = pick(p, 'reviews_count', 'reviewsCount', 'gbp_reviews_count');
     if (typeof rc === 'number') { n.reviews_count = rc; n.reviewsCount = rc; }
-    const rt = p.rating ?? p.gbp_rating;
+    const rt = pick(p, 'rating', 'gbp_rating');
     if (typeof rt === 'number') n.rating = rt;
+
+    // camelCase -> snake_case the rubric reads.
+    const aliasNum = (canon: string, ...c: string[]) => { const v = pick(p, ...c); if (typeof v === 'number') n[canon] = v; };
+    const aliasBool = (canon: string, ...c: string[]) => { const v = pick(p, ...c); if (typeof v === 'boolean') n[canon] = v; };
+    aliasNum('playlist_count', 'playlist_count', 'playlistCount');
+    aliasBool('has_membership', 'has_membership', 'hasMembership');
+    aliasBool('has_shop', 'has_shop', 'hasShop');
+    const tabs = pick(p, 'content_tabs', 'contentTabs'); if (Array.isArray(tabs)) n.content_tabs = tabs;
+    const cta = pick(p, 'cta_button_type', 'ctaButtonType'); if (cta) n.cta_button_type = cta;
+
+    // Recency: the rubric reads days_since_post, but most handlers emit a latest-activity date.
+    // Compute it here so content_recency / posting_frequency see recency for single profiles too.
+    if (typeof n.days_since_post !== 'number') {
+        const ds = pick(p, 'latestPostDate', 'latestVideoDate', 'latestTweetDate', 'latest_post_date');
+        if (ds) {
+            const t = new Date(ds).getTime();
+            if (!isNaN(t)) {
+                const days = Math.floor((Date.now() - t) / 86400000);
+                if (days >= 0) { n.days_since_post = days; n.daysSincePost = days; }
+            }
+        }
+    } else {
+        n.daysSincePost = n.days_since_post;
+    }
+
     return n;
 }
 
