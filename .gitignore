@@ -41,11 +41,14 @@ test-results/
 # TypeScript Build Cache
 *.tsbuildinfo
 
-# Subagents
+# Local-only: agent files, scratch, and project docs — kept locally, NEVER on the remote.
+# The remote trunk is purely build + engine. Reference docs live in ../apify_actor_reference.
 .agents/
-
-
-
+agents/
+skills/
+workflows/
+logs/
+results/
 
 # Stray RTK tool binary (not part of the project)
 rtk.exe
