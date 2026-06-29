@@ -14,9 +14,6 @@
   },
   "files": [],
   "references": [
-    { "path": "./packages/core-scraper" },
-    { "path": "./apps/agency-actor" },
-    { "path": "./apps/saas-actor" },
-    { "path": "./apps/marketplace-actor" }
+    { "path": "./packages/core-scraper" }
   ]
 }
